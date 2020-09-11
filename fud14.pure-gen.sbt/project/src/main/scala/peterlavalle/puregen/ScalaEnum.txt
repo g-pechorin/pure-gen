@@ -1,0 +1,84 @@
+
+trait <@kind/> {
+	@HostAccess.Export def <@data/>: Unit
+
+	def note(into: <@kind/>.E => Unit): <@kind/> =
+		<@kind/>.read {
+			(e: <@kind/>.E) =>
+				into(e)
+				<@kind/>.send(e, this)
+		}
+
+	def need(need: <@kind/>.need*): <@kind/> = {
+
+		val todo: Iterator[<@kind/>.E => Unit] =
+			need.toStream.flatMap {
+				need: <@kind/>.need =>
+					need.toChecks.map {
+						c: (<@kind/>.E => Boolean) =>
+							(e: <@kind/>.E) =>
+								require(c(e))
+					}
+			}.iterator
+
+		note {
+			e: <@kind/>.E =>
+				todo.next()(e)
+		}
+	}
+}
+
+implicit object <@kind/> extends TEnum[<@kind/>] {
+
+	case class <@data/> extends E
+
+	override def link(news: Array[Value], call: E): Value =
+		call match {
+			case null => news(0)
+			<@link/>
+		}
+
+	sealed trait need {
+		final def rep(count: Int): need = {
+			val from: need = this
+			new need {
+				override def toChecks: Stream[E => Boolean] =
+					Stream.continually(from)
+						.take(count)
+						.flatMap((_: need).toChecks)
+			}
+		}
+
+		final def forever: need = {
+			val from: need = this
+			new need {
+				override def toChecks: Stream[E => Boolean] =
+					Stream.continually(from)
+						.flatMap((_: need).toChecks)
+			}
+		}
+
+		def toChecks: Stream[E => Boolean]
+	}
+
+	def need[T <: E : ClassTag](check: T => Boolean = (_: T) => true): need =
+		new need {
+			override def toChecks: Stream[E => Boolean] =
+				Stream(
+					{
+						case e: T if classFor[T].isInstance(e) => check(e)
+						case _ => false
+					}
+				)
+		}
+
+	override def read(send: E => Unit): <@kind/> =
+		new <@kind/> {
+			@HostAccess.Export <@read/>
+		}
+
+	override def send(call: E, into: <@kind/>): Unit =
+		call match {
+			<@send/>
+		}
+}

@@ -1,0 +1,269 @@
+import org.graalvm.polyglot.{HostAccess, Value}
+import peterlavalle.puregen.{TEnum, TModule}
+import scala.reflect.ClassTag
+import peterlavalle._
+
+package foo.bar {
+	trait TestParse extends TModule {
+		def openBar(a0: String): TModule.Event[Bar]
+
+		trait Bar {
+			@HostAccess.Export def Touch(): Unit
+
+			def note(into: Bar.E => Unit): Bar =
+				Bar.read {
+					(e: Bar.E) =>
+						into(e)
+						Bar.send(e, this)
+				}
+
+			def need(need: Bar.need*): Bar = {
+
+				val todo: Iterator[Bar.E => Unit] =
+					need.toStream.flatMap {
+						need: Bar.need =>
+							need.toChecks.map {
+								c: (Bar.E => Boolean) =>
+									(e: Bar.E) =>
+										require(c(e))
+							}
+					}.iterator
+
+				note {
+					e: Bar.E =>
+						todo.next()(e)
+				}
+			}
+		}
+
+		implicit object Bar extends TEnum[Bar] {
+
+			case class Touch() extends E
+
+			override def link(news: Array[Value], call: E): Value =
+				call match {
+					case null => news(0)
+					case Touch() => news(1).execute()
+				}
+
+			sealed trait need {
+				final def rep(count: Int): need = {
+					val from: need = this
+					new need {
+						override def toChecks: Stream[E => Boolean] =
+							Stream.continually(from)
+								.take(count)
+								.flatMap((_: need).toChecks)
+					}
+				}
+
+				final def forever: need = {
+					val from: need = this
+					new need {
+						override def toChecks: Stream[E => Boolean] =
+							Stream.continually(from)
+								.flatMap((_: need).toChecks)
+					}
+				}
+
+				def toChecks: Stream[E => Boolean]
+			}
+
+			def need[T <: E : ClassTag](check: T => Boolean = (_: T) => true): need =
+				new need {
+					override def toChecks: Stream[E => Boolean] =
+						Stream(
+							{
+								case e: T if classFor[T].isInstance(e) => check(e)
+								case _ => false
+							}
+						)
+				}
+
+			override def read(send: E => Unit): Bar =
+				new Bar {
+					@HostAccess.Export override def Touch(): Unit = send(Bar.Touch())
+				}
+
+			override def send(call: E, into: Bar): Unit =
+				call match {
+					case Touch() => into.Touch()
+				}
+		}
+		def openFoo(a0: String): TModule.Signal[Foo]
+
+		trait Foo {
+			@HostAccess.Export def Tame(a0: Int): Unit
+			@HostAccess.Export def Trip(): Unit
+
+			def note(into: Foo.E => Unit): Foo =
+				Foo.read {
+					(e: Foo.E) =>
+						into(e)
+						Foo.send(e, this)
+				}
+
+			def need(need: Foo.need*): Foo = {
+
+				val todo: Iterator[Foo.E => Unit] =
+					need.toStream.flatMap {
+						need: Foo.need =>
+							need.toChecks.map {
+								c: (Foo.E => Boolean) =>
+									(e: Foo.E) =>
+										require(c(e))
+							}
+					}.iterator
+
+				note {
+					e: Foo.E =>
+						todo.next()(e)
+				}
+			}
+		}
+
+		implicit object Foo extends TEnum[Foo] {
+
+			case class Tame(a0: Int) extends E
+			case class Trip() extends E
+
+			override def link(news: Array[Value], call: E): Value =
+				call match {
+					case null => news(0)
+					case Tame(a0: Int) => news(1).execute(a0.asInstanceOf[Object])
+					case Trip() => news(2).execute()
+				}
+
+			sealed trait need {
+				final def rep(count: Int): need = {
+					val from: need = this
+					new need {
+						override def toChecks: Stream[E => Boolean] =
+							Stream.continually(from)
+								.take(count)
+								.flatMap((_: need).toChecks)
+					}
+				}
+
+				final def forever: need = {
+					val from: need = this
+					new need {
+						override def toChecks: Stream[E => Boolean] =
+							Stream.continually(from)
+								.flatMap((_: need).toChecks)
+					}
+				}
+
+				def toChecks: Stream[E => Boolean]
+			}
+
+			def need[T <: E : ClassTag](check: T => Boolean = (_: T) => true): need =
+				new need {
+					override def toChecks: Stream[E => Boolean] =
+						Stream(
+							{
+								case e: T if classFor[T].isInstance(e) => check(e)
+								case _ => false
+							}
+						)
+				}
+
+			override def read(send: E => Unit): Foo =
+				new Foo {
+					@HostAccess.Export override def Tame(a0: Int): Unit = send(Foo.Tame(a0))
+					@HostAccess.Export override def Trip(): Unit = send(Foo.Trip())
+				}
+
+			override def send(call: E, into: Foo): Unit =
+				call match {
+					case Tame(a0: Int) => into.Tame(a0)
+					case Trip() => into.Trip()
+				}
+		}
+		def openStrip(a0: Double): TModule.Sample[Strip]
+
+		trait Strip {
+			@HostAccess.Export def Flip(a0: String): Unit
+
+			def note(into: Strip.E => Unit): Strip =
+				Strip.read {
+					(e: Strip.E) =>
+						into(e)
+						Strip.send(e, this)
+				}
+
+			def need(need: Strip.need*): Strip = {
+
+				val todo: Iterator[Strip.E => Unit] =
+					need.toStream.flatMap {
+						need: Strip.need =>
+							need.toChecks.map {
+								c: (Strip.E => Boolean) =>
+									(e: Strip.E) =>
+										require(c(e))
+							}
+					}.iterator
+
+				note {
+					e: Strip.E =>
+						todo.next()(e)
+				}
+			}
+		}
+
+		implicit object Strip extends TEnum[Strip] {
+
+			case class Flip(a0: String) extends E
+
+			override def link(news: Array[Value], call: E): Value =
+				call match {
+					case null => news(0)
+					case Flip(a0: String) => news(1).execute(a0.asInstanceOf[Object])
+				}
+
+			sealed trait need {
+				final def rep(count: Int): need = {
+					val from: need = this
+					new need {
+						override def toChecks: Stream[E => Boolean] =
+							Stream.continually(from)
+								.take(count)
+								.flatMap((_: need).toChecks)
+					}
+				}
+
+				final def forever: need = {
+					val from: need = this
+					new need {
+						override def toChecks: Stream[E => Boolean] =
+							Stream.continually(from)
+								.flatMap((_: need).toChecks)
+					}
+				}
+
+				def toChecks: Stream[E => Boolean]
+			}
+
+			def need[T <: E : ClassTag](check: T => Boolean = (_: T) => true): need =
+				new need {
+					override def toChecks: Stream[E => Boolean] =
+						Stream(
+							{
+								case e: T if classFor[T].isInstance(e) => check(e)
+								case _ => false
+							}
+						)
+				}
+
+			override def read(send: E => Unit): Strip =
+				new Strip {
+					@HostAccess.Export override def Flip(a0: String): Unit = send(Strip.Flip(a0))
+				}
+
+			override def send(call: E, into: Strip): Unit =
+				call match {
+					case Flip(a0: String) => into.Flip(a0)
+				}
+		}
+	}
+}

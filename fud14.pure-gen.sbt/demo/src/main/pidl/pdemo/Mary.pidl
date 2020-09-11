@@ -1,0 +1,7 @@
+
+// a live "mary" that can signal if it's talking or not
+pipe LiveMary(text)
+	! Silent(real32)
+	! Speak(real32 text)
+	? Speaking(real32 text)
+	? Spoken(real32 text)

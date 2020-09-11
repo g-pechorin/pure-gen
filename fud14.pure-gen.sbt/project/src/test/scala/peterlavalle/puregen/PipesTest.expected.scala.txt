@@ -1,0 +1,199 @@
+import org.graalvm.polyglot.{HostAccess, Value}
+import peterlavalle.puregen.{TEnum, TModule}
+import scala.reflect.ClassTag
+import peterlavalle._
+
+package foo.bar {
+
+	trait PipesTest extends TModule {
+
+		trait Audio extends Opaque
+
+		def openTTS(): TModule.Pipe[TTS.Ev, TTS.Si]
+		object TTS {
+
+			trait Ev {
+				@HostAccess.Export def Silence(a0: Float): Unit
+				@HostAccess.Export def Speaking(a0: Float, a1: String): Unit
+				@HostAccess.Export def Spoken(a0: Float, a1: String): Unit
+
+				def note(into: Ev.E => Unit): Ev =
+					Ev.read {
+						(e: Ev.E) =>
+							into(e)
+							Ev.send(e, this)
+					}
+
+				def need(need: Ev.need*): Ev = {
+
+					val todo: Iterator[Ev.E => Unit] =
+						need.toStream.flatMap {
+							need: Ev.need =>
+								need.toChecks.map {
+									c: (Ev.E => Boolean) =>
+										(e: Ev.E) =>
+											require(c(e))
+								}
+						}.iterator
+
+					note {
+						e: Ev.E =>
+							todo.next()(e)
+					}
+				}
+			}
+
+			implicit object Ev extends TEnum[Ev] {
+
+				case class Silence(a0: Float) extends E
+				case class Speaking(a0: Float, a1: String) extends E
+				case class Spoken(a0: Float, a1: String) extends E
+
+				override def link(news: Array[Value], call: E): Value =
+					call match {
+						case null => news(0)
+						case Silence(a0: Float) => news(1).execute(a0.asInstanceOf[Object])
+						case Speaking(a0: Float, a1: String) => news(2).execute(a0.asInstanceOf[Object], a1.asInstanceOf[Object])
+						case Spoken(a0: Float, a1: String) => news(3).execute(a0.asInstanceOf[Object], a1.asInstanceOf[Object])
+					}
+
+				sealed trait need {
+					final def rep(count: Int): need = {
+						val from: need = this
+						new need {
+							override def toChecks: Stream[E => Boolean] =
+								Stream.continually(from)
+									.take(count)
+									.flatMap((_: need).toChecks)
+						}
+					}
+
+					final def forever: need = {
+						val from: need = this
+						new need {
+							override def toChecks: Stream[E => Boolean] =
+								Stream.continually(from)
+									.flatMap((_: need).toChecks)
+						}
+					}
+
+					def toChecks: Stream[E => Boolean]
+				}
+
+				def need[T <: E : ClassTag](check: T => Boolean = (_: T) => true): need =
+					new need {
+						override def toChecks: Stream[E => Boolean] =
+							Stream(
+								{
+									case e: T if classFor[T].isInstance(e) => check(e)
+									case _ => false
+								}
+							)
+					}
+
+				override def read(send: E => Unit): Ev =
+					new Ev {
+						@HostAccess.Export override def Silence(a0: Float): Unit = send(Ev.Silence(a0))
+						@HostAccess.Export override def Speaking(a0: Float, a1: String): Unit = send(Ev.Speaking(a0, a1))
+						@HostAccess.Export override def Spoken(a0: Float, a1: String): Unit = send(Ev.Spoken(a0, a1))
+					}
+
+				override def send(call: E, into: Ev): Unit =
+					call match {
+						case Silence(a0: Float) => into.Silence(a0)
+						case Speaking(a0: Float, a1: String) => into.Speaking(a0, a1)
+						case Spoken(a0: Float, a1: String) => into.Spoken(a0, a1)
+					}
+			}
+
+			trait Si {
+				@HostAccess.Export def Silent(a0: Float): Unit
+				@HostAccess.Export def Speak(a0: Float, a1: String): Unit
+
+				def note(into: Si.E => Unit): Si =
+					Si.read {
+						(e: Si.E) =>
+							into(e)
+							Si.send(e, this)
+					}
+
+				def need(need: Si.need*): Si = {
+
+					val todo: Iterator[Si.E => Unit] =
+						need.toStream.flatMap {
+							need: Si.need =>
+								need.toChecks.map {
+									c: (Si.E => Boolean) =>
+										(e: Si.E) =>
+											require(c(e))
+								}
+						}.iterator
+
+					note {
+						e: Si.E =>
+							todo.next()(e)
+					}
+				}
+			}
+
+			implicit object Si extends TEnum[Si] {
+
+				case class Silent(a0: Float) extends E
+				case class Speak(a0: Float, a1: String) extends E
+
+				override def link(news: Array[Value], call: E): Value =
+					call match {
+						case null => news(0)
+						case Silent(a0: Float) => news(1).execute(a0.asInstanceOf[Object])
+						case Speak(a0: Float, a1: String) => news(2).execute(a0.asInstanceOf[Object], a1.asInstanceOf[Object])
+					}
+
+				sealed trait need {
+					final def rep(count: Int): need = {
+						val from: need = this
+						new need {
+							override def toChecks: Stream[E => Boolean] =
+								Stream.continually(from)
+									.take(count)
+									.flatMap((_: need).toChecks)
+						}
+					}
+
+					final def forever: need = {
+						val from: need = this
+						new need {
+							override def toChecks: Stream[E => Boolean] =
+								Stream.continually(from)
+									.flatMap((_: need).toChecks)
+						}
+					}
+
+					def toChecks: Stream[E => Boolean]
+				}
+
+				def need[T <: E : ClassTag](check: T => Boolean = (_: T) => true): need =
+					new need {
+						override def toChecks: Stream[E => Boolean] =
+							Stream(
+								{
+									case e: T if classFor[T].isInstance(e) => check(e)
+									case _ => false
+								}
+							)
+					}
+
+				override def read(send: E => Unit): Si =
+					new Si {
+						@HostAccess.Export override def Silent(a0: Float): Unit = send(Si.Silent(a0))
+						@HostAccess.Export override def Speak(a0: Float, a1: String): Unit = send(Si.Speak(a0, a1))
+					}
+
+				override def send(call: E, into: Si): Unit =
+					call match {
+						case Silent(a0: Float) => into.Silent(a0)
+						case Speak(a0: Float, a1: String) => into.Speak(a0, a1)
+					}
+			}
+		}
+	}
+}

@@ -1,0 +1,12 @@
+
+
+// the age of the simulation
+sample Age() = real32
+
+// lets the agent say "wake me up at least this many units into the simulation"
+signal Kick() = real32
+
+// lets the agent dump a log status (at any time) with a named prefix
+signal Status(text) = text
+
+event Eve() = text

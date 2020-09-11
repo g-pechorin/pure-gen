@@ -1,0 +1,5 @@
+.global[<@take/>, () => Any]("<@pack/>.<@name/>") {
+	<@args/> =>
+		import this.<@path/>._
+		e[<@kind/>](this.<@path/>.open<@name/>(<@pass/>))
+}

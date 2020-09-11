@@ -1,0 +1,13 @@
+import org.graalvm.polyglot.{HostAccess, Value}
+import peterlavalle.puregen.{TEnum, TModule}
+import scala.reflect.ClassTag
+import peterlavalle._
+
+package foo.bar {
+	trait DemoTest extends TModule {
+		def openAge(): TModule.Sample[Float]
+		def openEve(): TModule.Event[String]
+		def openKick(): TModule.Signal[Float]
+		def openStatus(a0: String): TModule.Signal[String]
+	}
+}

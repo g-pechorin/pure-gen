@@ -1,0 +1,15 @@
+
+// connect to a live CMUSphinx thing
+event LiveSphinx() = text
+
+// the "data" from the audio system
+opaque AudioLine
+
+// the Microphone connection
+sample Microphone() = AudioLine
+
+// connection to a stream-sphinx thing
+pipe FullSphinx()
+	! Connect(AudioLine)
+	! Disconnect()
+	? Recognised(text)
