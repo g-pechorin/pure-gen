@@ -16,11 +16,19 @@ install spago and purs
 npm install -g purescript
 npm install -g spago
 
+`sbt demo/run`
 
-
+if you get an exception;
+`No line matching interface TargetDataLine supporting format ...` then
 
 
 # need
 
-- [ ] binary sbt launcher to be dumped from mercurial
-- [ ] get .hg (with a version tick?) into the dumps
+- [x] binary sbt launcher to be dumped from mercurial
+	- https://stackoverflow.com/questions/7385378/mercurial-get-contents-of-a-specific-revision-of-a-file
+- [x] get .hg (with a version tick?) into the dumps
+
+# want
+
+sbt demo/run?
+sbt demo/edit?
