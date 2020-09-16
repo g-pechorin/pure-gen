@@ -12,7 +12,7 @@ import com.google.protobuf.ByteString
 /**
  * this class (should) wrap up Google's ASR thing in a mechanism for real-time translation
  */
-class GoogleASR(json: File = new File("C:/Users/Peter/pureGen2020-08-26-1811e934f10c.json").getAbsoluteFile) {
+class GoogleASR(json: File = (new File(System.getProperty("user.home")) / "pureGen-gasr.json")) {
 
 	/**
 	 * alternate constructor
