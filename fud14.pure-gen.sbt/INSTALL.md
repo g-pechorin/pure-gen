@@ -4,7 +4,7 @@
 		- [Isolated (Windows only?)](.#toc_17_3_2)
 		- [Integrated (easiest?)](.#toc_44_3_3)
 	- [Google ASR License](.#toc_63_2_4)
-	- [Download & Launch](INSTALL.md#toc_69_2_5)
+	- [Download & Launch](INSTALL.md#toc-69-2-5)
 	- [Trouble Shooting](.#toc_79_2_6)
 		- [GOOGLE_APPLICATION_CREDENTIALS](.#toc_81_3_7)
 		- [TargetDataLine](.#toc_93_3_8)
