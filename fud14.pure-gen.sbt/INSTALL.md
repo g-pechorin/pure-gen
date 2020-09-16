@@ -120,8 +120,9 @@ A future longer solution that works more widely will be attempted at some point
 # TODO
 
 - need (before recruit)
-	- [ ] sbt setup "stuff" on Integrated
+	- [ ] sbt setup "stuff" on Integrated so it works on not-windows
 	- [ ] Google ASR
+	- [ ] better README.md as a "brief"
 	- [x] binary sbt launcher to be dumped from mercurial
 		- https://stackoverflow.com/questions/7385378/mercurial-get-contents-of-a-specific-revision-of-a-file
 - want (and know how)
