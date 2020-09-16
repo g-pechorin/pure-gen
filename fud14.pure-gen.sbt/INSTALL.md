@@ -1,17 +1,17 @@
 
-- [Installation](.#toc_3_1_0)
-	- [SDKs](.#toc_11_2_1)
-		- [Isolated (Windows only?)](.#toc_17_3_2)
-		- [Integrated (easiest?)](.#toc_44_3_3)
-	- [Google ASR License](.#toc_63_2_4)
-	- [Download & Launch](INSTALL.md#toc-69-2-5)
-	- [Trouble Shooting](.#toc_79_2_6)
-		- [GOOGLE_APPLICATION_CREDENTIALS](.#toc_81_3_7)
-		- [TargetDataLine](.#toc_93_3_8)
-		- [XSLT 'void' to 'boolean](.#toc_105_3_9)
-- [TODO](.#toc_119_1_10)
+- [Installation](#installation)
+	- [SDKs](#sdks)
+		- [Isolated (Windows only?)](#isolated-windows-only)
+		- [Integrated (easiest?)](#integrated-easiest)
+	- [Google ASR License](#google-asr-license)
+	- [Download & Launch](#download--launch)
+	- [Trouble Shooting](#trouble-shooting)
+		- [GOOGLE_APPLICATION_CREDENTIALS](#google_application_credentials)
+		- [TargetDataLine](#targetdataline)
+		- [XSLT 'void' to 'boolean](#xslt-void-to-boolean)
+- [TODO](#todo)
 
-[Installation](#toc_3_1_0)
+# Installation
 
 This needs a JDK11, and a Node.js/npm installation.
 
@@ -19,13 +19,13 @@ There are two approaches I'm suggesting - **chose one** of "Isolated" or "Integr
 
 ... but if something else works; do that.
 
-[SDKs](#toc_11_2_1)
+## SDKs
 
 - run `javac --version` and look for `javac 11.0` or later
 - run `java --version` and look for `openjdk 11.0` or later
 - run `npm --version` - I see 5.6.0, but, ealier ones that can find spago are likely fine
 
-[Isolated (Windows only?)](#toc_17_3_2)
+### Isolated (Windows only?)
 
 This will likely be the best option if you're using a University computer where you privelges are limited or a work computer where you don't want to interfere with Node.JS settings.
 (You'll still have a bunch of `.jar` files that `.ivy` leaves behind ... I'm not sure how to help with that yet. [This post discusses a way around this](https://stackoverflow.com/questions/3142856/how-to-configure-ivy-cache-directory-per-user-or-system-wide))
@@ -52,7 +52,7 @@ The whole exercise is a bit redundant if you can't use an uadio recording device
 	- `npm install -g purescript` will install purescript into the copy you made above
 	- `npm install -g spago` will install spago into the copy you made above
 
-[Integrated (easiest?)](#toc_44_3_3)
+### Integrated (easiest?)
 
 This relies on your PC having JDK11 and Node.JS installed and you not being worried about extra packages threatening Node.JS.
 
@@ -71,13 +71,13 @@ It goes;
 ----
 
 
-[Google ASR License](#toc_63_2_4)
+## Google ASR License
 
 you need a licnes/app/thing key for google's ASR
 
 i beed to try out setting one of these up again to check.
 
-[Download & Launch](#toc-69-2-5)
+## Download & Launch
 
 [Download and unzip the evaluation release](https://github.com/g-pechorin/pure-gen/archive/evaluation.zip) into a folder.
 
@@ -87,9 +87,9 @@ Run the command `sbt demo/run` to launch the Parrot Demo; it will take awhile as
 At some point a JSwing dialog will pop
 
 
-[Trouble Shooting](#toc_79_2_6)
+## Trouble Shooting
 
-[GOOGLE_APPLICATION_CREDENTIALS](#toc_81_3_7)
+### GOOGLE_APPLICATION_CREDENTIALS
 
 If you get an error at startup with a message containing ...
 
@@ -101,7 +101,7 @@ Error reading credential file from environment variable GOOGLE_APPLICATION_CREDE
 
 Put the file there.
 
-[TargetDataLine](#toc_93_3_8)
+### TargetDataLine
 
 If you get an error at startup with a message containing ...
 
@@ -113,7 +113,7 @@ No line matching interface TargetDataLine supporting format ...`
 
 Plug in your camera or microphone.
 
-[XSLT 'void' to 'boolean](#toc_105_3_9)
+### XSLT 'void' to 'boolean
 
 If you get an error at startup with a message containing ...
 
@@ -127,7 +127,7 @@ Then (like me) you're using Windows 7 and something in the MaryTTS XSLT has gone
 My (current) solution is to open the project in JetBrains DIEA and directly execute `fud14.pure-gen.sbt\demo\src\main\scala\peterlavalle\puregen\DemoTry.scala` as a Java program.
 A future longer solution that works more widely will be attempted at some point
 
-[TODO](#toc_119_1_10)
+# TODO
 
 - need (before recruit)
 	- [ ] sbt setup "stuff" on Integrated so it works on not-windows
