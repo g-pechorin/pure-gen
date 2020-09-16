@@ -1,7 +1,7 @@
 
 This is a WIP project.
 
-This is a partial "dump" of my ["monorepository"(https://en.wikipedia.org/wiki/Monorepo) containing everything to run the/my "pure-gen" Virtual Human system.
+This is a partial "dump" of my ["monorepository"](https://en.wikipedia.org/wiki/Monorepo) containing everything to run the/my "pure-gen" Virtual Human system.
 
 Maybe someday, I'll elabourate here ... but for the time being that's not a useful expenditure of effort.
 

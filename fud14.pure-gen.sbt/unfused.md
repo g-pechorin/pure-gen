@@ -20,7 +20,7 @@ pipe FullSphinx()
 	? spoken(real32 text)
 ```
 
-... which 
+... which
 
 
 
@@ -34,4 +34,3 @@ sinkin l r = Next $ \i -> do
 
 
 fuselr :: forall i m o -> SF i m -> SF m o -> SF i o
-

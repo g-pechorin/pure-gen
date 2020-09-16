@@ -155,7 +155,7 @@ https://cloud.google.com/speech-to-text#section-6
 	- this won't work; the Sphix server can't be flushed and doesn't shutdown
 
 
-- the next step MUST BE to fixit to be a streaming system BEFORE i adapt it to wrap 
+- the next step MUST BE to fixit to be a streaming system BEFORE i adapt it to wrap
 	- coppied it all ... hmm ... no response ... do I need "onComplete?"
 	- it worked for awhile ...
 
