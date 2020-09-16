@@ -1,7 +1,17 @@
 
-[toc]
+- [Installation](.#toc_3_1_0)
+	- [SDKs](.#toc_11_2_1)
+		- [Isolated (Windows only?)](.#toc_17_3_2)
+		- [Integrated (easiest?)](.#toc_44_3_3)
+	- [Google ASR License](.#toc_63_2_4)
+	- [Download & Launch](.#toc_69_2_5)
+	- [Trouble Shooting](.#toc_79_2_6)
+		- [GOOGLE_APPLICATION_CREDENTIALS](.#toc_81_3_7)
+		- [TargetDataLine](.#toc_93_3_8)
+		- [XSLT 'void' to 'boolean](.#toc_105_3_9)
+- [TODO](.#toc_119_1_10)
 
-# Installation
+[Installation](#toc_3_1_0)
 
 This needs a JDK11, and a Node.js/npm installation.
 
@@ -9,13 +19,13 @@ There are two approaches I'm suggesting - **chose one** of "Isolated" or "Integr
 
 ... but if something else works; do that.
 
-## SDKs
+[SDKs](#toc_11_2_1)
 
 - run `javac --version` and look for `javac 11.0` or later
 - run `java --version` and look for `openjdk 11.0` or later
 - run `npm --version` - I see 5.6.0, but, ealier ones that can find spago are likely fine
 
-### Isolated (Windows only?)
+[Isolated (Windows only?)](#toc_17_3_2)
 
 This will likely be the best option if you're using a University computer where you privelges are limited or a work computer where you don't want to interfere with Node.JS settings.
 (You'll still have a bunch of `.jar` files that `.ivy` leaves behind ... I'm not sure how to help with that yet. [This post discusses a way around this](https://stackoverflow.com/questions/3142856/how-to-configure-ivy-cache-directory-per-user-or-system-wide))
@@ -42,7 +52,7 @@ The whole exercise is a bit redundant if you can't use an uadio recording device
 	- `npm install -g purescript` will install purescript into the copy you made above
 	- `npm install -g spago` will install spago into the copy you made above
 
-### Integrated (easiest?)
+[Integrated (easiest?)](#toc_44_3_3)
 
 This relies on your PC having JDK11 and Node.JS installed and you not being worried about extra packages threatening Node.JS.
 
@@ -61,25 +71,25 @@ It goes;
 ----
 
 
-## Google ASR License
+[Google ASR License](#toc_63_2_4)
 
 you need a licnes/app/thing key for google's ASR
 
 i beed to try out setting one of these up again to check.
 
-## Download & Launch
+[Download & Launch](#toc_69_2_5)
 
 [Download and unzip the evaluation release](https://github.com/g-pechorin/pure-gen/archive/evaluation.zip) into a folder.
 
 Open a command line in the `fud14.pure-gen.sbt/` folder.
 If you're using the **Isolated** approach - you need to run your `setup.bat` now.
 Run the command `sbt demo/run` to launch the Parrot Demo; it will take awhile as it has to download quite a few packages.
-At some point a JSwing dialog will pop 
+At some point a JSwing dialog will pop
 
 
-## Trouble Shooting
+[Trouble Shooting](#toc_79_2_6)
 
-### GOOGLE_APPLICATION_CREDENTIALS
+[GOOGLE_APPLICATION_CREDENTIALS](#toc_81_3_7)
 
 If you get an error at startup with a message containing ...
 
@@ -91,7 +101,7 @@ Error reading credential file from environment variable GOOGLE_APPLICATION_CREDE
 
 Put the file there.
 
-### TargetDataLine
+[TargetDataLine](#toc_93_3_8)
 
 If you get an error at startup with a message containing ...
 
@@ -103,7 +113,7 @@ No line matching interface TargetDataLine supporting format ...`
 
 Plug in your camera or microphone.
 
-### XSLT 'void' to 'boolean
+[XSLT 'void' to 'boolean](#toc_105_3_9)
 
 If you get an error at startup with a message containing ...
 
@@ -117,7 +127,7 @@ Then (like me) you're using Windows 7 and something in the MaryTTS XSLT has gone
 My (current) solution is to open the project in JetBrains DIEA and directly execute `fud14.pure-gen.sbt\demo\src\main\scala\peterlavalle\puregen\DemoTry.scala` as a Java program.
 A future longer solution that works more widely will be attempted at some point
 
-# TODO
+[TODO](#toc_119_1_10)
 
 - need (before recruit)
 	- [ ] sbt setup "stuff" on Integrated so it works on not-windows
