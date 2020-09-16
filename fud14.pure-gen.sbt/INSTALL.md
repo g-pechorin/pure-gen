@@ -77,7 +77,7 @@ you need a licnes/app/thing key for google's ASR
 
 i beed to try out setting one of these up again to check.
 
-[Download & Launch](#toc_69_2_5)
+[Download & Launch](#toc-69-2-5)
 
 [Download and unzip the evaluation release](https://github.com/g-pechorin/pure-gen/archive/evaluation.zip) into a folder.
 
