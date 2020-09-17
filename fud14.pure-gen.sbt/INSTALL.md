@@ -3,27 +3,35 @@
 	- [SDKs](#sdks)
 		- [Isolated (Windows only?)](#isolated-windows-only)
 		- [Integrated (easiest?)](#integrated-easiest)
-	- [Google ASR License](#google-asr-license)
+	- [Google ASR Credentials](#google-asr-credentials)
 	- [Download & Launch](#download--launch)
 	- [Trouble Shooting](#trouble-shooting)
 		- [GOOGLE_APPLICATION_CREDENTIALS](#google_application_credentials)
 		- [TargetDataLine](#targetdataline)
 		- [XSLT 'void' to 'boolean](#xslt-void-to-boolean)
-- [TODO](#todo)
 
 # Installation
 
-This needs a JDK11, and a Node.js/npm installation.
+I've only been able to test this on Windows - there are likely stubs for certain command line details on not-Windows.
 
-There are two approaches I'm suggesting - **chose one** of "Isolated" or "Integrated."
-
-... but if something else works; do that.
 
 ## SDKs
+
+This needs a JDK11, and a Node.js/npm installation and the later is used to get PureScript and the Spago build tool.
+If you're not-using Windows, you'll [need the `sbt` tool to be installed.](https://www.scala-sbt.org/)
+You can check (from the command line) by running these commands;
 
 - run `javac --version` and look for `javac 11.0` or later
 - run `java --version` and look for `openjdk 11.0` or later
 - run `npm --version` - I see 5.6.0, but, ealier ones that can find spago are likely fine
+- run `purs --version` to check that 0.13.8 (or later?) is installed
+- run `spago version` to check that 0.15.2 (or later?) is installed
+- check that `sbt` works
+
+If it looks like everything is installed, skip [to the section on Google ASR Credentials](#google-asr-credentials) and continue.
+
+
+![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggVERcblxuXHRwdXJzW3VzZSBucG0gdG8gaW5zdGFsbCBQdXJlU2NyaXB0IGFuZCBTcGFnb11cblxuXHRzdWJncmFwaCBJc29sYXRlZFxuXHRcdGRsamRrW0Rvd25sb2FkIE9wZW5KREsxMV1cblx0XHRub2RlW0Rvd25sb2FkIE5vZGUuSlNdXG5cblx0XHRiYXRbVXNlIGEgLmJhdCB0byBzZXQgRW5WYXJzXVxuXG5cdFx0ZGxqZGsgLS0+IG5vZGVcblx0XHRub2RlIC0tPiBiYXRcblx0ZW5kXG5cblx0c3ViZ3JhcGggSW50ZWdyYXRlZFxuXHRcdGNoamRrW3NldHVwIEpESzExK11cblx0XHRzYnRpbltzZXR1cCBzYnQgY29tbWFuZF1cblxuXHRcdGNobmpzW3NldHVwIE5vZGUuSlMgYW5kIG5wbV1cblxuXHRcdGNoamRrIC0tPiBzYnRpblxuXHRlbmRcblxuXHRzYnRpbiAtLT4gY2huanNcblx0Y2huanMgLS0+IHB1cnNcblx0YmF0IC0tPiBwdXJzXG5cblx0Z2FzcltnZXQgR29vZ2xlIEFTUiBjcmVkZW50aWFsc11cblxuXHRwdXJzIC0tPiBnYXNyXG5cdGdhc3IgLS0+IGRlbW9cblxuXHRkZW1vW3J1biB0aGUgZGVtbyB3aXRoIGBzYnQgZGVtby9ydW5gXSJ9)
 
 ### Isolated (Windows only?)
 
@@ -68,14 +76,40 @@ It goes;
 	- `npm install -g purescript` should install purescript globally; locally didn't work for me
 	- `npm install -g spago` should install spago globally; locally didn't work for me
 
-----
+## Google ASR Credentials
 
+The system uses Google's Cloud Automatic Speech Recognition (GASR? - I'm calling it GASR) for its primary real-time speech recognition.
+There is the option to use [CMU Sphinx 4](https://github.com/cmusphinx/sphinx4) but it is not nearly as precise.
 
-## Google ASR License
+To connect to GASR, the system reads a credentials file containing a JSON object with some authentication data.
+This file stored outside of version control (for obvious reasons) and will be provided by Peter for the evaluation.
 
-you need a licnes/app/thing key for google's ASR
+Usage of GASR is metered by the minute, but, IME - I haven't exceeded the "free daily allowance" of 60 minutes.
+There was an advert giving $$300 or about £280 of credit for 90 days.
+If you're coming to this "later" and wish to use the GASR yourself, you can setup a project youself.
 
-i beed to try out setting one of these up again to check.
+> Somewhere along the way, Google Cloud will ask you to connect billing stuff.
+> I've already done that, so, I wasn't asked when writing this guide.
+> I don't remember where this was setup - I don't believe that it was at all confusing though.
+
+1. create the project
+	- remeber; you'll have to do something with billing
+	1. setup an account to the point where you can [login to the Google Cloud Platform https://console.cloud.google.com/](https://console.cloud.google.com/)
+	2. create a [new project](https://console.cloud.google.com/projectcreate)
+2. turn on cloud text to speech for your project
+	1. open the API Overview thing ![](INSTALL/api-overview.png)
+	2. open the "Enable APIs" thing along the top ![](INSTALL/enable-api.png)
+	3. open the "Cloud Speech to Text" control ![](INSTALL/cloud-asr.png)
+	4. enable it ![](INSTALL/overview-but-create.png)
+		- this will lead you to an overview page for creating credentials
+3. create some credentials
+	- from the above, you'll go to a credentials page
+	1. select cloud to speech and "no - we're not using compute" ![](INSTALL/select-api.png)
+	3. set it up as a project viewer, give it a name, and click continue ![](INSTALL/project-viewer.png)
+	4. it'll download a `.json` file for you - that's the thing that you want!
+4. put the file in the correct place
+	1. rename it `pureGen-gasr.json`
+	2. put it in your home directory
 
 ## Download & Launch
 
@@ -126,16 +160,3 @@ Then (like me) you're using Windows 7 and something in the MaryTTS XSLT has gone
 
 My (current) solution is to open the project in JetBrains DIEA and directly execute `fud14.pure-gen.sbt\demo\src\main\scala\peterlavalle\puregen\DemoTry.scala` as a Java program.
 A future longer solution that works more widely will be attempted at some point
-
-# TODO
-
-- need (before recruit)
-	- [ ] sbt setup "stuff" on Integrated so it works on not-windows
-	- [ ] Google ASR
-	- [ ] better README.md as a "brief"
-	- [x] binary sbt launcher to be dumped from mercurial
-		- https://stackoverflow.com/questions/7385378/mercurial-get-contents-of-a-specific-revision-of-a-file
-- want (and know how)
-	- [x] get .hg (with a version tick?) into the dumps
-	- [ ] XSLT config hack
-	- [ ] sbt demo/edit to open VSCode with a buildfile

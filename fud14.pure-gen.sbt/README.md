@@ -1,3 +1,6 @@
+
+This is super-incomplete, but, is piucked up by my audo-scrtip so you have to see it.
+
 see todo.md
 
 This is a reimplementation of my phd, with pure-script, that works this time.
