@@ -66,10 +66,11 @@ This relies on your PC having JDK11 and Node.JS installed and you not being worr
 
 It goes;
 
-1. install [JDK11]() or later
+1. install [JDK11](https://adoptopenjdk.net/) or later and [sbt](https://www.scala-sbt.org/)
 2. check that JDK11 is "the JAVA" and update `PATH` or uninstall "other Java" until it is
 	- run `javac --version` and look for `javac 11.0` or later
 	- run `java --version` and look for `openjdk 11.0` or later
+	- check that `sbt help` produces sensible output
 3. check that `npm --version` indicates ... some version of npm
 	- run `npm --version` - I see 5.6.0, but, ealier ones that can find spago are likely fine
 4. install PureScript and Spago globally

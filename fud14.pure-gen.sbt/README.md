@@ -1,91 +1,24 @@
 
-This is super-incomplete, but, is piucked up by my audo-scrtip so you have to see it.
+> Currently this is "Windows Only" due to my lack of not-Windows computers setup to test it.
 
-see todo.md
+This system demonstrates using [the (pure) functional programming language PureScript](https://www.purescript.org/) to ["script" (in the Unity3D sense)](https://docs.unity3d.com/Manual/ScriptingSection.html) the interactions between the systems that make up an interactive AI.
+For the time being - there are only speech recognition and speech synthesis components.
 
-This is a reimplementation of my phd, with pure-script, that works this time.
-It's faster and doesn't suffer from the same stack-overflow issue.
+[Installation Instructions](INSTALL.md) provide a guide to setting up the system and running the demonstration.
 
-It can be launched by running `peterlavalle.puregen.DemoTry` but you need to do a "real" `sbt compile` to generate `.purs` headers.
+The broad idea is that each "component" (once activated) should contribute (or not) up to one "event" to the execution of the "agent."
+The "agent" here is the part written in a functional programming language, and is [implemented following the functional reactive programming paradigm.](https://en.wikipedia.org/wiki/Functional_reactive_programming)
+The agent reacts to any events by adjusting (or not) any (or all) "signal" values, and, (in keeping with the paradigm) producing a "new version" of itself.
 
-... and either IDEA or sbt will crash with and XSLT error unless you comment/uncomment some lines from the `build.sbt` file.
-You'll know it when you see it (sorry).
-
-# modules
-
-multiple modules are used to try and isolate the need for exppertise.
-
-## core (formerly prot)
-
-this module is coupled to `project/` and acts as a basis for the generated source
-
-... and has some of the constructs which i expect all IAI will need to operate
-
-## demo
-
-this is the "live" aglamation of work
-
-## project
-
-the project folder constians an extension to consume my IDL (`.pidl`) and produce `.js` `.purs` and `.scala`
-
-it's coupled to definitions and conventions in `prot/`
-
-## spgo (formerly poct)
-
-This compiles the `.purs` files by writing a Spago project and launching Spago.
-
-this proof-of-concept-test module became the one to (generate and execute the logic to) build purescript
-
-()
-
-# requirements
-
-- might be windows-only
-	- think/tried to put platform specific stuff in switching stubs
-		- chase stack traces
-	- quirky problems ... might be a problem
-
-## purescript
-
-need `purescript` installed (via npm)
-uses spago to build, so needs that too (also via npm)
-
-Once compiled, i can grab "stuff" by rewriting the `.js` to be a function body, which returns `$PS`
-
-dead code elimination is in effect though ... so I need some handling of that
-
-# notes
-
-## python
-
-tried to embed python with Jep and ScalaPy
-
-both cases failed because I wasn't in the "main thread"
-
-"scpy" was going to be this - next i might try just running a remote python program
+From an imperative background;
+- the agent is a state machine with an undetermined number of states
+- each event triggers the creation of a new instance of the machine
+	- as the agent's state is immutable, this is unavoidable
+- the agent doesn't directly control outputs, rather it specifies what to output at any given time
+	- directly controlling output, as music, would be passing "the current" note out to a synthesizer
+	- the appraoch here passes out a song to play, and when to "have started" playing it
 
 
-## generated one-letter methods
+The approach is meant to provide guidance allowing component developers and agent developers to coordinate their efforts in a way that's automatically "checked" at buidl time.
+With this in mind, there should be a tutorial for updating the agent
 
-- adapt from DePa/Monads to a pedal
-
-
-## roles
-
-### end user
-
-- unlikely to be supported on its own (sorry)
-- will need JRE but setup should be basic
-
-### agent editor
-
-- need JRE, spago and an "assembly"
-
-### component integrator
-
-- need JDK, spago and a module's source tree
-
-### shell developer
-
-- need JDK, spago and the shell's (full) source tree
