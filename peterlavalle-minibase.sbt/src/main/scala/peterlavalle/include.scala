@@ -20,6 +20,7 @@ trait include
 		with PiOutputStreamT
 		with PiPairT
 		with PiPropertiesT
+		with PiStringT
 		with ToScalaImplicits
 		with PiThreadingT
 		with DecorateAsJava with DecorateAsScala {

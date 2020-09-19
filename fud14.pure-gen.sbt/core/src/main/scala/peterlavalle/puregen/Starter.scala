@@ -5,9 +5,18 @@ import scala.language.implicitConversions
 /**
  * like a "race" starter
  */
+@deprecated(
+	"kickThread is simpler"
+)
 sealed trait Starter extends (() => Boolean) with Runnable with AutoCloseable
 
+@deprecated(
+	"kickThread is simpler"
+)
 object Starter {
+	@deprecated(
+		"kickThread is simpler"
+	)
 	implicit def newStarter(starter: (() => Boolean) with Runnable with AutoCloseable): Starter =
 		starter match {
 			case starter: Starter => starter
@@ -21,6 +30,9 @@ object Starter {
 				}
 		}
 
+	@deprecated(
+		"kickThread is simpler"
+	)
 	def await(): Starter =
 		new (() => Boolean) with Runnable with AutoCloseable {
 
@@ -47,6 +59,9 @@ object Starter {
 				error("handle close")
 		}
 
+	@deprecated(
+		"kickThread is simpler"
+	)
 	def apply(task: => Unit): Runnable with AutoCloseable =
 		new Runnable with AutoCloseable {
 

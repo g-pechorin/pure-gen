@@ -1,8 +1,12 @@
+--
+-- don't edit this when writing agent/s
+-- ... unles you're fixing something you intend to push upstream
+--
+
 module FRP where
 
 
 import Effect (Effect) -- dep: effect
--- import Prelude -- dep: prelude
 import Prelude (bind, pure, ($)) -- dep: prelude
 import Data.Tuple (Tuple(..), fst, snd) -- dep: tuples
 import Data.Maybe (Maybe, fromMaybe) -- dep: maybe

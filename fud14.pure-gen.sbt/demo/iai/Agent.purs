@@ -1,32 +1,24 @@
-module Main where
+module Agent where
 
--- import Prelude (Unit, bind, discard, pure, show, unit, ($), (<>)) -- dep: prelude
-import Prelude -- dep: prelude
-
+-- system imports
+import Prelude (Unit, bind, pure, unit, ($), (<$>)) -- dep: prelude
 import Effect (Effect) -- dep: effect
-import Effect.Class.Console (log) -- dep: console
+import Data.Tuple (Tuple(..)) -- dep: tuples
+import Data.Maybe (Maybe(..)) -- dep: maybe
 
+-- framework imports
+import FRP (SF(..), fuselr, repeat, (>>>>))
 
-import FRP
-import Data.Tuple -- dep: tuples
-import Data.Maybe -- dep: maybe
-
+-- coponent imports
 import Pdemo.Scenario (openAge)
-import Pdemo.Sphinx
-import Pdemo.Mary
-
-
---- still need to import this (sorry)
-cycle :: SF Unit Unit -> Effect (SF Unit Unit)
-cycle sf = do
-  t <- react sf unit
-  pure $ fst t
+import Pdemo.Sphinx (FullSphinxE(..), FullSphinxS(..), openFullSphinx, openMicrophone)
+import Pdemo.Mary (LiveMaryS(..), openLiveMary)
 
 ---
--- improved demo!
+-- this is the/a parrot demo
 ---
-agent :: Unit -> Effect (SF Unit Unit)
-agent _ = do
+entry :: Unit -> Effect (SF Unit Unit)
+entry _ = do
   age <- openAge
   -- ear <- openLiveSphinx
   mic <- openMicrophone
@@ -44,7 +36,7 @@ agent _ = do
 
   -- start off silent
   pure $ (fuselr age ear) >>>>
-    (repeat (Silent 0.0) (Wrap (\(Tuple age txt) -> (Speak age) <$> txt))) >>>>
+    (repeat (Silent 0.0) (Wrap (\(Tuple now txt) -> (Speak now) <$> txt))) >>>>
     speak >>>> hushed
 
   where
