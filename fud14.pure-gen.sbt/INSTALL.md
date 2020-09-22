@@ -92,6 +92,8 @@ It goes;
 
 ## Google ASR Credentials
 
+> This won't be needed iff you're part of the study and Peter has sent you a `pureGen-gasr.json`
+
 The system uses Google's Cloud Automatic Speech Recognition (GASR? - I'm calling it GASR) for its primary real-time speech recognition.
 There is the option to use [CMU Sphinx 4](https://github.com/cmusphinx/sphinx4) but it is not nearly as precise.
 
@@ -132,8 +134,17 @@ If you're coming to this "later" and wish to use the GASR yourself, you can setu
 Open a command line in the `fud14.pure-gen.sbt/` folder.
 If you're using the **Isolated** approach - you need to run your `setup.bat` now.
 Run the command `sbt demo/run` to launch the Parrot Demo; it will take a while as it has to download quite a few packages.
-At some point, a JSwing dialogue will pop
+At some point, a JSwing dialogue will pop up;
 
+![](INSTALL/tick.png)
+
+- `OK` cycles the system
+	- there will be no "events" but the system is run anyway.
+- `Cancel` (or `x`) closes the system
+	- this currently is incomplete and crashes gracelessly but safely
+
+Talking at your computer should result in speech recognition being performed and the results being repeated.
+If you see error messages and crashes - something went wrong.
 
 ## Trouble Shooting
 
@@ -173,4 +184,3 @@ FATAL ERROR:  'Cannot convert data-type 'void' to 'boolean'.'
 Then (like me) you're using Windows 7 and something in the MaryTTS XSLT has gone wrong.
 
 My (current) solution is to open the project in JetBrains DIEA and directly execute `fud14.pure-gen.sbt\demo\src\main\scala\peterlavalle\puregen\DemoTry.scala` as a Java program.
-A future longer solution that works more widely will be attempted at some point

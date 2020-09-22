@@ -13,7 +13,7 @@ class TryScenario(age: => Float) extends Scenario {
 		error("this kick still fails in some parallel/edge cases - need to rethink it")
 	}
 
-	override def openStatus(a0: String): TModule.Signal[String] =
+	override def openLogColumn(a0: String): TModule.Signal[String] =
 		signal {
 			text: String =>
 				System.out.println(s"[$a0] @ $age")

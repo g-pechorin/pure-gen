@@ -1,7 +1,7 @@
 package peterlavalle
 
 import java.io.File
-import java.util.regex.{Matcher, Pattern}
+import java.util.regex.Pattern
 
 import scala.annotation.tailrec
 
@@ -15,13 +15,11 @@ trait PiStringT {
 
 			@tailrec
 			def loop(text: String): String = {
-				val matcher: Matcher = pattern.matcher(text)
-				if (!matcher.find())
+				val next: String = text.replaceAll(regex, replacement)
+				if (next == text)
 					text
 				else
-					loop(
-						matcher.replaceAll(replacement)
-					)
+					loop(next)
 			}
 
 			loop(text)

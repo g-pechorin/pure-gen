@@ -16,9 +16,9 @@ import Agent (entry)
 
 
 agent :: Unit -> Effect (SF Unit Unit)
-agent v = do
+agent _ = do
   log "creating the entry signal-function"
-  entry v
+  entry
 
 cycle :: SF Unit Unit -> Effect (SF Unit Unit)
 cycle sf = do

@@ -17,8 +17,8 @@ import Pdemo.Mary (LiveMaryS(..), openLiveMary)
 ---
 -- this is the/a parrot demo
 ---
-entry :: Unit -> Effect (SF Unit Unit)
-entry _ = do
+entry :: Effect (SF Unit Unit)
+entry = do
   age <- openAge
   -- ear <- openLiveSphinx
   mic <- openMicrophone

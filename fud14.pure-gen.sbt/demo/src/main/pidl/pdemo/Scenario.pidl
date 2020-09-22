@@ -7,4 +7,4 @@ sample Age() = real32
 signal Kick() = real32
 
 // lets the agent dump a log status (at any time) with a named prefix
-signal Status(text) = text
+signal LogColumn(text) = text

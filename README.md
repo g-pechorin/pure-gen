@@ -12,3 +12,5 @@ This is a copy of the/my PhD project containing everything to run the/my "pure-g
 	- Just ignore them.
 - `.hg`
 	- this file marks where I exported the sources from
+	- again - ignore it, it's needed for my config to work
+		- ... and explaining it is simpler than removing it

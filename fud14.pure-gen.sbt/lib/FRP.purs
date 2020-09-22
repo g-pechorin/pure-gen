@@ -13,7 +13,7 @@ import Data.Maybe (Maybe, fromMaybe) -- dep: maybe
 
 -- signal functions will conform to this generic type
 data SF i o
-  -- this allows an otherwise "normal" function to act as a signal function
+  -- this *wraps* an otherwise "pure function" to be a signal function
   = Wrap (i -> o)
 
   -- this is used for IO et al
@@ -35,6 +35,7 @@ react (Next f) i = f i
 -- ... surprisingly useful in the construction of the fSF
 consta :: forall i o. o -> SF i o
 consta o = Wrap $ \_ -> o
+
 
 -- make a signal function from some generic parameter "p" that's continually replaced
 foldp :: forall p i o. p -> (p -> i -> Effect (Tuple p o)) -> SF i o

@@ -123,6 +123,8 @@ object DemoTry {
 					}
 				}
 
+				starter.run()
+
 				okayLoop("CONTROL" -> "tick the system") {
 					starter.run()
 				}
