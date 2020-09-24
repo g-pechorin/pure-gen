@@ -7,7 +7,7 @@ module FRP where
 
 
 import Effect (Effect) -- dep: effect
-import Prelude (bind, pure, ($)) -- dep: prelude
+import Prelude (bind, pure, ($), Unit) -- dep: prelude
 import Data.Tuple (Tuple(..), fst, snd) -- dep: tuples
 import Data.Maybe (Maybe, fromMaybe) -- dep: maybe
 
@@ -30,6 +30,7 @@ react s@(Lift f) i = do
   o <- f i
   pure (Tuple s o)
 react (Next f) i = f i
+
 
 -- construct a signal function that *just* emits the same value over and over again
 -- ... surprisingly useful in the construction of the fSF
@@ -61,11 +62,6 @@ fuselr lsf rsf = Next $ \i -> do
   pure $ Tuple (fuselr (fst lno) (fst rno)) $ (Tuple (snd lno) (snd rno))
 infixr 7 fuselr as &&&&
 
--- -- this operator returns o when the SF returns Nothing
--- orElse :: forall i o. o -> SF i (Maybe o) -> SF i o
--- orElse = ?orElse
--- -- /?? :: o -> SF i (Maybe o) -> SF i o
-
 -- this operator starts with o but then returns the last Just-value coming out of the SF
 -- so it turns a SF that may or may not emit a value into something that always emits the value
 repeat :: forall i o. o -> SF i (Maybe o) -> SF i o
@@ -78,30 +74,31 @@ repeat last sf = Next $ \i -> do
   let out = fromMaybe last (next_out)
 
   pure $ Tuple (repeat out next_rsf) out
--- repeat last sf = Next step
---   where
---     step :: i -> Effect (Tuple (SF i o) o)
---     step i = do
---         n <- react sf i
-        
---         let next_rsf = fst n
---         let next_out = snd n
-        
---         let out = fromMaybe last (next_out)
-
---         pure $ Tuple (repeat out next_rsf) out
-      -- where
-        -- next_out :: (Tuple (SF i (Maybe o)) (Maybe o)) -> Maybe o
-        -- next_out n = snd n
-
-        -- nx :: o -> (Maybe o) -> o
-        -- nx d m = fromMaybe d m
-
-  -- | Next (i -> Effect (Tuple (SF i o) o))
+infixr 7 repeat as ////
 
 
 -- repeat = ?repeat
 -- -- ??/ :: o -> SF i (Maybe o) -> SF i o
+
+
+--
+-- pseudo-constructor for SF. takes a parameter `p` and some function to compute the next p and output
+roller :: forall p i o. p -> (p -> i -> (Tuple p o)) -> SF i o
+roller par fun = Next $ inner
+  where
+    inner :: i -> Effect (Tuple (SF i o) o)
+    inner i = do
+      let pair = fun par i
+      let n = fst pair
+      let o = snd pair
+      pure $ Tuple (roller n fun) o
+
+
+
+
+
+
+
 
 
 {-

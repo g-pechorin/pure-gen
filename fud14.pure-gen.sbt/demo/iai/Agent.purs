@@ -1,45 +1,25 @@
 module Agent where
 
--- system imports
-import Prelude (Unit, bind, pure, unit, ($), (<$>)) -- dep: prelude
-import Effect (Effect) -- dep: effect
-import Data.Tuple (Tuple(..)) -- dep: tuples
-import Data.Maybe (Maybe(..)) -- dep: maybe
+import Effect
+import FRP
+import Prelude
+import Data.Tuple 
 
--- framework imports
-import FRP (SF(..), fuselr, repeat, (>>>>))
+import Pdemo.Scenario
 
--- coponent imports
-import Pdemo.Scenario (openAge)
-import Pdemo.Sphinx (FullSphinxE(..), FullSphinxS(..), openFullSphinx, openMicrophone)
-import Pdemo.Mary (LiveMaryS(..), openLiveMary)
 
----
--- this is the/a parrot demo
----
+cycle_count :: SF Unit Int
+cycle_count = roller 0 suc
+  where
+    suc :: Int -> Unit -> (Tuple Int Int)
+    suc i _ = Tuple (i + 1) i
+
+
 entry :: Effect (SF Unit Unit)
 entry = do
-  age <- openAge
-  -- ear <- openLiveSphinx
-  mic <- openMicrophone
-  (Tuple audio recog) <- openFullSphinx
-  (Tuple speak spoke) <- openLiveMary ""
-
-  -- fuse the asr thing into one function
-  let asr = audio >>>> recog
-
-  -- 
-  let ear = mic >>>> (Wrap Connect) >>>> asr >>>> (Wrap eat)
-
-  -- just bury the TTS status messages
-  let hushed = spoke >>>> (Wrap \_ -> unit)
-
-  -- start off silent
-  pure $ (fuselr age ear) >>>>
-    (repeat (Silent 0.0) (Wrap (\(Tuple now txt) -> (Speak now) <$> txt))) >>>>
-    speak >>>> hushed
+  hello <- openLogColumn "hello"
+  pure (cycle_count >>>> message >>>> hello)
 
   where
-    eat :: Maybe FullSphinxE -> Maybe String
-    eat Nothing = Nothing
-    eat (Just (Recognised t)) = Just t
+    message :: SF Int String
+    message = Wrap $ \i -> ("Hello World " <> (show i))

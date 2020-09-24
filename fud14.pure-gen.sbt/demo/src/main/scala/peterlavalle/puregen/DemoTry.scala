@@ -20,7 +20,7 @@ object DemoTry {
 	private def runAgent(): Unit = {
 
 
-		println("running from `" + System.getProperty("user.dir") + "`")
+		println("preparing to run from `" + System.getProperty("user.dir") + "`")
 
 		val demo: File =
 			new File("demo").AbsoluteFile
