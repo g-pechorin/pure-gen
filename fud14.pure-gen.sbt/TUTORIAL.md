@@ -1,4 +1,21 @@
 
+This document leads the reader through developing a "parrot" with this system.
+It's intended for readers familiar with programming, "comfortable with Google" but not necesarily experienced with Haskell / PureScript.
+
+It is assumed that [the steps to install the system have been followed](INSTALL.md) first.
+
+- [Parrot](#parrot)
+	- [Empty Agent](#empty-agent)
+	- [Hello Log Agent](#hello-log-agent)
+		- [Log Columns](#log-columns)
+		- [Sending a Message](#sending-a-message)
+		- [Counting Log and the Dollar Thing](#counting-log-and-the-dollar-thing)
+	- [speaking log](#speaking-log)
+	- [asr to speak](#asr-to-speak)
+		- [event handling](#event-handling)
+		- [agent changes](#agent-changes)
+		- [parrot source](#parrot-source)
+
 # Parrot
 
 This is a tutorial for creating a "parrot" that repeats (in English) whatever speech it recognises (of English) in a rather crude way.
@@ -158,7 +175,7 @@ So; each is a sort of "slot" which has some message after each cycle.
 
 After that, we'll create a "counter" signal function and use it to create second a log column that prints out the
 
-### Log Column
+### Log Columns
 
 LogColumns are an output from teh agent.
 Any output (or input) is implemented with *foreign signal functions* which are signal functions invoking a *[foreigh function interface call](https://en.wikipedia.org/wiki/Foreign_function_interface)*.
@@ -311,6 +328,19 @@ creating the entry signal-function
 
 > Oops; Peter hasn't finished wirting this!
 
+
+The number of `(` and `)` can get hard to read.
+PureScript (and Haskell descendants) can be simplified with the `$`.
+Technically, this is *just* a function that changes the precedence of the left and right side.
+dsas
+ads
+das
+das#
+skldkld'
+S'SDA
+
+
+
 Let's do one more thing, let's modify the
 
 - want count
@@ -434,38 +464,94 @@ entry = do
 ## asr to speak
 
 - asr needs new trick; needs input, but, event!
+	- tts already showed "time" but time is `sampled` it's always there
+		- it also can't "update" the network
+		- asr woin't need you to press okay
+	- we already had the "speaking status" event
+		- ... but like [90% of exceptions we swallowed it](https://en.wikipedia.org/wiki/Error_hiding#Languages_with_exception_handling)
+	- we're going to handle the event this time
 
-- tts already showed "time" but time is `sampled` it's always there
-	- it also can't "update" the network
-	- asr woin't need you to press okay
-
-- asr function looks like `: SF () (Maybe String)`
-	- there are more complex variants that let you disconnect the audio once it's running
-		- ... possibly to switch between various implementations
-			- ... perhaps switching to a more expensive metered service whent he on-chip asr fails
-
-- network could have many inputs
-- it's not known that an input has a value at every cycle
-	- age is an exception
-- the input SF emits a `Maybe a` which works like a C++/Java/C# ref that could be null
-	- `Nothing` is "null" for `: Maybe a`
-	- `Just a` is "not null"
-
-- so we need to
-	1. cimpute a value of messages when there is "no" value from the input SF
-	2. compute a value where there is a value
-	- we also don't want to compute a "new value" when there's a "non input"
-		- don't want to change what we're saying if nothing is changing
-- so, one way is to *change* the output (which should be `:SF String ()`) to be `:SF (Maybe String) ()`
-	- on start? give it a "silten" value
-	- on `Nopthing` keep doing what we're doing
-	- on `Just a` change what we're doing now
+> hi! what do we want here, then, wehat will we walk through buildiong
 
 
-> too tired
+### event handling
+
+- events are foreign signal functions that may or may not emit something
+	- PureScript (and Haskell, Idris, et al) call this `Maybe` and it can either be `Just` a value or `Nothing`
+		- this is analogous to `null` in C descendants where all values are potentially null if they have a null type
+		- many conventions exist which handle `Maybe a` as **a collection of 0 or 1** items of type `a`
+			- this might not be relevant to this tutorial, but, forms such a prevalent theoretical basis for this i feel it's important to bring up here
+
+![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgZXZlbnRbXCJldmVudCA6IFNGICgpIChNYXliZSBhKVwiXVxuXG4gIGp1c3RbXCJoYW5kbGUgYSBgSnVzdCBhYFwiXVxuICBub3BlW1wiaGFuZGxlIGEgYE5vdGhpbmdgXCJdXG5cbiAgZXZlbnQgLS4tPiBqdXN0XG4gIGV2ZW50IC0uLT4gbm9wZVxuXG4gIGRvbmVbY29tcHV0ZSByZXN0IG9mIHRoZSBhZ2VudF1cblxuICBqdXN0IC0uLT4gZG9uZVxuICBub3BlIC0uLT4gZG9uZSJ9)
+
+- an obvious way to handle it (for a `String -> Int`) would be ...
+
+```purescript
+handle :: SF () (Maybe String)
+handle = Wrap inner
+	where
+		inner :: Maybe String -> Int
+		inner (Just i) = compute_something
+		inner Nothing = use_fallback_value
+```
+
+- we can pass in the fallback and compute functions like this
+
+```purescript
+handle ::  Int -> (String -> Int) -> SF () (Maybe String)
+handle fallback compute = Wrap inner
+	where
+		inner :: Maybe String -> Int
+		inner (Just i) = compute
+		inner Nothing = fallback
+```
+
+- we can then make it generic by repalcing `String` and `Int` types
+
+```purescript
+handle :: forall i o. o -> (i -> o) -> SF () (Maybe i)
+handle fallback compute = Wrap inner
+	where
+		inner :: Maybe i -> o
+		inner (Just i) = compute
+		inner Nothing = fallback
+```
+
+- so this is closer to what we want
+- if we use this, every time that the ASR has an event (and the agent is updated) the "blopck" would eitehr compute an output value (say ... the text to speak) or compute "silence"
+- that's fine if there's only one source of events
+	- which is almost true here, but, not true in general
+- if the user clicks the "Ok" button on the prompt
+
+- we want to give it `o0 : o` and get back a signal function that will compute `o1 : o` when possible, and then, use `o1` instead of `o0`
+- we want it to repeat `o` until it ias a new value of `o` then reconstruct itself, it should look like this
+
+```purescript
+repeat :: forall i o. o -> SF i (Maybe o) -> SF i o
+repeat last sf = Next $ \i -> do
+  n <- react sf i
+
+  let next_rsf = fst n
+  let next_out = snd n
+
+  let out = fromMaybe last (next_out)
+
+  pure $ Tuple (repeat out next_rsf) out
+```
+
+- the function is in the `FRP.purs` module and is bound to the `////` operator
+	- this is a complex function (sorry) that won't be explained here (sorry) as that's somewhat outside the scope of this document
+
+> this seems to de-justify the usage of `Maybe` rather than some `event` specific type with explicit specialised value(s) for `Nothing` and `Just`
+>
+> ... until i tried to imagine `repeat` done with non-standard Maybe/Just/Nothing
 
 
+### agent changes
 
-> Oops; Peter hasn't finished wirting this!
+???
 
+### parrot source
+
+???
 
