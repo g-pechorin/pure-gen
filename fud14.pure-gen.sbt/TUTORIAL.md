@@ -5,16 +5,16 @@ It's intended for readers familiar with programming, "comfortable with Google" b
 It is assumed that [the steps to install the system have been followed](INSTALL.md) first.
 
 - [Parrot](#parrot)
-	- [Empty Agent](#empty-agent)
-	- [Hello Log Agent](#hello-log-agent)
-		- [Log Columns](#log-columns)
-		- [Sending a Message](#sending-a-message)
-		- [Counting Log and the Dollar Thing](#counting-log-and-the-dollar-thing)
-	- [speaking log](#speaking-log)
-	- [asr to speak](#asr-to-speak)
-		- [event handling](#event-handling)
-		- [agent changes](#agent-changes)
-		- [parrot source](#parrot-source)
+- [Empty Agent](#empty-agent)
+- [Hello Log Agent](#hello-log-agent)
+	- [Log Columns](#log-columns)
+	- [Sending a Message](#sending-a-message)
+	- [Counting Log and the Dollar Thing](#counting-log-and-the-dollar-thing)
+- [Speaking Out](#speaking-out)
+- [asr to speak](#asr-to-speak)
+	- [event handling](#event-handling)
+	- [agent changes](#agent-changes)
+	- [parrot source](#parrot-source)
 
 # Parrot
 
@@ -26,7 +26,7 @@ I am assuming that [you have installed the system already and it's working - her
 > As with the installation, there's a way to do this with "no priveleges" using a "portable" package ... but I'll forgo detailing it here for the sake of brevity.
 
 
-## Empty Agent
+# Empty Agent
 
 Open the `fud14.pure-gen.sbt/` folder and run `sbt demo/run` or open the project in IntelliJ IDEA and run `demo/main/peterlavalle.puregen.DemoTry` whichever is simplest.
 Test that the agent works and recognises a word or two.
@@ -165,7 +165,7 @@ entry = do
 Great - make a copy (outside of the `iai/` folder) as a backup so you can get back to it.
 We're almost at a "Hello World" agent.
 
-## Hello Log Agent
+# Hello Log Agent
 
 This style of programming doesn't suit *just* writing out messages.
 All output from the agents is considered to be a "signal" and signals need to be present after every iteration of the agent.
@@ -175,7 +175,7 @@ So; each is a sort of "slot" which has some message after each cycle.
 
 After that, we'll create a "counter" signal function and use it to create second a log column that prints out the
 
-### Log Columns
+## Log Columns
 
 LogColumns are an output from teh agent.
 Any output (or input) is implemented with *foreign signal functions* which are signal functions invoking a *[foreigh function interface call](https://en.wikipedia.org/wiki/Foreign_function_interface)*.
@@ -217,7 +217,7 @@ Exception in thread "Thread-4" java.lang.RuntimeException: an output:signal did 
 You need to send a value to the log column every cycle.
 
 
-### Sending a Message
+## Sending a Message
 
 Right now, the LogColumn has the form `: SF String Unit` and the system is creating a (useless) value with the type `: SF Unit Unit`.
 If we transform the log function to `: SF Unit Unit` we can *just* return it from the `entry` function and run from there.
@@ -324,7 +324,7 @@ creating the entry signal-function
 [hello]: Hello World
 ```
 
-### Counting Log and the Dollar Thing
+## Counting Log and the Dollar Thing
 
 > Oops; Peter hasn't finished wirting this!
 
@@ -389,6 +389,7 @@ module Agent where
 import Effect
 import FRP
 import Prelude
+import Data.Tuple
 
 import Pdemo.Scenario
 
@@ -401,67 +402,170 @@ cycle_count = roller 0 suc
 entry :: Effect (SF Unit Unit)
 entry = do
   hello <- openLogColumn "hello"
-  pure (cycle_count >>>> message >>>> hello) -- use our hole
+  pure (cycle_count >>>> message >>>> hello)
 
   where
-		message :: SF Int String
-		message = Wrap $ \i -> ("Hello World" <> (show i))
+    message :: SF Int String
+    message = Wrap $ \i -> ("Hello World " <> (show i))
 ```
 
 - now have made changed program
 - showed how to do output
 - showed how to compose functions
 
-## speaking log
+# Speaking Out
 
-> this needs to be updated so that the final type is `: SF String ()` and easier to use in the/that other
+> this needs to be updated so that the final type is `: SF String Unit` and easier to use in the/that other
 
-- what have made
-	- it react
-	- it emit text
+- weh ave made an agent
+	- it reacts
+	- it emits text
+	- not great, but, it obeys all the conventions of what we need it to
 - what next
-	- make it speak
+	- make it speak outloud
 	- show's slightly complex io
 	- shows using time
 	- show using fork
 
 - link toghether things
 	- icounr to message; okay
-	- `linkin :: forall i o. SF i o -> SF o () -> SF i o` function
+	- `linkin :: forall i o. SF i o -> SF o Unit -> SF i o` function
 	- now have message!
 
 - open speech
-	- simple
-	- okay, but, what is type?
-	- `(speek :: SF Message (), state :: SF () Maybe Update)` hmm
+	- import and call
+		- `import Pdemo.Mary`
+		- `_ <- openLiveMary ""`
+			- ignore th string parameter for now ... sorry
+		- simple
+	- what is the "type" of mary?
+		- `(Tuple speak spoke) <- openLiveMary ""`
+	- the `speak` is a SF we use to control what we want the TTS to "say"
+	- the `spoke` is a SF we use to rect to when the TTS says something
 
-- silence the state
-	- `state >>>> (Wrap $ \_ -> unit)` now state is `: SF () ()` and we can ignore
+- we're not going to use the `spoke` SF in this tutorial
+- silence the `spoke` SF
+	- we can "ignore" it and make its type `: SF Unit Unit` by concatenating a function that returns `: Unit`
+		- `state >>>> (Wrap $ \_ -> unit)`
+	- we still have to include it in the agent, seel this fragemtn;
+		```purescript
+		(Tuple speak spoke) <- openLiveMary ""
 
-- now ... now we have;
-	- old thing `: SF () String`
-	- speech thing `: SF Message ()`
-	- silenced state `: SF () ()`
-- we need to connect them
+		-- silence the spoke
+		let unspoke = spoke >>>> (Wrap $ \_ -> unit)
 
-- open the/a clock
-	- `: SF Double`
+		pure (unspoke >>>> cycle_count >>>> message >>>> hello)
+		```
+- we can run the agent like this, but, we'll get a complaint that `an output:signal did not receive data peterlavalle.puregen.TEnum$E`
+	- this is the shell complaining that we created, but did not set an output
+	- this is the `speak` SF - we haven't used it.
 
-- "fuse" the clock and the folde thing
-	- `fuselr :: forall i l r. SF i l -> SF i r -> SF i (Tuple l r)`
-	- now we have `: SF () (Tuple Double String)`
+> the approach given here is somewhat roundabout and graceless
 
-- add a `Wrap` to the end to *change* this
-	- `fused >>>> (Wrap $ \(Tuple age message) -> Message age message)`
-	- now we have `wrapped :: SF () Message`
+- to signal to the TTS that we want it to start speaking, we send it an `LiveMaryS` data as a signal
+	- at the time of writing MaryTTS is the "backend" for speech synthesis
+- due to how the approach works, the signal needs to be "pure" in the sense that ???
+	- the consquence of this is that the signal needs a timestamp of when the sopeaking should start
+- to get the current time, or age of the simulation, we need the `openAge` signal function. this time from the `Scenario.purs` module
+	- `import Pdemo.Scenario`
+	- `age <- openAge`
+	- `age: SF Unit Number` is a `sample` and will always have a value
+- now, we want to construct something of the form `speaker :: SF String Unit` that will take the message string and send it out to the `speak: SF LiveMaryS Unit` value
+	- again; this whole approach isn't ideal, but, is much easier to demonstrate than something more clean
 
-- concatentate all the functions
-	- `wrapped >>>> speek >>>> silenced : SF () ()`
-	- now we can return this; it's an agent
 
-- run it; when you click "Ok" you'll get the same message, but, it should also be spoken by the PC's speakers
+- styart by addind a where clause with `combine :: SF Unit Number -> SF String (Tuple Number String)` that adds the age, but passes the string value through
+	- this uses the `fuselr :: forall i l r. SF i l -> SF i r -> SF i (Tuple l r)` through the `&&&&` operator
+		- which creates a SF which takes one `i` and sends it to two other SF, then, pairs their output as its own output
+	- we need to change the input `String` to `Unit` for this to work with time; that's done by creating `(Warp $ \_ -> unit)` and concatenating `>>>>` the `age` to it
+	- we *just* pass the string through - this is done by `(Wrap $ \txt -> txt)`
+	- so out `where` block now looks like this;
+		```purescript
+		where
+			message :: SF Int String
+			message = Wrap $ \i -> ("Hello World " <> (show i))
 
-## asr to speak
+			combine :: SF Unit Number -> SF String (Tuple Number String)
+			combine age = ((Wrap $ \_ -> unit) >>>> age) &&&& (Wrap $ \txt -> txt)
+		```
+
+- this will compile, but, when run witlkl staill complain that an ourput was not set
+- since we now have  "all" the parameters to do that ... let's construct a `LiveMaryS/Speak` value in a `Wrap` and replace the `hello` with it  and comment out `hello <- openLogColumn "hello"` for now
+	- `(combine age) >>>> (Wrap $ \(Tuple n s) -> Speak n s) >>>> speak`
+  - `pure (unspoke >>>> cycle_count >>>> message >>>> (combine age) >>>> (Wrap $ \(Tuple n s) -> Speak n s) >>>> speak)`
+
+it should now look like this
+
+```purescript
+module Agent where
+
+import Effect
+import FRP
+import Prelude
+import Data.Tuple
+
+import Pdemo.Scenario
+import Pdemo.Mary
+
+cycle_count :: SF Unit Int
+cycle_count = roller 0 suc
+  where
+    suc :: Int -> Unit -> (Tuple Int Int)
+    suc i _ = Tuple (i + 1) i
+
+
+entry :: Effect (SF Unit Unit)
+entry = do
+  -- hello <- openLogColumn "hello"
+  (Tuple speak spoke) <- openLiveMary ""
+  age <- openAge
+
+  -- silence the spoke
+  let unspoke = spoke >>>> (Wrap $ \_ -> unit)
+
+  pure (unspoke >>>> cycle_count >>>> message >>>> (combine age) >>>> (Wrap $ \(Tuple n s) -> Speak n s) >>>> speak)
+
+  where
+    message :: SF Int String
+    message = Wrap $ \i -> ("Hello World " <> (show i))
+
+    combine :: SF Unit Number -> SF String (Tuple Number String)
+    combine age = ((Wrap $ \_ -> unit) >>>> age) &&&& (Wrap $ \txt -> txt)
+
+```
+
+- compile and run it and ... you will hear the voice repeating itself.
+	- this is complicated.
+- to start to diagnose this; we should reintroduce the log coulmn (trust me)
+	- start by pulling out the "tts" stuff into a `let` value
+		- like this ...
+			```purescript
+				-- the tts
+				let tts = (combine age) >>>> (Wrap $ \(Tuple n s) -> Speak n s) >>>> speak
+
+				-- the agent network
+				pure $ unspoke >>>> cycle_count >>>> message >>>> tts
+			```
+		- check that this still runs to ensure the edit was correct
+		- fuse log and tts
+			- `pure $ unspoke >>>> cycle_count >>>> message >>>> (tts &&&& hello)`
+			- compile/run this - there will be an error because the fused type is `: SF Unit (Tuple Unit Unit)`
+			- compose the fused type with something suitable to convert the value `pure $ unspoke >>>> cycle_count >>>> message >>>> (tts &&&& hello) >>>> (Wrap $ \_ -> unit)`
+
+- we can see that everytime there's a new noise, there's a new "log message"
+- what's actually happening, every time some "speaking" command is done, the agent is cycled and is re-updated
+	- ... and every time this happens; a new spoken message is computed and produced
+		- the new message means that the TTS stops and switches to the new pronounciation
+
+> Oops; Peter hasn't finished wirting this!
+
+???
+
+> need to handle/explain the optional values here, rather than in the ASR sections
+>
+> great.
+
+# asr to speak
 
 - asr needs new trick; needs input, but, event!
 	- tts already showed "time" but time is `sampled` it's always there
@@ -474,7 +578,7 @@ entry = do
 > hi! what do we want here, then, wehat will we walk through buildiong
 
 
-### event handling
+## event handling
 
 - events are foreign signal functions that may or may not emit something
 	- PureScript (and Haskell, Idris, et al) call this `Maybe` and it can either be `Just` a value or `Nothing`
@@ -482,12 +586,12 @@ entry = do
 		- many conventions exist which handle `Maybe a` as **a collection of 0 or 1** items of type `a`
 			- this might not be relevant to this tutorial, but, forms such a prevalent theoretical basis for this i feel it's important to bring up here
 
-![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgZXZlbnRbXCJldmVudCA6IFNGICgpIChNYXliZSBhKVwiXVxuXG4gIGp1c3RbXCJoYW5kbGUgYSBgSnVzdCBhYFwiXVxuICBub3BlW1wiaGFuZGxlIGEgYE5vdGhpbmdgXCJdXG5cbiAgZXZlbnQgLS4tPiBqdXN0XG4gIGV2ZW50IC0uLT4gbm9wZVxuXG4gIGRvbmVbY29tcHV0ZSByZXN0IG9mIHRoZSBhZ2VudF1cblxuICBqdXN0IC0uLT4gZG9uZVxuICBub3BlIC0uLT4gZG9uZSJ9)
+![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgZXZlbnRbXCJldmVudCA6IFNGIFVuaXQgKE1heWJlIGEpXCJdXG5cbiAganVzdFtcImhhbmRsZSBhIGBKdXN0IGFgXCJdXG4gIG5vcGVbXCJoYW5kbGUgYSBgTm90aGluZ2BcIl1cblxuICBldmVudCAtLi0+IGp1c3RcbiAgZXZlbnQgLS4tPiBub3BlXG5cbiAgZG9uZVtjb21wdXRlIHJlc3Qgb2YgdGhlIGFnZW50XVxuXG4gIGp1c3QgLS4tPiBkb25lXG4gIG5vcGUgLS4tPiBkb25lIn0=)
 
 - an obvious way to handle it (for a `String -> Int`) would be ...
 
 ```purescript
-handle :: SF () (Maybe String)
+handle :: SF Unit (Maybe String)
 handle = Wrap inner
 	where
 		inner :: Maybe String -> Int
@@ -498,7 +602,7 @@ handle = Wrap inner
 - we can pass in the fallback and compute functions like this
 
 ```purescript
-handle ::  Int -> (String -> Int) -> SF () (Maybe String)
+handle ::  Int -> (String -> Int) -> SF Unit (Maybe String)
 handle fallback compute = Wrap inner
 	where
 		inner :: Maybe String -> Int
@@ -509,7 +613,7 @@ handle fallback compute = Wrap inner
 - we can then make it generic by repalcing `String` and `Int` types
 
 ```purescript
-handle :: forall i o. o -> (i -> o) -> SF () (Maybe i)
+handle :: forall i o. o -> (i -> o) -> SF Unit (Maybe i)
 handle fallback compute = Wrap inner
 	where
 		inner :: Maybe i -> o
@@ -546,12 +650,18 @@ repeat last sf = Next $ \i -> do
 >
 > ... until i tried to imagine `repeat` done with non-standard Maybe/Just/Nothing
 
+> Oops; Peter hasn't finished wirting this!
 
-### agent changes
+
+## agent changes
+
+???
+> Oops; Peter hasn't finished wirting this!
+
+
+## parrot source
 
 ???
 
-### parrot source
-
-???
+> Oops; Peter hasn't finished wirting this!
 

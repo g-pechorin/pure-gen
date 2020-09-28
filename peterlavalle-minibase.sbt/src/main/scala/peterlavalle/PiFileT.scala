@@ -41,7 +41,11 @@ trait PiFileT {
 				.filter(p)
 		}
 
-		def /(path: String): File = new File(AbsoluteFile, path).getAbsoluteFile
+		def /(path: String): File =
+			if (path.startsWith("../"))
+				AbsoluteFile.ParentFile / path.drop(3)
+			else
+				new File(AbsoluteFile, path).getAbsoluteFile
 
 		def reWriteLine(regex: String)(make: String => String): Err[File] =
 			Source.fromFile(AbsoluteFile).using {
