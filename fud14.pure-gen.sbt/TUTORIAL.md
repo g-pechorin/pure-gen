@@ -4,7 +4,8 @@ It's intended for readers familiar with programming, "comfortable with Google" b
 
 It is assumed that [the steps to install the system have been followed](INSTALL.md) first.
 
-- [Parrot](#parrot)
+# Parrot
+
 - [Empty Agent](#empty-agent)
 - [Hello Log Agent](#hello-log-agent)
 	- [Log Columns](#log-columns)
@@ -16,7 +17,6 @@ It is assumed that [the steps to install the system have been followed](INSTALL.
 	- [agent changes](#agent-changes)
 	- [parrot source](#parrot-source)
 
-# Parrot
 
 This is a tutorial for creating a "parrot" that repeats (in English) whatever speech it recognises (of English) in a rather crude way.
 I am assuming that [you have installed the system already and it's working - here's a guide to do that.](INSTALL.md)
@@ -26,7 +26,7 @@ I am assuming that [you have installed the system already and it's working - her
 > As with the installation, there's a way to do this with "no priveleges" using a "portable" package ... but I'll forgo detailing it here for the sake of brevity.
 
 
-# Empty Agent
+## Empty Agent
 
 Open the `fud14.pure-gen.sbt/` folder and run `sbt demo/run` or open the project in IntelliJ IDEA and run `demo/main/peterlavalle.puregen.DemoTry` whichever is simplest.
 Test that the agent works and recognises a word or two.
@@ -165,7 +165,7 @@ entry = do
 Great - make a copy (outside of the `iai/` folder) as a backup so you can get back to it.
 We're almost at a "Hello World" agent.
 
-# Hello Log Agent
+## Hello Log Agent
 
 This style of programming doesn't suit *just* writing out messages.
 All output from the agents is considered to be a "signal" and signals need to be present after every iteration of the agent.
@@ -175,7 +175,7 @@ So; each is a sort of "slot" which has some message after each cycle.
 
 After that, we'll create a "counter" signal function and use it to create second a log column that prints out the
 
-## Log Columns
+### Log Columns
 
 LogColumns are an output from teh agent.
 Any output (or input) is implemented with *foreign signal functions* which are signal functions invoking a *[foreigh function interface call](https://en.wikipedia.org/wiki/Foreign_function_interface)*.
@@ -217,7 +217,7 @@ Exception in thread "Thread-4" java.lang.RuntimeException: an output:signal did 
 You need to send a value to the log column every cycle.
 
 
-## Sending a Message
+### Sending a Message
 
 Right now, the LogColumn has the form `: SF String Unit` and the system is creating a (useless) value with the type `: SF Unit Unit`.
 If we transform the log function to `: SF Unit Unit` we can *just* return it from the `entry` function and run from there.
@@ -324,7 +324,7 @@ creating the entry signal-function
 [hello]: Hello World
 ```
 
-## Counting Log and the Dollar Thing
+### Counting Log and the Dollar Thing
 
 > Oops; Peter hasn't finished wirting this!
 
@@ -413,7 +413,7 @@ entry = do
 - showed how to do output
 - showed how to compose functions
 
-# Speaking Out
+## Speaking Out
 
 > this needs to be updated so that the final type is `: SF String Unit` and easier to use in the/that other
 
@@ -565,7 +565,7 @@ entry = do
 >
 > great.
 
-# asr to speak
+## asr to speak
 
 - asr needs new trick; needs input, but, event!
 	- tts already showed "time" but time is `sampled` it's always there
@@ -578,7 +578,7 @@ entry = do
 > hi! what do we want here, then, wehat will we walk through buildiong
 
 
-## event handling
+### event handling
 
 - events are foreign signal functions that may or may not emit something
 	- PureScript (and Haskell, Idris, et al) call this `Maybe` and it can either be `Just` a value or `Nothing`
@@ -653,13 +653,13 @@ repeat last sf = Next $ \i -> do
 > Oops; Peter hasn't finished wirting this!
 
 
-## agent changes
+### agent changes
 
 ???
 > Oops; Peter hasn't finished wirting this!
 
 
-## parrot source
+### parrot source
 
 ???
 
