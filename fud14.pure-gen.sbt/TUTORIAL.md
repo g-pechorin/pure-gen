@@ -11,6 +11,16 @@ It is assumed that [the steps to install the system have been followed](INSTALL.
 	- [Log Columns](#log-columns)
 	- [Sending a Message](#sending-a-message)
 	- [Counting Log and the Dollar Thing](#counting-log-and-the-dollar-thing)
+- [Listening for Speech](#listening-for-speech)
+	- [Review and Forecast](#review-and-forecast)
+	- [event/vs/sample](#eventvssample)
+	- [implement the changes](#implement-the-changes)
+		- [open the things](#open-the-things)
+		- [connect the microphone to the ASR](#connect-the-microphone-to-the-asr)
+		- [simplify the ASR](#simplify-the-asr)
+		- [compute and despatch ASR message](#compute-and-despatch-asr-message)
+	- [review and full source](#review-and-full-source)
+- [Speech Synthesis](#speech-synthesis)
 - [Speaking Out](#speaking-out)
 - [asr to speak](#asr-to-speak)
 	- [event handling](#event-handling)
@@ -411,7 +421,124 @@ entry = do
 
 - now have made changed program
 - showed how to do output
-- showed how to compose functions
+- showed how to compose signal functions
+
+## Listening for Speech
+
+### Review and Forecast
+
+We have an agent that responds to a cycle by updating its log status.
+Now we're going to connect a speech recogniser that triggers those cycles.
+To simplify interaction, once this is done we'll connect a speech synthesis system to then reproduce what was recognised.
+This will conclude with a "parrot" program which demonstrates how well the components are functioning.
+
+### event/vs/sample
+
+Inputs into the agent come in two forms;
+
+* `event` - a value that's present or not on a cycle update
+* `sample` - a value that's computed for the cycle
+
+It would make no sense for the "simulation age" to enter the agent as an `event` since the simulation is always running.
+	For this reason, *age* enters the agent as a `sample` value that's always available.
+	<!-- We could have specified a constantly updating clock and updated the agent with the/a new age every X units of time, but, this -->
+It wouldn't make much sense for the "speech recognised" data to enter the agent as a `sample` since there will frequently be new data, and, otehr events could occur which don't involve the speech.
+	<!-- In theory - we could record the "last" speech, and, compare the agent's last value with whatever is given -->
+
+- one weirdness is the "line based" metaphor for microphones (and eventually - other things)
+- the/a microphone is passed arround as an "audio-line" analougs to the physical cable rather than audio samples
+	- it might be plugged into something
+	- it might be plugged into nothing
+	- it might be plugged into two things
+- the ASR components are implemented as a `pipe` type component which (from the agent's perspective) is a `signal` (for output) and an `event` (for input)
+	- the ASR component needs to be updated so that it connects or remains connected to a line
+	- an ASR component can also be connected to nothing
+	- an ASR component will produce events which will trigger a cycle with an `event` data
+
+### implement the changes
+
+We're going to;
+
+1. open things
+	- open microphone
+	- open ASR
+	- open log
+2. connect the ASR and microphone by composing them
+3. react to ASR by wrotoimg a log message
+
+
+
+#### open the things
+
+- all opening is effectful, so, we do it all as do-notation
+
+```purescript
+	-- open a microphone
+	mic <- openMicrophone
+
+	-- open the sphinx system
+	(Tuple line hear) <- openCMUSphinx4ASR
+
+	-- open our log
+	log <- openLogColumn "heard"
+```
+
+#### connect the microphone to the ASR
+
+- we're not going to change the connection for this demo
+- we can *just* compose the two toghter
+	- we'll need to add this into the final agent, but as before, we can largely ignore it now
+
+```purescript
+	-- just connect the microphone to the recogniser always
+	let connect = (mic >>>> (Wrap $ SConnect) >>>> line)
+```
+
+#### simplify the ASR
+
+- so we need to compute some message from the/a `hear` output
+- `hear` will put out `: Maybe CMUSphinx4ASRE` or "maybe a CMUSphinx4 event"
+	- ... which happens to only have one possible value, which is `SRecognised String` or "sphinx recognised some text"
+	- ... hey; let's do that!
+	- `let head_ = head >>>> (Wrap map! $ \(SRecognised m) -> m)`
+	- now it's just `: SF () (Maybe String)`
+
+#### compute and despatch ASR message
+
+- need to convert maybe string to a string message we'll emit each frame
+	- naieve solution is to emit "heard X" or "heard nothing"
+		- this bad; means that the system "changes" when nnothign changes?
+		- system becomes "not reactive"
+			- ... hard to describre
+	- what is good solution?
+		- need `Maybe a -> a` type messafe that'll emit some general value `a` until it gets a thing
+		- also; need it to keep emitting the last value once it starts
+		- ... gee ... if only there was some sort of "signal function" concept for this ...
+		- `repeat: a -> SF () (Maybe a) -> SF () a`
+	- for the sake of laziness, further complicate `head_` to emit a log message
+		- `let head__ = head_ >>>> (Wrap $ \m -> map m $ \t -> "heard '" <> t <> "'")`
+	- build the new rfeader like this
+		- `let read = repeat "heard nothing yet" head___`
+	- combine repeat with log
+		- `let main = read >>>> log`
+	- mixin `connect` and we have our result
+
+### review and full source
+
+????
+
+did this work?
+
+## Speech Synthesis
+
+
+
+------------------------
+
+
+
+-----
+
 
 ## Speaking Out
 
