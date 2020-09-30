@@ -24,7 +24,18 @@ def conf: String => String = {
 
 
 
+//
+// trying to fix mary xslt error
+// adding these fixes MaryTTS in the sbt CLI, but, breaks it under IDEA on Windows 7
+def maryXSLTFix = {
+	Seq(
+		// https://github.com/marytts/marytts/issues/455
+		"xalan" % "xalan" % "2.7.2",
 
+		// https://github.com/marytts/marytts/issues/740
+		"net.sf.saxon" % "Saxon-HE" % "9.7.0-18",
+	)
+}
 
 
 
@@ -126,21 +137,7 @@ lazy val mary = project
 	)
 	.settings(
 
-		//
-		// trying to fix mary xslt error
-		libraryDependencies ++= Seq(
-
-			//			//
-			//			// these two fix issues discussed in threads BUT they break IDEA (which doesn't have the issues)
-			//			// https://github.com/marytts/marytts/issues/455
-			//			"xalan" % "xalan" % "2.7.2",
-			//
-			//			// https://github.com/marytts/marytts/issues/740
-			//			"net.sf.saxon" % "Saxon-HE" % "9.7.0-18",
-
-		),
-		// end (of mary xslt error)
-		//
+		libraryDependencies ++= maryXSLTFix,
 
 		libraryDependencies ++= Seq(
 			"de.dfki.mary" % "voice-cmu-slt-hsmm" % "5.2",

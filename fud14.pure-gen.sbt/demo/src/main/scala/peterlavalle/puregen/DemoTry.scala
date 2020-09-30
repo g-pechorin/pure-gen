@@ -19,8 +19,7 @@ object DemoTry {
 
 	private def runAgent(): Unit = {
 
-
-		println("preparing to run from `" + System.getProperty("user.dir") + "`")
+		println("running with user.dir=`" + System.getProperty("user.dir") + "`")
 
 		val demo: File =
 			new File("demo").AbsoluteFile
@@ -117,9 +116,25 @@ object DemoTry {
 							.apply(null)
 
 					while (starter()) {
-						cyclist.load()
-						last = cycle(last)
-						cyclist.send()
+						try {
+							cyclist.load()
+							last = cycle(last)
+							cyclist.send()
+						} catch {
+							case e: Exception =>
+								System.out.flush()
+								System.out.close()
+								// excuse the wall of text; not all modules want to close, so, I need/want a way to ensure this is seen
+								System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+								System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+								System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+								e.printStackTrace(System.err)
+								System.err.println("! caught an exception during the cycle")
+								System.err.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+								System.err.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+								System.err.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+								System.exit(-2)
+						}
 					}
 				}
 

@@ -1,6 +1,10 @@
 
 > I have only tested this on Windows, so, there are likely parts of it that will fail with a simple error message on Linux/macOS.
 > If you're interested in those platforms - let me know! (Maybe by opening a ticket?)
+>
+
+This document describes installing the system, but, relies on a functioning "demo" that may only be available int he default/master branch.
+The demo can be reconstructed by [following the tutorial](TUTORIAL.md).
 
 # Installation
 

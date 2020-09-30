@@ -10,9 +10,31 @@ import scala.reflect.ClassTag
 /**
  * performs "state management"
  *
- * @param starter
+ * @param starter the control for "next frame"
  */
 class Cyclist(val starter: Starter) {
+
+	sealed trait CException extends Throwable
+
+	sealed trait CUserException extends CException
+
+	sealed trait CHardException extends CException
+
+	case class CoolDownException private(message: String) extends Exception(message) with CUserException
+
+	case class WarmUpException private(message: String) extends Exception(message) with CUserException
+
+	case class MainPhaseException private(message: String) extends Exception(message) with CUserException
+
+	case class DeepException private(message: String) extends Exception(message) with CHardException
+
+	case class SideException private(message: String) extends Exception(message) with CHardException
+
+	@throws[CException]
+	private def require(condition: Boolean)(thrown: => CException): Unit = {
+		if (!condition)
+			throw thrown
+	}
 
 	private var state: State = Cold
 
@@ -142,7 +164,7 @@ class Cyclist(val starter: Starter) {
 		pedals.synchronized {
 			if (Cold == state)
 				state = Waiting
-			require(state == Waiting)
+			require(state == Waiting)(???)
 			state = Loading
 
 			pedals.forEach((_: Pedal).load())
@@ -152,7 +174,7 @@ class Cyclist(val starter: Starter) {
 
 	def send(): Unit =
 		pedals.synchronized {
-			require(Running == state)
+			require(Running == state)(???)
 			state = Sending
 			pedals.forEach((_: Pedal).send())
 			state = Waiting
@@ -178,7 +200,7 @@ class Cyclist(val starter: Starter) {
 		def send(): Unit
 
 		pedals.synchronized {
-			require(Cold == state)
+			require(Cold == state)(DeepException("someone is trying to add a pedal when the cyclist isn't cold"))
 			pedals.add(this)
 		}
 	}
@@ -190,26 +212,26 @@ class Cyclist(val starter: Starter) {
 
 		def load(): Unit =
 			pedals.synchronized {
-				require(Loading == state)
-				require(queued.isEmpty)
+				require(Loading == state)(???)
+				require(queued.isEmpty)(???)
 			}
 
 		def send(): Unit =
 			pedals.synchronized {
-				require(Sending == state)
-				require(queued.nonEmpty, "an output:signal did not receive data " + classFor[Si].getName)
+				require(Sending == state)(DeepException("wrong state"))
+				require(queued.nonEmpty)(CoolDownException("an output:signal did not receive data " + classFor[Si].getName))
 				output(queued.get)
 				queued = None
 			}
 
 		def pass(v: Si): Unit =
 			pedals.synchronized {
-				require(Running == state, s"was accessed when not running")
+				require(Running == state)(SideException(s"was accessed when not running"))
 				require(
-					classFor[Si].isInstance(v),
+					classFor[Si].isInstance(v))(SideException(
 					s"need ${classFor[Si].getName} but got " + (if (null == v) "<null>" else v.getClass.getName)
-				)
-				require(queued.isEmpty)
+				))
+				require(queued.isEmpty)(???)
 				queued = Some(v.asInstanceOf[Si])
 			}
 	}
@@ -219,21 +241,21 @@ class Cyclist(val starter: Starter) {
 
 		def load(): Unit =
 			pedals.synchronized {
-				require(Loading == state)
-				require(loaded.isEmpty, s"$name was already loaded at start")
+				require(Loading == state)(WarmUpException(s"someone tried to load $name was already loaded at start"))
+				require(loaded.isEmpty)(WarmUpException(s"$name was already loaded at start"))
 				loaded = Some(read())
 			}
 
 		def send(): Unit =
 			pedals.synchronized {
-				require(Sending == state)
-				require(loaded.isEmpty, s"$name was not consumed")
+				require(Sending == state)(???)
+				require(loaded.isEmpty)(CoolDownException(s"$name was not consumed - likely an open signal function was not used this cycle"))
 			}
 
 		def take(): Ev = {
 			pedals.synchronized {
-				require(Running == state, s"$name was accessed when the cyclist was not running")
-				require(loaded.nonEmpty, s"$name was not loaded or has already been consumed")
+				require(Running == state)(DeepException(s"$name was accessed when the cyclist was not running"))
+				require(loaded.nonEmpty)(MainPhaseException(s"$name was not loaded or has already been consumed"))
 				val out: Ev = loaded.get
 				loaded = None
 				out

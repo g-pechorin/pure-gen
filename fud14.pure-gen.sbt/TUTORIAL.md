@@ -467,6 +467,31 @@ We're going to;
 3. react to ASR by wrotoimg a log message
 
 
+To start off, replace the `Agent.purs` source with the below stuff.
+If you compile this (you will see numerous wanrings but) it will be correctly typed.
+
+```purescript
+module Agent where
+
+import Effect
+import FRP
+import Prelude
+import Data.Tuple
+import Data.Maybe
+
+import Pdemo.Scenario
+import Pdemo.Mary
+import Pdemo.Sphinx
+
+
+entry :: Effect (SF Unit Unit)
+entry = do
+
+
+
+  pure $ Wrap $ \_ -> unit
+```
+
 
 #### open the things
 
@@ -483,6 +508,9 @@ We're going to;
 	log <- openLogColumn "heard"
 ```
 
+If you add this to the start of the agent, the program will compile (with warnings) correctly before crashing at runtime because we're not using the opened signal functions.
+This is the expected result.
+
 #### connect the microphone to the ASR
 
 - we're not going to change the connection for this demo
@@ -491,17 +519,51 @@ We're going to;
 
 ```purescript
 	-- just connect the microphone to the recogniser always
-	let connect = (mic >>>> (Wrap $ SConnect) >>>> line)
+	let connect = mic >>>> (Wrap $ SConnect) >>>> line
 ```
 
 #### simplify the ASR
 
-- so we need to compute some message from the/a `hear` output
-- `hear` will put out `: Maybe CMUSphinx4ASRE` or "maybe a CMUSphinx4 event"
-	- ... which happens to only have one possible value, which is `SRecognised String` or "sphinx recognised some text"
-	- ... hey; let's do that!
-	- `let head_ = head >>>> (Wrap map! $ \(SRecognised m) -> m)`
-	- now it's just `: SF () (Maybe String)`
+The ASR signal function `hear` has type `: SF () (Maybe CMUSphinx4ASRE)` or "signal function that maybe produces a CMUSphinx4 event"
+The *CMUSphinx4 event* can only be constructed one way - as `SRecognised String` which *just* carries a string.
+We can simplify the value to be a string using teh `<$>` operator, and, concatenate several signal functions togetehr.
+
+So, to *unpack* a single `CMUSphinx4ASRE` event and get the `String` we would ...
+
+```purescript
+unpack :: CMUSphinx4ASRE -> String
+unpack (SRecognised text) = text
+```
+
+Once we have a way to *unpack* the message, we can *swap* the `Maybe a` values ...
+
+```purescript
+swap :: (Maybe CMUSphinx4ASRE) -> (Maybe String)
+swap m = unpack <$> m
+```
+
+Since `swap :: (Maybe CMUSphinx4ASRE) -> (Maybe String)` we can `Wrap` it to be a `: SF (Maybe CMUSphinx4ASRE) (Maybe String)` and concatenate it with our existing `hear: SF () (Maybe CMUSphinx4ASRE)` function ...
+
+```purescript
+  -- simplify the ASR messages
+  let hear_1 = hear1 hear
+
+  -- return an agent made of everything we've created so far
+  pure $ connect >>>> hear_1 >>>> (Wrap $ \_ -> unit)
+
+  where
+    -- build the simplified "hear" function
+    hear1 :: SF Unit (Maybe CMUSphinx4ASRE) ->  SF Unit (Maybe String)
+    hear1 hear = hear >>>> (Wrap swap)
+      where
+        swap :: (Maybe CMUSphinx4ASRE) -> (Maybe String)
+        swap m = unpack <$> m
+          where
+            unpack :: CMUSphinx4ASRE -> String
+            unpack (SRecognised text) = text
+```
+
+
 
 #### compute and despatch ASR message
 
