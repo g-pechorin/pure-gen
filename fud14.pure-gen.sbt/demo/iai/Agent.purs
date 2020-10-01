@@ -29,7 +29,7 @@ entry = do
   let hear_1 = hear1 hear
 
   -- return an agent made of everything we've created so far
-  pure $ connect >>>> hear_1 >>>> (Wrap $ \_ -> unit)
+  pure $ connect >>>> hear_1 >>>> (Wrap $ fromMaybe "nothing was heard") >>>> log
 
   where
     -- build the simplified "hear" function

@@ -19,13 +19,6 @@ It is assumed that [the steps to install the system have been followed](INSTALL.
 		- [connect the microphone to the ASR](#connect-the-microphone-to-the-asr)
 		- [simplify the ASR](#simplify-the-asr)
 		- [compute and despatch ASR message](#compute-and-despatch-asr-message)
-	- [review and full source](#review-and-full-source)
-- [Speech Synthesis](#speech-synthesis)
-- [Speaking Out](#speaking-out)
-- [asr to speak](#asr-to-speak)
-	- [event handling](#event-handling)
-	- [agent changes](#agent-changes)
-	- [parrot source](#parrot-source)
 
 
 This is a tutorial for creating a "parrot" that repeats (in English) whatever speech it recognises (of English) in a rather crude way.
@@ -483,11 +476,10 @@ import Pdemo.Scenario
 import Pdemo.Mary
 import Pdemo.Sphinx
 
-
 entry :: Effect (SF Unit Unit)
 entry = do
 
-
+	-- your agent will go here
 
   pure $ Wrap $ \_ -> unit
 ```
@@ -498,18 +490,23 @@ entry = do
 - all opening is effectful, so, we do it all as do-notation
 
 ```purescript
-	-- open a microphone
-	mic <- openMicrophone
+-- open a microphone
+mic <- openMicrophone
 
-	-- open the sphinx system
-	(Tuple line hear) <- openCMUSphinx4ASR
+-- open the sphinx system
+(Tuple line hear) <- openCMUSphinx4ASR
 
-	-- open our log
-	log <- openLogColumn "heard"
+-- open our log
+log <- openLogColumn "heard"
 ```
 
 If you add this to the start of the agent, the program will compile (with warnings) correctly before crashing at runtime because we're not using the opened signal functions.
 This is the expected result.
+
+> The CMUSphinx4 Speech Recogniser is neither accurate or precise in the author's experince.
+> Many more competitive systems exist, but, they're less easily embedded.
+>
+> For our purposes - the Sphinx system should be *fine* for this.
 
 #### connect the microphone to the ASR
 
@@ -518,8 +515,8 @@ This is the expected result.
 	- we'll need to add this into the final agent, but as before, we can largely ignore it now
 
 ```purescript
-	-- just connect the microphone to the recogniser always
-	let connect = mic >>>> (Wrap $ SConnect) >>>> line
+-- just connect the microphone to the recogniser always
+let connect = mic >>>> (Wrap $ SConnect) >>>> line
 ```
 
 #### simplify the ASR
@@ -532,7 +529,7 @@ So, to *unpack* a single `CMUSphinx4ASRE` event and get the `String` we would ..
 
 ```purescript
 unpack :: CMUSphinx4ASRE -> String
-unpack (SRecognised text) = text
+unpack (SRecognised text) = "heard '" <> text <> "'"
 ```
 
 Once we have a way to *unpack* the message, we can *swap* the `Maybe a` values ...
@@ -545,11 +542,75 @@ swap m = unpack <$> m
 Since `swap :: (Maybe CMUSphinx4ASRE) -> (Maybe String)` we can `Wrap` it to be a `: SF (Maybe CMUSphinx4ASRE) (Maybe String)` and concatenate it with our existing `hear: SF () (Maybe CMUSphinx4ASRE)` function ...
 
 ```purescript
+-- simplify the ASR messages
+let hear_1 = hear1 hear
+
+-- return an agent made of everything we've created so far
+pure $ connect >>>> hear_1 >>>> (Wrap $ \_ -> unit)
+
+where
+	-- build the simplified "hear" function
+	hear1 :: SF Unit (Maybe CMUSphinx4ASRE) ->  SF Unit (Maybe String)
+	hear1 hear = hear >>>> (Wrap swap)
+		where
+			swap :: (Maybe CMUSphinx4ASRE) -> (Maybe String)
+			swap m = unpack <$> m
+				where
+					unpack :: CMUSphinx4ASRE -> String
+					unpack (SRecognised text) = "heard '" <> text <> "'"
+```
+
+
+
+#### compute and despatch ASR message
+
+We have a set of signal functions with the type `: SF () (Maybe String)` and we need to connect it to `: SF String ()`.
+We can use [`fromMaybe`](https://pursuit.purescript.org/packages/purescript-maybe/3.0.0/docs/Data.Maybe#v:fromMaybe) for a very naive solution, just placing `(Wrap $ fromMaybe "nothing was heard")` into place - let's do that now.
+
+```purescript
+-- return an agent made of everything we've created so far
+pure $ connect >>>> hear_1 >>>> (Wrap $ fromMaybe "nothing was heard") >>>> log
+```
+
+You can run the agent now - Sphinx logs a lot of data to standard out.
+Anytime you see `INFO liveCMN` in the log, Sphinx has recognised something.
+If you press the "OK" button you will get a "nopthing was heard" message.
+
+This is "okay" for our purpoes - in the next section we'll use the text-to-speech and see ??? the differnece between these "column" outputs and "behaviour" signals.
+
+```purescript
+module Agent where
+
+import Effect
+import FRP
+import Prelude
+import Data.Tuple
+import Data.Maybe
+
+import Pdemo.Scenario
+import Pdemo.Mary
+import Pdemo.Sphinx
+
+
+entry :: Effect (SF Unit Unit)
+entry = do
+  -- open a microphone
+  mic <- openMicrophone
+
+  -- open the sphinx system
+  (Tuple line hear) <- openCMUSphinx4ASR
+
+  -- open our log
+  log <- openLogColumn "heard"
+
+  -- just connect the microphone to the recogniser always
+  let connect = mic >>>> (Wrap $ SConnect) >>>> line
+
   -- simplify the ASR messages
   let hear_1 = hear1 hear
 
   -- return an agent made of everything we've created so far
-  pure $ connect >>>> hear_1 >>>> (Wrap $ \_ -> unit)
+  pure $ connect >>>> hear_1 >>>> (Wrap $ fromMaybe "nothing was heard") >>>> log
 
   where
     -- build the simplified "hear" function
@@ -563,294 +624,4 @@ Since `swap :: (Maybe CMUSphinx4ASRE) -> (Maybe String)` we can `Wrap` it to be 
             unpack (SRecognised text) = text
 ```
 
-
-
-#### compute and despatch ASR message
-
-- need to convert maybe string to a string message we'll emit each frame
-	- naieve solution is to emit "heard X" or "heard nothing"
-		- this bad; means that the system "changes" when nnothign changes?
-		- system becomes "not reactive"
-			- ... hard to describre
-	- what is good solution?
-		- need `Maybe a -> a` type messafe that'll emit some general value `a` until it gets a thing
-		- also; need it to keep emitting the last value once it starts
-		- ... gee ... if only there was some sort of "signal function" concept for this ...
-		- `repeat: a -> SF () (Maybe a) -> SF () a`
-	- for the sake of laziness, further complicate `head_` to emit a log message
-		- `let head__ = head_ >>>> (Wrap $ \m -> map m $ \t -> "heard '" <> t <> "'")`
-	- build the new rfeader like this
-		- `let read = repeat "heard nothing yet" head___`
-	- combine repeat with log
-		- `let main = read >>>> log`
-	- mixin `connect` and we have our result
-
-### review and full source
-
-????
-
-did this work?
-
-## Speech Synthesis
-
-
-
-------------------------
-
-
-
------
-
-
-## Speaking Out
-
-> this needs to be updated so that the final type is `: SF String Unit` and easier to use in the/that other
-
-- weh ave made an agent
-	- it reacts
-	- it emits text
-	- not great, but, it obeys all the conventions of what we need it to
-- what next
-	- make it speak outloud
-	- show's slightly complex io
-	- shows using time
-	- show using fork
-
-- link toghether things
-	- icounr to message; okay
-	- `linkin :: forall i o. SF i o -> SF o Unit -> SF i o` function
-	- now have message!
-
-- open speech
-	- import and call
-		- `import Pdemo.Mary`
-		- `_ <- openLiveMary ""`
-			- ignore th string parameter for now ... sorry
-		- simple
-	- what is the "type" of mary?
-		- `(Tuple speak spoke) <- openLiveMary ""`
-	- the `speak` is a SF we use to control what we want the TTS to "say"
-	- the `spoke` is a SF we use to rect to when the TTS says something
-
-- we're not going to use the `spoke` SF in this tutorial
-- silence the `spoke` SF
-	- we can "ignore" it and make its type `: SF Unit Unit` by concatenating a function that returns `: Unit`
-		- `state >>>> (Wrap $ \_ -> unit)`
-	- we still have to include it in the agent, seel this fragemtn;
-		```purescript
-		(Tuple speak spoke) <- openLiveMary ""
-
-		-- silence the spoke
-		let unspoke = spoke >>>> (Wrap $ \_ -> unit)
-
-		pure (unspoke >>>> cycle_count >>>> message >>>> hello)
-		```
-- we can run the agent like this, but, we'll get a complaint that `an output:signal did not receive data peterlavalle.puregen.TEnum$E`
-	- this is the shell complaining that we created, but did not set an output
-	- this is the `speak` SF - we haven't used it.
-
-> the approach given here is somewhat roundabout and graceless
-
-- to signal to the TTS that we want it to start speaking, we send it an `LiveMaryS` data as a signal
-	- at the time of writing MaryTTS is the "backend" for speech synthesis
-- due to how the approach works, the signal needs to be "pure" in the sense that ???
-	- the consquence of this is that the signal needs a timestamp of when the sopeaking should start
-- to get the current time, or age of the simulation, we need the `openAge` signal function. this time from the `Scenario.purs` module
-	- `import Pdemo.Scenario`
-	- `age <- openAge`
-	- `age: SF Unit Number` is a `sample` and will always have a value
-- now, we want to construct something of the form `speaker :: SF String Unit` that will take the message string and send it out to the `speak: SF LiveMaryS Unit` value
-	- again; this whole approach isn't ideal, but, is much easier to demonstrate than something more clean
-
-
-- styart by addind a where clause with `combine :: SF Unit Number -> SF String (Tuple Number String)` that adds the age, but passes the string value through
-	- this uses the `fuselr :: forall i l r. SF i l -> SF i r -> SF i (Tuple l r)` through the `&&&&` operator
-		- which creates a SF which takes one `i` and sends it to two other SF, then, pairs their output as its own output
-	- we need to change the input `String` to `Unit` for this to work with time; that's done by creating `(Warp $ \_ -> unit)` and concatenating `>>>>` the `age` to it
-	- we *just* pass the string through - this is done by `(Wrap $ \txt -> txt)`
-	- so out `where` block now looks like this;
-		```purescript
-		where
-			message :: SF Int String
-			message = Wrap $ \i -> ("Hello World " <> (show i))
-
-			combine :: SF Unit Number -> SF String (Tuple Number String)
-			combine age = ((Wrap $ \_ -> unit) >>>> age) &&&& (Wrap $ \txt -> txt)
-		```
-
-- this will compile, but, when run witlkl staill complain that an ourput was not set
-- since we now have  "all" the parameters to do that ... let's construct a `LiveMaryS/Speak` value in a `Wrap` and replace the `hello` with it  and comment out `hello <- openLogColumn "hello"` for now
-	- `(combine age) >>>> (Wrap $ \(Tuple n s) -> Speak n s) >>>> speak`
-  - `pure (unspoke >>>> cycle_count >>>> message >>>> (combine age) >>>> (Wrap $ \(Tuple n s) -> Speak n s) >>>> speak)`
-
-it should now look like this
-
-```purescript
-module Agent where
-
-import Effect
-import FRP
-import Prelude
-import Data.Tuple
-
-import Pdemo.Scenario
-import Pdemo.Mary
-
-cycle_count :: SF Unit Int
-cycle_count = roller 0 suc
-  where
-    suc :: Int -> Unit -> (Tuple Int Int)
-    suc i _ = Tuple (i + 1) i
-
-
-entry :: Effect (SF Unit Unit)
-entry = do
-  -- hello <- openLogColumn "hello"
-  (Tuple speak spoke) <- openLiveMary ""
-  age <- openAge
-
-  -- silence the spoke
-  let unspoke = spoke >>>> (Wrap $ \_ -> unit)
-
-  pure (unspoke >>>> cycle_count >>>> message >>>> (combine age) >>>> (Wrap $ \(Tuple n s) -> Speak n s) >>>> speak)
-
-  where
-    message :: SF Int String
-    message = Wrap $ \i -> ("Hello World " <> (show i))
-
-    combine :: SF Unit Number -> SF String (Tuple Number String)
-    combine age = ((Wrap $ \_ -> unit) >>>> age) &&&& (Wrap $ \txt -> txt)
-
-```
-
-- compile and run it and ... you will hear the voice repeating itself.
-	- this is complicated.
-- to start to diagnose this; we should reintroduce the log coulmn (trust me)
-	- start by pulling out the "tts" stuff into a `let` value
-		- like this ...
-			```purescript
-				-- the tts
-				let tts = (combine age) >>>> (Wrap $ \(Tuple n s) -> Speak n s) >>>> speak
-
-				-- the agent network
-				pure $ unspoke >>>> cycle_count >>>> message >>>> tts
-			```
-		- check that this still runs to ensure the edit was correct
-		- fuse log and tts
-			- `pure $ unspoke >>>> cycle_count >>>> message >>>> (tts &&&& hello)`
-			- compile/run this - there will be an error because the fused type is `: SF Unit (Tuple Unit Unit)`
-			- compose the fused type with something suitable to convert the value `pure $ unspoke >>>> cycle_count >>>> message >>>> (tts &&&& hello) >>>> (Wrap $ \_ -> unit)`
-
-- we can see that everytime there's a new noise, there's a new "log message"
-- what's actually happening, every time some "speaking" command is done, the agent is cycled and is re-updated
-	- ... and every time this happens; a new spoken message is computed and produced
-		- the new message means that the TTS stops and switches to the new pronounciation
-
-> Oops; Peter hasn't finished wirting this!
-
-???
-
-> need to handle/explain the optional values here, rather than in the ASR sections
->
-> great.
-
-## asr to speak
-
-- asr needs new trick; needs input, but, event!
-	- tts already showed "time" but time is `sampled` it's always there
-		- it also can't "update" the network
-		- asr woin't need you to press okay
-	- we already had the "speaking status" event
-		- ... but like [90% of exceptions we swallowed it](https://en.wikipedia.org/wiki/Error_hiding#Languages_with_exception_handling)
-	- we're going to handle the event this time
-
-> hi! what do we want here, then, wehat will we walk through buildiong
-
-
-### event handling
-
-- events are foreign signal functions that may or may not emit something
-	- PureScript (and Haskell, Idris, et al) call this `Maybe` and it can either be `Just` a value or `Nothing`
-		- this is analogous to `null` in C descendants where all values are potentially null if they have a null type
-		- many conventions exist which handle `Maybe a` as **a collection of 0 or 1** items of type `a`
-			- this might not be relevant to this tutorial, but, forms such a prevalent theoretical basis for this i feel it's important to bring up here
-
-![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgZXZlbnRbXCJldmVudCA6IFNGIFVuaXQgKE1heWJlIGEpXCJdXG5cbiAganVzdFtcImhhbmRsZSBhIGBKdXN0IGFgXCJdXG4gIG5vcGVbXCJoYW5kbGUgYSBgTm90aGluZ2BcIl1cblxuICBldmVudCAtLi0+IGp1c3RcbiAgZXZlbnQgLS4tPiBub3BlXG5cbiAgZG9uZVtjb21wdXRlIHJlc3Qgb2YgdGhlIGFnZW50XVxuXG4gIGp1c3QgLS4tPiBkb25lXG4gIG5vcGUgLS4tPiBkb25lIn0=)
-
-- an obvious way to handle it (for a `String -> Int`) would be ...
-
-```purescript
-handle :: SF Unit (Maybe String)
-handle = Wrap inner
-	where
-		inner :: Maybe String -> Int
-		inner (Just i) = compute_something
-		inner Nothing = use_fallback_value
-```
-
-- we can pass in the fallback and compute functions like this
-
-```purescript
-handle ::  Int -> (String -> Int) -> SF Unit (Maybe String)
-handle fallback compute = Wrap inner
-	where
-		inner :: Maybe String -> Int
-		inner (Just i) = compute
-		inner Nothing = fallback
-```
-
-- we can then make it generic by repalcing `String` and `Int` types
-
-```purescript
-handle :: forall i o. o -> (i -> o) -> SF Unit (Maybe i)
-handle fallback compute = Wrap inner
-	where
-		inner :: Maybe i -> o
-		inner (Just i) = compute
-		inner Nothing = fallback
-```
-
-- so this is closer to what we want
-- if we use this, every time that the ASR has an event (and the agent is updated) the "blopck" would eitehr compute an output value (say ... the text to speak) or compute "silence"
-- that's fine if there's only one source of events
-	- which is almost true here, but, not true in general
-- if the user clicks the "Ok" button on the prompt
-
-- we want to give it `o0 : o` and get back a signal function that will compute `o1 : o` when possible, and then, use `o1` instead of `o0`
-- we want it to repeat `o` until it ias a new value of `o` then reconstruct itself, it should look like this
-
-```purescript
-repeat :: forall i o. o -> SF i (Maybe o) -> SF i o
-repeat last sf = Next $ \i -> do
-  n <- react sf i
-
-  let next_rsf = fst n
-  let next_out = snd n
-
-  let out = fromMaybe last (next_out)
-
-  pure $ Tuple (repeat out next_rsf) out
-```
-
-- the function is in the `FRP.purs` module and is bound to the `////` operator
-	- this is a complex function (sorry) that won't be explained here (sorry) as that's somewhat outside the scope of this document
-
-> this seems to de-justify the usage of `Maybe` rather than some `event` specific type with explicit specialised value(s) for `Nothing` and `Just`
->
-> ... until i tried to imagine `repeat` done with non-standard Maybe/Just/Nothing
-
-> Oops; Peter hasn't finished wirting this!
-
-
-### agent changes
-
-???
-> Oops; Peter hasn't finished wirting this!
-
-
-### parrot source
-
-???
-
-> Oops; Peter hasn't finished wirting this!
 

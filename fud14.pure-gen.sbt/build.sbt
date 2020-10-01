@@ -37,8 +37,10 @@ def maryXSLTFix = {
 	)
 }
 
-
-
+//
+// trying to tell sbt exit
+fork in run := true
+//trapExit := false
 
 
 

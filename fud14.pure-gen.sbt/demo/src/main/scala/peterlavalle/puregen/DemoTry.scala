@@ -110,11 +110,38 @@ object DemoTry {
 						.eff[Value, Value]("Main.cycle")
 
 				daemon {
-					var last: Value =
-						scriptValue
-							.eff[Null, Value]("Main.agent")
-							.apply(null)
 
+					def fail(status: Int, e: Exception, m: String): Exception = {
+						System.out.flush()
+						System.out.close()
+						// excuse the wall of text; not all modules want to close, so, I need/want a way to ensure this is seen
+						System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+						System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+						System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+						System.err.println("! ")
+						System.err.println("! " + e.getMessage)
+						System.err.println("! ")
+						System.err.println("======================================")
+						System.err.println("======================================")
+						e.printStackTrace(System.err)
+						System.err.println("======================================")
+						System.err.println("\n" + m + "\n")
+						System.err.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+						System.err.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+						System.err.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+						System.exit(status)
+						e
+					}
+
+					var last: Value =
+						try {
+							scriptValue
+								.eff[Null, Value]("Main.agent")
+								.apply(null)
+						} catch {
+							case e: Exception =>
+								throw fail(-1, e, "caught an exception during the setup")
+						}
 					while (starter()) {
 						try {
 							cyclist.load()
@@ -122,18 +149,7 @@ object DemoTry {
 							cyclist.send()
 						} catch {
 							case e: Exception =>
-								System.out.flush()
-								System.out.close()
-								// excuse the wall of text; not all modules want to close, so, I need/want a way to ensure this is seen
-								System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-								System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-								System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-								e.printStackTrace(System.err)
-								System.err.println("! caught an exception during the cycle")
-								System.err.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-								System.err.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-								System.err.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-								System.exit(-2)
+								throw fail(-2, e, "caught an exception during the cycle")
 						}
 					}
 				}
