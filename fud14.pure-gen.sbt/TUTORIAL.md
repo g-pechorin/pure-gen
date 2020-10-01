@@ -19,6 +19,13 @@ It is assumed that [the steps to install the system have been followed](INSTALL.
 		- [connect the microphone to the ASR](#connect-the-microphone-to-the-asr)
 		- [simplify the ASR](#simplify-the-asr)
 		- [compute and despatch ASR message](#compute-and-despatch-asr-message)
+- [Speaking Out](#speaking-out)
+	- [what we're doing](#what-were-doing)
+	- [how we do it](#how-we-do-it)
+	- [fork](#fork)
+	- [?what just happened](#what-just-happened)
+	- [?how to fixit](#how-to-fixit)
+	- [final thing?](#final-thing)
 
 
 This is a tutorial for creating a "parrot" that repeats (in English) whatever speech it recognises (of English) in a rather crude way.
@@ -623,5 +630,163 @@ entry = do
             unpack :: CMUSphinx4ASRE -> String
             unpack (SRecognised text) = text
 ```
+
+## Speaking Out
+
+### what we're doing
+
+
+- weh ave made an agent
+	- it reacts
+	- it emits text
+	- not great, but, it obeys all the conventions of what we need it to
+- what next
+	- make it speak outloud
+	- show's slightly complex io
+	- shows using time
+	- show using fork
+
+### how we do it
+
+- open speech
+	- import and call
+		- `import Pdemo.Mary`
+		- `_ <- openLiveMary ""`
+			- ignore th string parameter for now ... sorry
+		- simple
+	- what is the "type" of mary?
+		- `(Tuple mary_signals mary_events) <- openLiveMary ""`
+	- the `speak` is a SF we use to control what we want the TTS to "say"
+	- the `spoke` is a SF we use to rect to when the TTS says something
+
+
+- `mary_events` will introduce an interesting issue tricky
+	- not going to use the `mary_events` SF in this tutorial
+		- so can silence it by as before ... but lets use a standard one
+			- `unitsf :: forall i o. SF i o -> SF i ()`
+	- this is "the way" in this design
+
+- `mary_signals` is how we speak
+	- how it works will hihgligh difference between "columsn" and "behaviours"
+		* columsn - data with a value that's time-invariant
+		* behaviours - output that started at a specific time and changes over time withouth "changing"
+	- let's *justy* copy the heard test to it, test that, then come back to the disctinction
+
+
+### fork
+
+- start with the program from the last section
+
+- it does ...
+
+![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgbWljIC0tPnw+Pj4+fGxpbmVcblxuICB3cmFwW1wiZnJvbU1heWJlICdub3RoaW5nIHdhcyBoZWFyZCdcIl1cblxuICBoZWFyIC0tPnw+Pj4+fHVucGFja1xuXG4gIHVucGFjay0tPnw+Pj4+fHdyYXBcbiAgd3JhcCAtLT58Pj4+Pnxsb2cifQ==)
+
+... but we want
+
+
+![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgbWljIC0tPnw+Pj4+fGxpbmVcblxuICB3cmFwW1wiZnJvbU1heWJlICdub3RoaW5nIHdhcyBoZWFyZCdcIl1cblxuICBoZWFyIC0tPnw+Pj4+fHVucGFja1xuXG4gIHVucGFjay0tPnw+Pj4+fHdyYXBcbiAgd3JhcCAtLT58Pj4+Pnxsb2dcblxuICB1bnBhY2sgLS0+fD4+Pj58c29tZXRoaW5nXG4gIHNvbWV0aGluZ1tcInNvbWV0aGluZyBlbHNlIHRvIHRyaWdnZXIgVFRTXCJdIn0=)
+
+let's start with a function type to connect the `Maybe String` to our `LiveMaryS` ...
+
+```purescript
+something :: SF (Maybe String) LiveMaryS
+```
+
+... right? so we'd get ...
+
+![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgbWljIC0tPnw+Pj4+fGxpbmVcblxuICB3cmFwW1wiZnJvbU1heWJlICdub3RoaW5nIHdhcyBoZWFyZCdcIl1cblxuICBoZWFyIC0tPnw+Pj4+fHVucGFja1xuXG4gIHVucGFjay0tPnw+Pj4+fHdyYXBcbiAgd3JhcCAtLT58Pj4+Pnxsb2dcblxuICB1bnBhY2sgLS0+fD4+Pj58c29tZXRoaW5nXG4gIHNvbWV0aGluZyAtLT58Pj4+PnxtYXJ5X3NpZ25hbHNcblxuXHRkZWFkW1wiV3JhcCAkIFxcXyAtPiB1bml0XCJdXG5cdG1hcnlfZXZlbnRzIC0tPnw+Pj4+fGRlYWQifQ==)
+... because we have to do something with the events.
+
+Most of this should look "fine" except for that "split" between unoack
+
+that's not too-too hard; `fuselr :: forall i l r. SF i l -> SF i r -> SF i (Tuple l r)` will do the work.
+we can "collect" the log stuff with a let, and, do the same with the tts stuff, then `fuselr` them before ignoring thge fused outoput with `>>>> (Wrap $ \_ -> unit)`
+
+so ...
+
+```purescript
+pure $ connect >>>> hear_1 >>>> (Wrap $ fromMaybe "nothing was heard") >>>> log
+```
+
+... becomes ...
+
+```purescript
+let logging = (Wrap $ fromMaybe "nothing was heard") >>>> log
+pure $ connect >>>> hear_1 >>>> logging
+```
+
+... which becomes ...
+
+
+```purescript
+let logging = (Wrap $ fromMaybe "nothing was heard") >>>> log
+let speaking = something >>>> mary_signals
+pure $ connect >>>> hear_1 >>>> logging
+```
+
+... leaving us to *just* implement ...
+
+```purescript
+something :: SF (Maybe String) LiveMaryS
+```
+
+... so make a function that takes "maybe a string" and returns a `LiveMaryS` instance.
+The issue with this is that `LiveMaryS` has two constructors ...
+
+```purescript
+data LiveMaryS
+  = Silent Number
+  | Speak Number String
+```
+
+- `LiveMaryS` is a *behaviour* (not a column) and needs to know when to "start" working.
+- So to create `: SF (Maybe String) LiveMaryS` we need a `: SF () Number` making the  `something0 :: SF () Number -> SF (Maybe String) LiveMaryS`
+	- and need to open age `age <- openAge`
+	- ... and then pass that `let speaking = (something0 age) >>>> mary_signals`
+- we can implement `something0 :: SF () Number -> SF (Maybe String) LiveMaryS`
+
+```purescript
+something0 :: SF () Number -> SF (Maybe String) LiveMaryS`
+something0 age =
+	where
+		inner :: Number -> SF (Maybe String) LiveMaryS`
+		inner age = ???
+```
+
+- now compile and run it (as below) ... and see what happens
+
+### ?what just happened
+
+- what went wrong?
+	- sound was/is being prepeated
+	- nope!
+
+> should add the/a cycle to this sound message
+
+- what is behaviours?
+	- might be "start polaying song at this time point"
+		- consider from the component view;
+			- we get message, check the clock, skip to the proper point and start
+			- if we get antoher message, we stop playing and repeat
+		- no matter what time it is now, if that song was started at that point - we don't need to think about it
+	- would not be "now play this note" or "load this file and get back to me"
+		- these are "too low level" for what we're trying to achieve
+
+### ?how to fixit
+
+- only update audio on found
+
+> will this even go wrong?
+
+
+### final thing?
+
+
+- what we did
+- what it shows
+- where to go from here
+
+
+
 
 
