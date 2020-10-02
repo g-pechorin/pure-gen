@@ -7,7 +7,7 @@ module FRP where
 
 
 import Effect (Effect) -- dep: effect
-import Prelude (bind, pure, ($), Unit) -- dep: prelude
+import Prelude (bind, pure, ($), Unit, unit) -- dep: prelude
 import Data.Tuple (Tuple(..), fst, snd) -- dep: tuples
 import Data.Maybe (Maybe, fromMaybe) -- dep: maybe
 
@@ -76,7 +76,6 @@ repeat last sf = Next $ \i -> do
   pure $ Tuple (repeat out next_rsf) out
 infixr 7 repeat as ////
 
-
 -- repeat = ?repeat
 -- -- ??/ :: o -> SF i (Maybe o) -> SF i o
 
@@ -96,6 +95,11 @@ roller par fun = Next $ inner
 
 
 
+unitsf :: forall i. SF i Unit
+unitsf = (Wrap $ \_ -> unit)
+
+passsf :: forall v. SF v v
+passsf = (Wrap $ \v -> v)
 
 
 
