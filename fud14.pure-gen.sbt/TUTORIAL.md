@@ -1132,19 +1132,24 @@ entry = do
 One of the author's previous supervisors felt that *novice* developers were frequently reluctant to utilise search engines to resolve problems.
 Later (mutual) speculation suggested that naive assumptions about software quality led to a mindset which was reluctant to *justfixit* and move on, even when the solution was something graceless.
 [?](#f_link0)
+
 <b id='f_note1'>[1](#f_link1)</b>
 A meaningful introduction to [PureScript](https://www.purescript.org/) is regrettably beyond the scope of this document.
 I would suggest that an interested reader follow [the Quick Start Guide](https://github.com/purescript/documentation/blob/master/guides/Getting-Started.md) but would note that this system uses a different environment.
 > ... and the author hasn't followed the guide - generally searching for Haskell/Scala equivalency has been sufficient.
 [?](#f_link1)
+
 <b id='f_note2'>[2](#f_link2)</b>
 As with the installation, there's a way to do this with "no privileges" using a "portable" package ... but I'll forgo detailing it here for the sake of brevity.
 [?](#f_link2)
+
 <b id='f_note3'>[3](#f_link3)</b>
 This is something of an optimisation.
 The `Next :: forall i o. (i -> Effect (Tuple (SF i o) o)) -> SF i o` is the/a most-general type that any Signal Function needs to implement.
 `Wrap :: forall i o. (i -> o) -> SF i o` *just* simplifies this (in an obvious way) and *should* reduce system requirements.
 [?](#f_link3)
+
 <b id='f_note4'>[4](#f_link4)</b>
 or we could cheat and use an ascending counter ... but that's
 [?](#f_link4)
+
