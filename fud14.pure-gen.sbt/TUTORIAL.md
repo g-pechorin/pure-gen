@@ -55,7 +55,7 @@ Test that the agent works and recognises a word or two.
 
 
 
-<sup id='f_note1'>1;(#f_link1)</sup>
+<sup id='f_note1'>[1](#f_link1)</sup>
 i am foontote 1
 
 Get the `fud14.pure-gen.sbt/demo/` folder open in your editor and open the `fud14.pure-gen.sbt/demo/iai/Agent.purs` file **BUT DON'T LOOK TO CLOSELY**.
