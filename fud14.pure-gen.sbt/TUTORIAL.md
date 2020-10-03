@@ -4,7 +4,8 @@ It's intended for readers familiar (possibly rusty) with functional programming,
 
 It is assumed that [the steps to install the system have been followed](INSTALL.md) first.
 
-<sup id='a1'>[1](#a1)</sup>
+i link to footnote <sup id='f_link1'>[1](#f_note1)</sup>
+
 Something
 
 # Parrot
@@ -51,6 +52,11 @@ I am assuming that [you have installed the system already and it's working - her
 
 Open the `fud14.pure-gen.sbt/` folder and run `sbt demo/run` or open the project in IntelliJ IDEA and run `demo/main/peterlavalle.puregen.DemoTry` whichever is simplest.
 Test that the agent works and recognises a word or two.
+
+
+
+<sup id='f_note1'>1;(#f_link1)</sup>
+i am foontote 1
 
 Get the `fud14.pure-gen.sbt/demo/` folder open in your editor and open the `fud14.pure-gen.sbt/demo/iai/Agent.purs` file **BUT DON'T LOOK TO CLOSELY**.
 Replace the contents with ... <sup id='a1'>[1](#f1)</sup>
