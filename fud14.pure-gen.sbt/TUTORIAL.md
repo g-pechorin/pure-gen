@@ -1,11 +1,8 @@
 
 This document leads the reader through developing a "parrot" with this system.
-It's intended for readers familiar with functional programming,(but possibly lapsed) and "comfortable with Google"[^bossGoogle] but not necessarily experienced with Haskell / PureScript.
+It's intended for readers familiar with functional programming,(but possibly lapsed) and "comfortable with Google"<sup id='f_link0'>[0](#f_note0)</sup> but not necessarily experienced with Haskell / PureScript.
 It is assumed that [the steps to install the system have been followed](INSTALL.md) first.
 
-[^bossGoogle]:
-  One of the author's previous supervisors felt that *novice* developers were frequently reluctant to utilise search engines to resolve problems.
-  Later (mutual) speculation suggested that naive assumptions about software quality led to a mindset which was reluctant to *justfixit* and move on, even when the solution was something graceless.
 
 
 # Parrot
@@ -34,16 +31,10 @@ It is assumed that [the steps to install the system have been followed](INSTALL.
 
 
 This is a tutorial for creating a "parrot" that repeats (in English) whatever speech it recognises (of English) using this Interactive Artificial Intelligence tool.
-I am assuming that [you have installed the system already and it's working - here's a guide to do that](INSTALL.md) and are somewhat comfortable using PureScript.[^learnPureScript]
-You'll need a text editor, I'm using [Visual Code](https://code.visualstudio.com/)[^noPrivCode] with the [PureScript Language Support](https://marketplace.visualstudio.com/items?itemName=nwolverson.language-purescript) installed.
+I am assuming that [you have installed the system already and it's working - here's a guide to do that](INSTALL.md) and are somewhat comfortable using PureScript.<sup id='f_link1'>[1](#f_note1)</sup>
+You'll need a text editor, I'm using [Visual Code](https://code.visualstudio.com/)<sup id='f_link2'>[2](#f_note2)</sup> with the [PureScript Language Support](https://marketplace.visualstudio.com/items?itemName=nwolverson.language-purescript) installed.
 
-[^noPrivCode]:
-  As with the installation, there's a way to do this with "no privileges" using a "portable" package ... but I'll forgo detailing it here for the sake of brevity.
 
-[^learnPureScript]:
-  A meaningful introduction to [PureScript](https://www.purescript.org/) is regrettably beyond the scope of this document.
-  I would suggest that an interested reader follow [the Quick Start Guide](https://github.com/purescript/documentation/blob/master/guides/Getting-Started.md) but would note that this system uses a different environment.
-  > ... and the author hasn't followed the guide - generally searching for Haskell/Scala equivalency has been sufficient.
 
 > PureScript uses [the "off-side rule"](https://en.wikipedia.org/wiki/Off-side_rule) and (sensibly) enforces the indentation character.
 > Make sure you're not using `\t` to avoid compilation errors.
@@ -150,12 +141,8 @@ PureScript is (not TypeScript or JavaScript and) a pure functional programming l
 In a more practical sense, pure has a signature `pure :: forall a. a -> Effect a` and works like C's `return` ... sort of.
 For any `value : a` you can pass it through `pure` to produce a value of type `Effect a`.
 
-[^wrapRedundant]:
-  This is something of an optimisation.
-  The `Next :: forall i o. (i -> Effect (Tuple (SF i o) o)) -> SF i o` is the/a most-general type that any Signal Function needs to implement.
-  `Wrap :: forall i o. (i -> o) -> SF i o` *just* simplifies this (in an obvious way) and *should* reduce system requirements.
 
-`Wrap :: forall i o. (i -> o) -> SF i o` is a constructor (from the `lib/FRP.purs` file) that *wraps* an otherwise "pure function" to be a signal function.[^wrapRedundant]
+`Wrap :: forall i o. (i -> o) -> SF i o` is a constructor (from the `lib/FRP.purs` file) that *wraps* an otherwise "pure function" to be a signal function.<sup id='f_link3'>[3](#f_note3)</sup>
 
 The `\_ -> unit` statement is is a function that takes any value and returns a/the value of type `Unit`.
 It is semantically identical to the snippet below;
@@ -826,11 +813,9 @@ data LiveMaryS
 	- the log is (or can be) thought of a "column" where at each cycle a *value* is computed
 	- this speech is a "behaviour" where the value is *what action the system is doing,* which, includes *when it started*
 
-[^orCheat]:
-	or we could cheat and use an ascending counter ... but that's
 
 
-- the practical effect of this is that we need a time-stamp[^orCheat]
+- the practical effect of this is that we need a time-stamp<sup id='f_link4'>[4](#f_note4)</sup>
 
 
 - time stamps come from the `openAge` which is opened as `age <- openAge`
@@ -1140,3 +1125,26 @@ entry = do
             unpack (GRecognised text) = text
 
 ```
+
+----
+
+<b id='f_note0'>[0](#f_link0)</b>
+One of the author's previous supervisors felt that *novice* developers were frequently reluctant to utilise search engines to resolve problems.
+Later (mutual) speculation suggested that naive assumptions about software quality led to a mindset which was reluctant to *justfixit* and move on, even when the solution was something graceless.
+[?](#f_link0)
+<b id='f_note1'>[1](#f_link1)</b>
+A meaningful introduction to [PureScript](https://www.purescript.org/) is regrettably beyond the scope of this document.
+I would suggest that an interested reader follow [the Quick Start Guide](https://github.com/purescript/documentation/blob/master/guides/Getting-Started.md) but would note that this system uses a different environment.
+> ... and the author hasn't followed the guide - generally searching for Haskell/Scala equivalency has been sufficient.
+[?](#f_link1)
+<b id='f_note2'>[2](#f_link2)</b>
+As with the installation, there's a way to do this with "no privileges" using a "portable" package ... but I'll forgo detailing it here for the sake of brevity.
+[?](#f_link2)
+<b id='f_note3'>[3](#f_link3)</b>
+This is something of an optimisation.
+The `Next :: forall i o. (i -> Effect (Tuple (SF i o) o)) -> SF i o` is the/a most-general type that any Signal Function needs to implement.
+`Wrap :: forall i o. (i -> o) -> SF i o` *just* simplifies this (in an obvious way) and *should* reduce system requirements.
+[?](#f_link3)
+<b id='f_note4'>[4](#f_link4)</b>
+or we could cheat and use an ascending counter ... but that's
+[?](#f_link4)
