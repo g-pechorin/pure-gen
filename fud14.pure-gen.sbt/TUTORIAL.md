@@ -4,6 +4,9 @@ It's intended for readers familiar (possibly rusty) with functional programming,
 
 It is assumed that [the steps to install the system have been followed](INSTALL.md) first.
 
+<sup id='a1'>[1](#a1)</sup>
+Something
+
 # Parrot
 
 - [Empty Agent](#empty-agent)
@@ -50,7 +53,7 @@ Open the `fud14.pure-gen.sbt/` folder and run `sbt demo/run` or open the project
 Test that the agent works and recognises a word or two.
 
 Get the `fud14.pure-gen.sbt/demo/` folder open in your editor and open the `fud14.pure-gen.sbt/demo/iai/Agent.purs` file **BUT DON'T LOOK TO CLOSELY**.
-Replace the contents with ...
+Replace the contents with ... <sup id='a1'>[1](#f1)</sup>
 
 ```purescript
 module Agent where
