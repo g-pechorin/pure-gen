@@ -196,19 +196,24 @@ We're almost at a "Hello World" agent.
 
 ## Hello Log Agent
 
-This style of programming doesn't suit *just* writing out messages.
-All output from the agents is considered to be a "signal" and signals need to be present after every iteration of the agent.
-We're going to create "log columns" which (at any iteration) will have some value.
+While a skilled (or stubborn) programmer could include a way to *just* write out messages to the console, however, this would be analogous to "fighting the system" with C/++ by casting `const` data to be mutable.
+The intended approach for things like log messages would be to compute and assign a "column" value for each "cycle" of the agent and system.
+One could consider each "cycle" of the system to be a row in a table or spreadsheet.
+Each cycle includes a column with values for each foreign signal function carrying data in or out of the agent.
 
-So; each is a sort of "slot" which has some message after each cycle.
-
-After that, we'll create a "counter" signal function and use it to create second a log column that prints out the
+The *agent* is the (PureScript) program we're writing that reads and sends data to components.
+Each output from the agent is referred to as a signal.
+In this section, we will alter the empty agent we've produced to emit a simple "log column" type of signal.
+This column will have a name and, after each "frame" the system will print the value of this column to STDIO.
+To make the thing "interesting," once it works we will program and use a counter to display the "iteration number" in the log message.
 
 ### Log Columns
 
-LogColumns are an output from teh agent.
-Any output (or input) is implemented with *foreign signal functions* which are signal functions invoking a *[foreigh function interface call](https://en.wikipedia.org/wiki/Foreign_function_interface)*.
-To the develoiper (you!) it works more like a file handle which is opened at agent setup, and has a value put into it at each cycle.
+LogColumns are output from the agent.
+Any output (or input) from the components is implemented with **foreign signal functions** which communicate the data to the agent.
+These are so named as (from PureScript's perspective) they are invoking a *[foreigh function interface call](https://en.wikipedia.org/wiki/Foreign_function_interface)*.
+To a developer (such as the reader reading this document) this is somewhat analogous to a filehandle or a network socket with a more specific API.
+These *foreign signal functions* are *opened* at agent setup, and have a value put into it at each cycle.
 
 Start by adding `hello <- openLogColumn "hello"` to the line after `do` in the agent to open our logging column.
 This function comes from the `Pdemo.Scenario` module, so, we need to `import Pdemo.Scenario` to access it.
@@ -229,28 +234,28 @@ entry = do
   pure (Wrap (\_ -> unit))
 ```
 
-When you run the agent, you'll see the usual warnings along with a new exception ...
+When you run the agent, you'll see the usual warnings, the system will run (as before) but will immediately halt with a new exception ...
 
 ```
 Exception in thread "Thread-4" java.lang.RuntimeException: an output:signal did not receive data java.lang.String
-	at peterlavalle.puregen.Cyclist$Passable.send(Cyclist.scala:200)
-	at peterlavalle.puregen.Cyclist$$anon$2.send(Cyclist.scala:102)
-	at peterlavalle.puregen.Cyclist.$anonfun$send$1(Cyclist.scala:157)
-	at java.base/java.lang.Iterable.forEach(Iterable.java:75)
-	at peterlavalle.puregen.Cyclist.send(Cyclist.scala:157)
-	at peterlavalle.puregen.DemoTry$.$anonfun$runAgent$5(DemoTry.scala:122)
-	at peterlavalle.include$$anon$2$$anon$3.run(include.scala:117)
+  at peterlavalle.puregen.Cyclist$Passable.send(Cyclist.scala:200)
+  at peterlavalle.puregen.Cyclist$$anon$2.send(Cyclist.scala:102)
+  at peterlavalle.puregen.Cyclist.$anonfun$send$1(Cyclist.scala:157)
+  at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+  at peterlavalle.puregen.Cyclist.send(Cyclist.scala:157)
+  at peterlavalle.puregen.DemoTry$.$anonfun$runAgent$5(DemoTry.scala:122)
+  at peterlavalle.include$$anon$2$$anon$3.run(include.scala:117)
 ```
 
-... which indicates that one of the outputs wasn't "written to" durring the cycle.
-You need to send a value to the log column every cycle.
-
+This indicates that one of the outputs wasn't "written to" during the cycle.
+Each output (and input) needs to be accessed once (and only once) every cycle.
+This is "enforced" to be sure that the agent is functioning as intended.
 
 ### Sending a Message
 
 Right now, the LogColumn has the form `: SF String Unit` and the system is creating a (useless) value with the type `: SF Unit Unit`.
-If we transform the log function to `: SF Unit Unit` we can *just* return it from the `entry` function and run from there.
-
+The agent has to implement properly typed `entry :: Effect (SF Unit Unit)` function to run.
+We need to transform the log function to `: SF Unit Unit` so that we can return it from the `entry` function - so we need to produce something to create the message with the form `: SF Unit String` and combine the functions.
 Two signal functions can be combined with the `concat` function or `>>>>` operator.
 
 ```purescript
@@ -258,12 +263,14 @@ concat :: forall i m o. SF i m -> SF m o -> SF i o
 infixr 7 concat as >>>>
 ```
 
-Given two signal functions `L: SF i m` and `R: SF m o` with a desired type, they can be composed with the `>>>>` operation.
+Given two signal functions `L: SF i m` and `R: SF m o` with the desired type, they can be composed with the `>>>>` operation.
 
 ![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgTFtMOiBTRiBpIG1dXG4gIFJbUjogU0YgbSBvXVxuXG4gIEwgLS0+fD4+Pj58UlxuXG4gIE9bTFIgOjogU0YgaSBvXSJ9)
 
-So, if we had a `message :: SF Unit String` we could compose it and return that value with `pure`.
-Let's add this at the end of the agent in a `where` block to check the types, first *just* add it and build ...
+
+So, if we had a constructor `messages :: SF Unit String`, we could compose it with the `hello` and return the result value with `pure`.
+Let's add this at the end of the agent in a `where` block to check the types.
+Add it with a hole<sup id='f_link4'>[4](#f_note4)</sup> first and then build it to see what happens ...
 
 ```purescript
 module Agent where
@@ -278,9 +285,9 @@ import Pdemo.Scenario
 entry :: Effect (SF Unit Unit)
 entry = do
   hello <- openLogColumn "hello"
-  pure (Wrap (\_ -> unit))
+  pure (message >>>> hello) -- use our hole
 
-	-- add a where block with "typed hole"
+  -- add a where block with "typed hole"
   where
     message:: SF Unit String
     message = ?todo
@@ -299,41 +306,18 @@ entry = do
 ```
 
 ... great.
-
-Now we can use this hole to build a result and check if that works.
-
-```purescript
-module Agent where
-
-import Effect
-import FRP
-import Prelude
-
-import Pdemo.Scenario
-
-
-entry :: Effect (SF Unit Unit)
-entry = do
-  hello <- openLogColumn "hello"
-  pure (message >>>> hello) -- use our hole
-
-  where
-    message:: SF Unit String
-    message = ?todo
-```
-
-If everything has worked, you should get the same error messages as before.
+Really - this is just the compiler saying "Your program is fine, but, I can't work with this thing so I need you to fill it in."
+We can "fill in" this hole<sup id='f_link4'>[4](#f_note4)</sup> to build a result that works.
 So, all that needs to be done is to replace `?todo` with something that emits a suitable string value.
 
-We've already seen how to do this with `unit :: Unit` above, so, we *can* just do this ...
+We've already seen how to do this with `unit :: Unit` above, so, we *could* just do this ...
 
 ```purescript
 message = Wrap (\_ -> "Hello World")
 ```
 
 ... and get the agent to emit the message.
-
-But - there's a builtin function `consta :: forall i o. o -> SF i o` we could also use.
+But, there's a builtin function `consta :: forall i o. o -> SF i o` we could also use.
 
 ```purescript
 message = consta "Hello World"
@@ -352,6 +336,8 @@ creating the entry signal-function
 [hello] @ 22.111
 [hello]: Hello World
 ```
+
+So, that's us saying "Hello World" with an Interactive Artificial Intelligence.
 
 ### Counting Log and the Dollar Thing
 
@@ -815,7 +801,7 @@ data LiveMaryS
 
 
 
-- the practical effect of this is that we need a time-stamp<sup id='f_link4'>[4](#f_note4)</sup>
+- the practical effect of this is that we need a time-stamp<sup id='f_link5'>[5](#f_note5)</sup>
 
 
 - time stamps come from the `openAge` which is opened as `age <- openAge`
@@ -1150,6 +1136,11 @@ The `Next :: forall i o. (i -> Effect (Tuple (SF i o) o)) -> SF i o` is the/a mo
 [?](#f_link3)
 
 <b id='f_note4'>[4](#f_link4)</b>
-or we could cheat and use an ascending counter ... but that's
+"Typed holes" are "holes" with a "data type" and a feature of some functional programming languages.
+It's exactly what it sounds like; a hole in the program that lets you compile it so you can check your progress before coming back and finishing.
 [?](#f_link4)
+
+<b id='f_note5'>[5](#f_link5)</b>
+or we could cheat and use an ascending counter ... but that's
+[?](#f_link5)
 
