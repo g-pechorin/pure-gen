@@ -14,13 +14,11 @@ It is assumed that [the steps to install the system have been followed](INSTALL.
 	- [Cycle Counter](#cycle-counter)
 		- [Count](#count)
 - [Listening for Speech](#listening-for-speech)
-	- [Review and Forecast](#review-and-forecast)
-	- [event/vs/sample](#eventvssample)
-	- [implement the changes](#implement-the-changes)
-		- [open the things](#open-the-things)
-		- [connect the microphone to the ASR](#connect-the-microphone-to-the-asr)
-		- [simplify the ASR](#simplify-the-asr)
-		- [compute and despatch ASR message](#compute-and-despatch-asr-message)
+	- [Event and Sample Inputs](#event-and-sample-inputs)
+	- [Import Required Functionality](#import-required-functionality)
+	- [Open the Signal Functions](#open-the-signal-functions)
+	- [Connect the Microphone to the ASR](#connect-the-microphone-to-the-asr)
+	- [Logging ASR Values](#logging-asr-values)
 - [Speaking Out](#speaking-out)
 	- [what we're doing](#what-were-doing)
 	- [how we do it](#how-we-do-it)
@@ -445,76 +443,71 @@ entry = do
 
 ## Listening for Speech
 
-### Review and Forecast
-
 We have an agent that responds to a cycle by updating its log status.
 Now we're going to connect a speech recogniser that triggers those cycles.
-To simplify interaction, once this is done we'll connect a speech synthesis system to then reproduce what was recognised.
-This will conclude with a "parrot" program which demonstrates how well the components are functioning.
+We will use the `cycle_message >>>> cycle_column` from the last section to help us see what's happening with the system.
+Once we've prepared this, the next section will send the recognised speech to a speech synthesizer.
 
-### event/vs/sample
+> The CMUSphinx4 Speech Recogniser is neither accurate or precise in the author's experince.
+> Many more competitive systems exist, but, they're metered or less easily embedded.
+>
+> For our purposes - the Sphinx system should be *fine* for this.
+> At the end - we'll change to Google's Cloud ASR which performs much better, but, needs an account to bill.
 
-Inputs into the agent come in two forms;
+### Event and Sample Inputs
 
-* `event` - a value that's present or not on a cycle update
-* `sample` - a value that's computed for the cycle
+We've already seen that output data leaves the agent via "foreign signal functions" which are "opened" at setup.
+Inputs are also done via "foreign signal functions" and generally work in one of two ways;
+
+* `sample` inputs are a value that's computed for the cycle
+  - these may be passed in as tagged `data` or simple values
+  - this input type is (currently only) used for the "simulation age" which will be used in the next chapter
+* `event` inputs are a value that may or may not be present during a cycle update
+  - these are "events" that were recorded (immediately) prior to the cycle and necessitate "updating" the agent
+  - these are encoded as a `Maybe a` with `a` being either tagged `data` or a simple value
+  - if the ASR detects a phrase, it will raise an event with the detected speech
+  - pressing the "Ok" button on the demo does not raise an event
+  - the passage of time (currently) does not raise an event
+
 
 It would make no sense for the "simulation age" to enter the agent as an `event` since the simulation is always running.
-	For this reason, *age* enters the agent as a `sample` value that's always available.
-	<!-- We could have specified a constantly updating clock and updated the agent with the/a new age every X units of time, but, this -->
-It wouldn't make much sense for the "speech recognised" data to enter the agent as a `sample` since there will frequently be new data, and, otehr events could occur which don't involve the speech.
-	<!-- In theory - we could record the "last" speech, and, compare the agent's last value with whatever is given -->
+  It is also "inelegant" to compute a safe alternative for "no age being present" within the agent.
+  For this reason, *age* enters the agent as a `sample` value that's always available.
+It wouldn't make sense for the "speech recognised" data to enter the agent as a `sample` or any value which isn't "optional."
+  There are technical justifications, beyond the scope of this document, for why two types of input are needed.
+  The use of a [sentinel value](https://en.wikipedia.org/wiki/Sentinel_value) here would be something of an [anti-pattern](https://en.wikipedia.org/wiki/Anti-pattern) when the `Maybe a` functionality is so idiomatic to functional programming.
 
-- one weirdness is the "line based" metaphor for microphones (and eventually - other things)
-- the/a microphone is passed arround as an "audio-line" analougs to the physical cable rather than audio samples
-	- it might be plugged into something
-	- it might be plugged into nothing
-	- it might be plugged into two things
-- the ASR components are implemented as a `pipe` type component which (from the agent's perspective) is a `signal` (for output) and an `event` (for input)
-	- the ASR component needs to be updated so that it connects or remains connected to a line
-	- an ASR component can also be connected to nothing
-	- an ASR component will produce events which will trigger a cycle with an `event` data
+Frequently, `event` and `signal` are tied together as "pipes" and opened at the same time.
+  This is the case for the speech synthesizer we'll see later which must report its status back to the agent.
+  This is also the case for this speech recogniser which we wish to "listen to" and "connect/disconnect" from the system's microphone.
 
-### implement the changes
+Audio samples (on their own or aggregated) are not passed through the agent.
+  This *seemed* too low level, felt like an inefficient design, and, the alternative was curiously simple to implement.
+Instead, there is a `sample` input representing an abstraction of the/a microphone which returns an `AudioLine` analogous to a physical cable that someone might use to connect audio equipment.
+  For most purposes, the distinction is irrelevant from the agent developer's perspective.
+  During this tutorial - we will use the `>>>>` to *just* tie the recognizer to the microphone and forget about it.
 
-We're going to;
+With that in mind, we can get started.
+  The microphone, ASR and log(s) need to be opened first at the start of the agent.
+  The old log can be easily "composed" to a `: SF Unit Unit` value and then combined with the microphone and speech recogniser control.
+  The new functionality, *just* needs to map the incoming ASR result to a `: String` before passing it to the log - and that can be done with a `Wrap` lambda.
 
-1. open things
-	- open microphone
-	- open ASR
-	- open log
-2. connect the ASR and microphone by composing them
-3. react to ASR by wrotoimg a log message
+### Import Required Functionality
 
-
-To start off, replace the `Agent.purs` source with the below stuff.
-If you compile this (you will see numerous wanrings but) it will be correctly typed.
+For this example, we're going to require additional `import` statements.
+We need the `Maybe` package to manipulate these values.
+We'll also need the package related to the speech recognition systems.
+Add these packages and check to ensure that (other than new wantings) the agent still compiles and runs.
 
 ```purescript
-module Agent where
-
-import Effect
-import FRP
-import Prelude
-import Data.Tuple
 import Data.Maybe
-
-import Pdemo.Scenario
-import Pdemo.Mary
 import Pdemo.Sphinx
-
-entry :: Effect (SF Unit Unit)
-entry = do
-
-	-- your agent will go here
-
-  pure $ Wrap $ \_ -> unit
 ```
 
+### Open the Signal Functions
 
-#### open the things
-
-- all opening is effectful, so, we do it all as do-notation
+The three signal functions need to be "opened" as effects  - just like the pre-exisng logging function.
+You'll need to add these lines before `do` but before `pure` for it to work correctly.
 
 ```purescript
 -- open a microphone
@@ -527,83 +520,165 @@ mic <- openMicrophone
 log <- openLogColumn "heard"
 ```
 
-If you add this to the start of the agent, the program will compile (with warnings) correctly before crashing at runtime because we're not using the opened signal functions.
-This is the expected result.
+Remeber to use consisttent indentation and compile/run the agent to check that it fails as expected.
 
-> The CMUSphinx4 Speech Recogniser is neither accurate or precise in the author's experince.
-> Many more competitive systems exist, but, they're less easily embedded.
->
-> For our purposes - the Sphinx system should be *fine* for this.
+Amidst a (figurative) swamp of output, you shgould see an error ...
 
-#### connect the microphone to the ASR
+```
+creating the entry signal-function
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+!
+! a loaded value was not consumed - likely an open signal function was not used this cycle
+!
+======================================
+======================================
+peterlavalle.puregen.Cyclist$CoolDownException: a loaded value was not consumed - likely an open signal function was not used this cycle
+        at peterlavalle.puregen.Cyclist$CoolDownException$.apply(Cyclist.scala:23)
+        at peterlavalle.puregen.Cyclist$Loadable.$anonfun$send$6(Cyclist.scala:252)
+        at peterlavalle.puregen.Cyclist.peterlavalle$puregen$Cyclist$$require(Cyclist.scala:36)
+        at peterlavalle.puregen.Cyclist$Loadable.send(Cyclist.scala:252)
+        at peterlavalle.puregen.Cyclist$$anon$4.send(Cyclist.scala:156)
+        at peterlavalle.puregen.Cyclist.$anonfun$send$2(Cyclist.scala:179)
+        at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+        at peterlavalle.puregen.Cyclist.send(Cyclist.scala:179)
+        at peterlavalle.puregen.DemoTry$.$anonfun$runAgent$5(DemoTry.scala:149)
+        at peterlavalle.include![anon$2](https://render.githubusercontent.com/render/math?math=anon$2)anon$3.run(include.scala:117)
+======================================
 
-- we're not going to change the connection for this demo
-- we can *just* compose the two toghter
-	- we'll need to add this into the final agent, but as before, we can largely ignore it now
+caught an exception during the cycle
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+```
+
+(Sorry about the swamp)
+This isn't the error you saw before when the log hadn't been set, but, it's simmilar.
+This error indicates that an input was oepnend but not read, and it is the sibling of "output not set."
+
+Seeing this error means that you've opened (at least one of) the signal functioons as dictated and can continue.
+Remever to kill the program with CTRL+C before you try to run it again.
+
+### Connect the Microphone to the ASR
+
+Connecting the microphone `AudioLine` is simple;
+
+1. read the `AudioLine` value from the microphone signal function
+2. construct a control message with the value
+  - an `SConnect` one in this case
+3. pass the control message to the `line :: SF CMUSphinx4ASRS Unit` signal function
+4. remember to hook this all into the `pure` statement
+
+The first three steps are accomplished with this `let` statement.
 
 ```purescript
 -- just connect the microphone to the recogniser always
-let connect = mic >>>> (Wrap $ SConnect) >>>> line
+let connect_microphone = mic >>>> (Wrap $ SConnect) >>>> line
 ```
 
-#### simplify the ASR
+This `let` statement has to appear after the `mic` and `line` signal functions are opened.
 
-The ASR signal function `hear` has type `: SF () (Maybe CMUSphinx4ASRE)` or "signal function that maybe produces a CMUSphinx4 event"
-The *CMUSphinx4 event* can only be constructed one way - as `SRecognised String` which *just* carries a string.
-We can simplify the value to be a string using teh `<$>` operator, and, concatenate several signal functions togetehr.
-
-So, to *unpack* a single `CMUSphinx4ASRE` event and get the `String` we would ...
+The fourth step is accomplished by replacing the `pure $ ...` statement with the below one
 
 ```purescript
-unpack :: CMUSphinx4ASRE -> String
-unpack (SRecognised text) = "heard '" <> text <> "'"
+-- pure $ cycle_message >>>> cycle_column
+pure $ connect_microphone >>>> cycle_message >>>> cycle_column
 ```
 
-Once we have a way to *unpack* the message, we can *swap* the `Maybe a` values ...
+You should try to run the program again to check that his is all connected.
+(You might have to kill the previous instance of the program with CTRL+C before you try to re-run it)
+Amidst the same "swamp" you should see a new error ...
+
+```
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+!
+! pipe-pedal[pdemo.Sphinx$CMUSphinx4ASR$Ev,pdemo.Sphinx$CMUSphinx4ASR$Ev] was not consumed - likely an open sign
+al function was not used this cycle
+!
+======================================
+======================================
+peterlavalle.puregen.Cyclist$CoolDownException: pipe-pedal[pdemo.Sphinx$CMUSphinx4ASR$Ev,pdemo.Sphinx$CMUSphinx4
+ASR$Ev] was not consumed - likely an open signal function was not used this cycle
+        at peterlavalle.puregen.Cyclist$CoolDownException$.apply(Cyclist.scala:23)
+        at peterlavalle.puregen.Cyclist$Loadable.$anonfun$send$6(Cyclist.scala:252)
+        at peterlavalle.puregen.Cyclist.peterlavalle$puregen$Cyclist$$require(Cyclist.scala:36)
+        at peterlavalle.puregen.Cyclist$Loadable.send(Cyclist.scala:252)
+        at peterlavalle.puregen.Cyclist$$anon$1.send(Cyclist.scala:110)
+        at peterlavalle.puregen.Cyclist.$anonfun$send$2(Cyclist.scala:179)
+        at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+        at peterlavalle.puregen.Cyclist.send(Cyclist.scala:179)
+        at peterlavalle.puregen.DemoTry$.$anonfun$runAgent$5(DemoTry.scala:149)
+        at peterlavalle.include![anon$2](https://render.githubusercontent.com/render/math?math=anon$2)anon$3.run(include.scala:117)
+======================================
+
+caught an exception during the cycle
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+```
+
+... which is (kind of) equivalent to the previous error, but, coming from a different component.
+We have made progress, in the next section we'll perform the final step by mapping the
+So this means ... we've made progress.
+
+----
+
+### Logging ASR Values
+
+ASR data enters teh agent with the form `Maybe CMUSphinx4ASRE`.
+This can be pattern matched, translated to a string, and passed out to the `"heard"` log column.
+We start with a strong function prototype ... and try to compile it.
+(Thus far - we haven't had compilation errors in this chapter)
+This can be placed "anywhere" but I'm putting it at the end of the file.
 
 ```purescript
-swap :: (Maybe CMUSphinx4ASRE) -> (Maybe String)
-swap m = unpack <$> m
+log_asr :: Maybe CMUSphinx4ASRE -> String
 ```
 
-Since `swap :: (Maybe CMUSphinx4ASRE) -> (Maybe String)` we can `Wrap` it to be a `: SF (Maybe CMUSphinx4ASRE) (Maybe String)` and concatenate it with our existing `hear: SF () (Maybe CMUSphinx4ASRE)` function ...
+When you compile & run you'll get the error `The type declaration for log_asr should be followed by its definition.`
+Add a case for when there's "no value" when the message is `Nothing`.
 
 ```purescript
--- simplify the ASR messages
-let hear_1 = hear1 hear
-
--- return an agent made of everything we've created so far
-pure $ connect >>>> hear_1 >>>> (Wrap $ \_ -> unit)
-
-where
-	-- build the simplified "hear" function
-	hear1 :: SF Unit (Maybe CMUSphinx4ASRE) ->  SF Unit (Maybe String)
-	hear1 hear = hear >>>> (Wrap swap)
-		where
-			swap :: (Maybe CMUSphinx4ASRE) -> (Maybe String)
-			swap m = unpack <$> m
-				where
-					unpack :: CMUSphinx4ASRE -> String
-					unpack (SRecognised text) = "heard '" <> text <> "'"
+log_asr :: Maybe CMUSphinx4ASRE -> String
+log_asr Nothing = "there's no ASR data this cycle"
 ```
 
+When you compile & run again - you'll get a different compilation error.
+The gist of it is that you've handled "no value" and now you need to handle `Just a` value.
+So you need to provide matchign deconstructros for each constructor of `CMUSphinx4ASRE`.
 
-
-#### compute and despatch ASR message
-
-We have a set of signal functions with the type `: SF () (Maybe String)` and we need to connect it to `: SF String ()`.
-We can use [`fromMaybe`](https://pursuit.purescript.org/packages/purescript-maybe/3.0.0/docs/Data.Maybe#v:fromMaybe) for a very naive solution, just placing `(Wrap $ fromMaybe "nothing was heard")` into place - let's do that now.
+There's only one constructor for `CMUSphinx4ASRE` it's `SRecognised String` so let's add that, and construct a striong from it.
 
 ```purescript
--- return an agent made of everything we've created so far
-pure $ connect >>>> hear_1 >>>> (Wrap $ fromMaybe "nothing was heard") >>>> log
+log_asr :: Maybe CMUSphinx4ASRE -> String
+log_asr Nothing = "there's no ASR data this cycle"
+log_asr (Just (SRecognised text)) = "the ASR heard `" <> text <> "`"
 ```
 
-You can run the agent now - Sphinx logs a lot of data to standard out.
-Anytime you see `INFO liveCMN` in the log, Sphinx has recognised something.
-If you press the "OK" button you will get a "nopthing was heard" message.
+This will compile and run again, but, imediatly halt becauyse we're still on consuming the `hear :: SF Unit CMUSphinx4ASRE` message.
+So, the last step here is to compose `hear` with `Wrap $ log_asr` and `log` and add it to the `pure` return value.
 
-This is "okay" for our purpoes - in the next section we'll use the text-to-speech and see ??? the differnece between these "column" outputs and "behaviour" signals.
+```purescript
+-- pure $ cycle_message >>>> cycle_column
+-- pure $ connect_microphone >>>> cycle_message >>>> cycle_column
+pure $ connect_microphone >>>> cycle_message >>>> cycle_column >>>> hear >>>> (Wrap $ log_asr) >>>> log
+```
+
+Try stating "oh" or "no" or other monosyllabic words to set off the speech detectiong.
+It's quite rough - likely it'd work better if it was tuend, but, that's beyond the scope of this exercise.
+Tapping the `Ok` button should lead to messages that a cycle executed withouth speech data.
+
+When you're ready, close the demo.
+
+Before we go - we should simplify some things with more `let` statements.
+Pack the `connect_microphone >>>> cycle_message` into a `let cycles = ...` imediately after the `openLogColumn "cycle"` line.
+Pack *just* the last two chunks of the ASR into `let log_asr_heard = ...` for the time being - put it right after the `openLogColumn "heard"` line.
+The program should look like this, test it again before continuing.
 
 ```purescript
 module Agent where
@@ -611,44 +686,48 @@ module Agent where
 import Effect
 import FRP
 import Prelude
+
 import Data.Tuple
-import Data.Maybe
 
 import Pdemo.Scenario
-import Pdemo.Mary
-import Pdemo.Sphinx
 
+import Data.Maybe
+import Pdemo.Sphinx
 
 entry :: Effect (SF Unit Unit)
 entry = do
-  -- open a microphone
-  mic <- openMicrophone
 
-  -- open the sphinx system
-  (Tuple line hear) <- openCMUSphinx4ASR
+    -- open a microphone
+    mic <- openMicrophone
 
-  -- open our log
-  log <- openLogColumn "heard"
+    -- open the sphinx system
+    (Tuple line hear) <- openCMUSphinx4ASR
 
-  -- just connect the microphone to the recogniser always
-  let connect = mic >>>> (Wrap $ SConnect) >>>> line
+    -- open our log
+    log <- openLogColumn "heard"
+    let log_asr_heard = (Wrap $ log_asr) >>>> log
 
-  -- simplify the ASR messages
-  let hear_1 = hear1 hear
+    -- just connect the microphone to the recogniser always
+    let connect_microphone = mic >>>> (Wrap $ SConnect) >>>> line
 
-  -- return an agent made of everything we've created so far
-  pure $ connect >>>> hear_1 >>>> (Wrap $ fromMaybe "nothing was heard") >>>> log
+    cycle_column <- openLogColumn "cycle"
+    let cycles = cycle_message >>>> cycle_column
 
+    pure $ connect_microphone >>>> cycles >>>> hear >>>> log_asr_heard
   where
-    -- build the simplified "hear" function
-    hear1 :: SF Unit (Maybe CMUSphinx4ASRE) ->  SF Unit (Maybe String)
-    hear1 hear = hear >>>> (Wrap swap)
+    cycle_message:: SF Unit String
+    cycle_message = cycle_count >>>> (Wrap $ \i -> "cycle #" <> show i <> " finished")
       where
-        swap :: (Maybe CMUSphinx4ASRE) -> (Maybe String)
-        swap m = unpack <$> m
+        cycle_count :: SF Unit Int
+        cycle_count = roller 0 successor
           where
-            unpack :: CMUSphinx4ASRE -> String
-            unpack (SRecognised text) = text
+            successor :: Int -> Unit -> (Tuple Int Int)
+            successor i _ = Tuple (i + 1) i
+
+
+log_asr :: Maybe CMUSphinx4ASRE -> String
+log_asr Nothing = "there's no ASR data this cycle"
+log_asr (Just (SRecognised text)) = "the ASR heard `" <> text <> "`"
 ```
 
 ## Speaking Out
