@@ -41,6 +41,23 @@ trait PiFileT {
 				.filter(p)
 		}
 
+		def ioWriteLines(text: String): File =
+			ioWriteLines(text.split("[\r \t]*\n"))
+
+		def ioWriteLines(lines: Seq[String]): File = {
+			val file = AbsoluteFile
+
+			require(file.exists() == file.isFile)
+
+			lines.foldLeft(
+				new FileWriter(file.EnsureParent).asInstanceOf[Writer]
+			)((_: Writer) append (_: String) append "\n")
+				.close()
+
+
+			file
+		}
+
 		def /(path: String): File =
 			if (path.startsWith("../"))
 				AbsoluteFile.ParentFile / path.drop(3)

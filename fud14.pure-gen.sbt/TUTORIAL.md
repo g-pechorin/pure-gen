@@ -1,6 +1,6 @@
 
 This document leads the reader through developing a "parrot" with this system.
-It's intended for readers familiar with functional programming,(but possibly lapsed) and "comfortable with Google"<sup id='f_link0'>[0](#f_note0)</sup> but not necessarily experienced with Haskell / PureScript.
+It's intended for readers familiar with functional programming,(but possibly lapsed) and "comfortable with Google"<sup id='f_link1'>[1](#f_note1)</sup> but not necessarily experienced with Haskell / PureScript.
 It is assumed that [the steps to install the system have been followed](INSTALL.md) first.
 
 
@@ -11,7 +11,8 @@ It is assumed that [the steps to install the system have been followed](INSTALL.
 - [Hello Log Agent](#hello-log-agent)
 	- [Log Columns](#log-columns)
 	- [Sending a Message](#sending-a-message)
-	- [Counting Log and the Dollar Thing](#counting-log-and-the-dollar-thing)
+	- [Cycle Counter](#cycle-counter)
+		- [Count](#count)
 - [Listening for Speech](#listening-for-speech)
 	- [Review and Forecast](#review-and-forecast)
 	- [event/vs/sample](#eventvssample)
@@ -31,8 +32,8 @@ It is assumed that [the steps to install the system have been followed](INSTALL.
 
 
 This is a tutorial for creating a "parrot" that repeats (in English) whatever speech it recognises (of English) using this Interactive Artificial Intelligence tool.
-I am assuming that [you have installed the system already and it's working - here's a guide to do that](INSTALL.md) and are somewhat comfortable using PureScript.<sup id='f_link1'>[1](#f_note1)</sup>
-You'll need a text editor, I'm using [Visual Code](https://code.visualstudio.com/)<sup id='f_link2'>[2](#f_note2)</sup> with the [PureScript Language Support](https://marketplace.visualstudio.com/items?itemName=nwolverson.language-purescript) installed.
+I am assuming that [you have installed the system already and it's working - here's a guide to do that](INSTALL.md) and are somewhat comfortable using PureScript.<sup id='f_link2'>[2](#f_note2)</sup>
+You'll need a text editor, I'm using [Visual Code](https://code.visualstudio.com/)<sup id='f_link3'>[3](#f_note3)</sup> with the [PureScript Language Support](https://marketplace.visualstudio.com/items?itemName=nwolverson.language-purescript) installed.
 
 
 
@@ -142,9 +143,9 @@ In a more practical sense, pure has a signature `pure :: forall a. a -> Effect a
 For any `value : a` you can pass it through `pure` to produce a value of type `Effect a`.
 
 
-`Wrap :: forall i o. (i -> o) -> SF i o` is a constructor (from the `lib/FRP.purs` file) that *wraps* an otherwise "pure function" to be a signal function.<sup id='f_link3'>[3](#f_note3)</sup>
+`Wrap :: forall i o. (i -> o) -> SF i o` is a constructor (from the `lib/FRP.purs` file) that *wraps* an otherwise "pure function" to be a signal function.<sup id='f_link4'>[4](#f_note4)</sup>
 
-The `\_ -> unit` statement is is a function that takes any value and returns a/the value of type `Unit`.
+The `\_ -> unit` statement is a function that takes any value and returns a/the value of type `Unit`.
 It is semantically identical to the snippet below;
 
 ```purescript
@@ -244,7 +245,7 @@ Exception in thread "Thread-4" java.lang.RuntimeException: an output:signal did 
   at java.base/java.lang.Iterable.forEach(Iterable.java:75)
   at peterlavalle.puregen.Cyclist.send(Cyclist.scala:157)
   at peterlavalle.puregen.DemoTry$.$anonfun$runAgent$5(DemoTry.scala:122)
-  at peterlavalle.include$$anon$2$$anon$3.run(include.scala:117)
+  at peterlavalle.include![anon$2](https://render.githubusercontent.com/render/math?math=anon$2)anon$3.run(include.scala:117)
 ```
 
 This indicates that one of the outputs wasn't "written to" during the cycle.
@@ -270,7 +271,7 @@ Given two signal functions `L: SF i m` and `R: SF m o` with the desired type, th
 
 So, if we had a constructor `messages :: SF Unit String`, we could compose it with the `hello` and return the result value with `pure`.
 Let's add this at the end of the agent in a `where` block to check the types.
-Add it with a hole<sup id='f_link4'>[4](#f_note4)</sup> first and then build it to see what happens ...
+Add it with a hole<sup id='f_link5'>[5](#f_note5)</sup> first and then build it to see what happens ...
 
 ```purescript
 module Agent where
@@ -307,7 +308,7 @@ entry = do
 
 ... great.
 Really - this is just the compiler saying "Your program is fine, but, I can't work with this thing so I need you to fill it in."
-We can "fill in" this hole<sup id='f_link4'>[4](#f_note4)</sup> to build a result that works.
+We can "fill in" this hole<sup id='f_link5'>[5](#f_note5)</sup> to build a result that works.
 So, all that needs to be done is to replace `?todo` with something that emits a suitable string value.
 
 We've already seen how to do this with `unit :: Unit` above, so, we *could* just do this ...
@@ -339,23 +340,28 @@ creating the entry signal-function
 
 So, that's us saying "Hello World" with an Interactive Artificial Intelligence.
 
-### Counting Log and the Dollar Thing
+### Cycle Counter
 
-> Peter needs to "finish" this by reading/editing it once the rest of the document is understood.
+This final goal of adding a cycle count to the "Hello Log" starts with changing the `message :: SF Unit String` function.
+We'll do this in two steps;
+
+1. create a signal function `: SF Unit Int` that performs the "counting"
+2. concatenate it with a `Int -> String` function via `Wrap`
+
+#### Count
+
+The author expected that the pattern ...
 
 
-The number of `(` and `)` can get hard to read.
-PureScript (and Haskell descendants) can be simplified with the `$`.
-Technically, this is *just* a function that changes the precedence of the left and right side.
+![f\left(p_0, i\right) = \left(p_1, o\right)](https://render.githubusercontent.com/render/math?math=f\left(p_0,%20i\right)%20=%20\left(p_1,%20o\right))
 
-
-Let's do one more thing, let's modify the
-
-- want count
-- grab the `icount` function
+... would be commonly used.
+That is, for some known value ![p_0](https://render.githubusercontent.com/render/math?math=p_0) a function ![f\left(p, i\right)](https://render.githubusercontent.com/render/math?math=f\left(p,%20i\right)) would be known to produce an output pair ![\left(p, o\right)](https://render.githubusercontent.com/render/math?math=\left(p,%20o\right)) containing both the next value ![p_1](https://render.githubusercontent.com/render/math?math=p_1) and the output value for ![f](https://render.githubusercontent.com/render/math?math=f).
+A PureScript constructor is included of the form `roller :: forall p i o. p -> (p -> i -> (Tuple p o)) -> SF i o` to build these entitites.
+We'll need to import `import Data.Tuple` at the top for this to work.
+We can use it as shown here;
 
 ```purescript
-
 --
 --
 -- uses roller :: forall p i o. p -> (p -> i -> (Tuple p o)) -> SF i o
@@ -364,32 +370,52 @@ cycle_count = roller 0 suc
   where
     suc :: Int -> Unit -> (Tuple Int Int)
     suc i _ = Tuple (i + 1) i
-
 ```
 
-- now we can modify message back to the `Wrap`
+Going back to `message` we can hide `cycle_count :: SF Unit Int` in the `where` block and change it to the `Wrap` form ...
 
 ```purescript
 message:: SF Unit String
 -- message = consta "Hello World"
-message = Wrap $ \_ -> "Hello World" -- new
+message = Wrap $ \i -> "Hello World" -- new
+  where
+    cycle_count :: SF Unit Int
 ```
 
-- change it to do "show" and declare that it's an `Int` and take the/a parameter and
+... then "compose it" onto the `cycle_count :: SF Unit Int` ...
 
 ```purescript
-message :: SF Int String
-message = Wrap $ \i -> ("Hello World " <> (show i))
+message:: SF Unit String
+-- message = consta "Hello World"
+-- message = Wrap $ \i -> "Hello World"
+message = cycle_count >>>> (Wrap $ \i -> "Hello World") -- new
+  where
+    cycle_count :: SF Unit Int
 ```
 
-- now when you build and run; error! Yes!
+... before computing a `: String` value in the lambda ...
 
-![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgTFttZXNzYWdlOiBTRiBJbnQgU3RyaW5nXVxuICBSW2xvZzogU0YgU3RyaW5nIFVuaXRdXG5cbiAgTCAtLT58Pj4+PnxSXG5cbiAgT1tlbnRyeTogU0YgSW50IFVuaXRdIn0=)
+```purescript
+message:: SF Unit String
+-- message = consta "Hello World"
+-- message = Wrap $ \i -> "Hello World"
+-- message = cycle_count >>>> (Wrap $ \i -> "Hello World")
+message = cycle_count >>>> (Wrap $ \i -> "Hello World " <> show i) -- new
+  where
+    cycle_count :: SF Unit Int
+    cycle_count = roller 0 suc
+      where
+        suc :: Int -> Unit -> (Tuple Int Int)
+        suc i _ = Tuple (i + 1) i
+```
 
-- you need a `: SF Unit Int` to start
-- concat the `cycle_count` to do something like this
+... to get a working program.
+This works now - you can build and run it.
+You can "trigger" the next cycle by pressing "Ok" and the counter will update.
 
-![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgSVtjeWNsZV9jb3VudDogU0YgVW5pdCBJbnRdXG5cbiAgTFttZXNzYWdlOiBTRiBJbnQgU3RyaW5nXVxuICBSW2xvZzogU0YgU3RyaW5nIFVuaXRdXG5cbiAgSSAtLT58Pj4+PnxMXG4gIEwgLS0+fD4+Pj58UlxuXG4gIE9bZW50cnk6IFNGIFVuaXQgVW5pdF0ifQ==)
+A "full" agent would have components that trigger the next cycle themselves.
+This section demonstrated how to build an agent that logs an "iteration count" message.
+The fields in the agent can be "renamed," as they are below, and built upon in the next section which listens for speech.
 
 ```purescript
 module Agent where
@@ -397,29 +423,25 @@ module Agent where
 import Effect
 import FRP
 import Prelude
+
 import Data.Tuple
 
 import Pdemo.Scenario
 
-cycle_count :: SF Unit Int
-cycle_count = roller 0 suc
-  where
-    suc :: Int -> Unit -> (Tuple Int Int)
-    suc i _ = Tuple (i + 1) i
-
 entry :: Effect (SF Unit Unit)
 entry = do
-  hello <- openLogColumn "hello"
-  pure (cycle_count >>>> message >>>> hello)
-
+    cycle_column <- openLogColumn "cycle"
+    pure $ cycle_message >>>> cycle_column
   where
-    message :: SF Int String
-    message = Wrap $ \i -> ("Hello World " <> (show i))
+    cycle_message:: SF Unit String
+    cycle_message = cycle_count >>>> (Wrap $ \i -> "cycle #" <> show i <> " finished")
+      where
+        cycle_count :: SF Unit Int
+        cycle_count = roller 0 successor
+          where
+            successor :: Int -> Unit -> (Tuple Int Int)
+            successor i _ = Tuple (i + 1) i
 ```
-
-- now have made changed program
-- showed how to do output
-- showed how to compose signal functions
 
 ## Listening for Speech
 
@@ -801,7 +823,7 @@ data LiveMaryS
 
 
 
-- the practical effect of this is that we need a time-stamp<sup id='f_link5'>[5](#f_note5)</sup>
+- the practical effect of this is that we need a time-stamp<sup id='f_link6'>[6](#f_note6)</sup>
 
 
 - time stamps come from the `openAge` which is opened as `age <- openAge`
@@ -1114,33 +1136,33 @@ entry = do
 
 ----
 
-<b id='f_note0'>[0](#f_link0)</b>
+<b id='f_note1'>[1](#f_link1)</b>
 One of the author's previous supervisors felt that *novice* developers were frequently reluctant to utilise search engines to resolve problems.
 Later (mutual) speculation suggested that naive assumptions about software quality led to a mindset which was reluctant to *justfixit* and move on, even when the solution was something graceless.
-[?](#f_link0)
-
-<b id='f_note1'>[1](#f_link1)</b>
-A meaningful introduction to [PureScript](https://www.purescript.org/) is regrettably beyond the scope of this document.
-I would suggest that an interested reader follow [the Quick Start Guide](https://github.com/purescript/documentation/blob/master/guides/Getting-Started.md) but would note that this system uses a different environment.
-> ... and the author hasn't followed the guide - generally searching for Haskell/Scala equivalency has been sufficient.
 [?](#f_link1)
 
 <b id='f_note2'>[2](#f_link2)</b>
-As with the installation, there's a way to do this with "no privileges" using a "portable" package ... but I'll forgo detailing it here for the sake of brevity.
+A meaningful introduction to [PureScript](https://www.purescript.org/) is regrettably beyond the scope of this document.
+I would suggest that an interested reader follow [the Quick Start Guide](https://github.com/purescript/documentation/blob/master/guides/Getting-Started.md) but would note that this system uses a different environment.
+> ... and the author hasn't followed the guide - generally searching for Haskell/Scala equivalency has been sufficient.
 [?](#f_link2)
 
 <b id='f_note3'>[3](#f_link3)</b>
-This is something of an optimisation.
-The `Next :: forall i o. (i -> Effect (Tuple (SF i o) o)) -> SF i o` is the/a most-general type that any Signal Function needs to implement.
-`Wrap :: forall i o. (i -> o) -> SF i o` *just* simplifies this (in an obvious way) and *should* reduce system requirements.
+As with the installation, there's a way to do this with "no privileges" using a "portable" package ... but I'll forgo detailing it here for the sake of brevity.
 [?](#f_link3)
 
 <b id='f_note4'>[4](#f_link4)</b>
-"Typed holes" are "holes" with a "data type" and a feature of some functional programming languages.
-It's exactly what it sounds like; a hole in the program that lets you compile it so you can check your progress before coming back and finishing.
+This is something of an optimisation.
+The `Next :: forall i o. (i -> Effect (Tuple (SF i o) o)) -> SF i o` is the/a most-general type that any Signal Function needs to implement.
+`Wrap :: forall i o. (i -> o) -> SF i o` *just* simplifies this (in an obvious way) and *should* reduce system requirements.
 [?](#f_link4)
 
 <b id='f_note5'>[5](#f_link5)</b>
-or we could cheat and use an ascending counter ... but that's
+"Typed holes" are "holes" with a "data type" and a feature of some functional programming languages.
+It's exactly what it sounds like; a hole in the program that lets you compile it so you can check your progress before coming back and finishing.
 [?](#f_link5)
+
+<b id='f_note6'>[6](#f_link6)</b>
+or we could cheat and use an ascending counter ... but that's
+[?](#f_link6)
 
