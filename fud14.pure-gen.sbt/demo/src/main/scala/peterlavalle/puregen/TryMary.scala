@@ -20,8 +20,8 @@ class TryMary() extends Mary {
 				val ifNewer: Newer[Float] = Newer(-1.0f)
 
 				new LiveMary.Si {
-					override def Silent(a0: Float): Unit =
-						ifNewer(a0) {
+					override def Silent(): Unit =
+						ifNewer() {
 							live.speak("", () => {}, (_: Boolean) => {})
 						}
 

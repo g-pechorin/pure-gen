@@ -732,9 +732,157 @@ log_asr (Just (SRecognised text)) = "the ASR heard `" <> text <> "`"
 
 ## Speaking Out
 
-> this section is/was drafted assuming that the/a cycle count is/was in the previous section
+The agent can now log data about its state after a cycle, and, recognise (some) speech from the user.
+This chapter expands on the previous one by adding functionality to convert the text to speech (TTS) and play it back to the user.
+This faces an noteworthy hurdle - the agents are "reactive" and when speaking need to function as a "DJ" rather than a "singer" in that they choose which speech to emit (i.e. which song to play) then monitor incoming events to see if they should "switch" that value, but, otherwise don't actively do anything.
 
-> this section needs to be tested
+
+The last chapter touched on the nature of "optional" values such as the `Maybe a` type.
+
+![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgbWF5YmVbOiBNYXliZSBhXVxuICBqdXN0W0p1c3QgYV1cbiAgbm9uZVtOb3RoaW5nXVxuXG4gIG1heWJlIC0tPnxpZiBpdCBoYXMgYSB2YWx1ZXxqdXN0XG4gIG1heWJlIC0tPnxpZiB0aGVyZSBpcyBubyB2YWx1ZXxub25lIn0=)
+
+For this chapter, when speech was detected by the ASR we need to produce a new speech synthesis command.
+
+![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgbWF5YmVbOiBNYXliZSBDTVVTcGhpbng0QVNSRV1cbiAganVzdFtKdXN0IFNSZWNvZ25pc2VkXVxuICBub25lW05vdGhpbmddXG4gIHRhbGtbcHJvZHVjZSBhIFRUUyB2YWx1ZV1cbiAgbWF5YmUgLS0+anVzdFxuICBtYXliZSAtLT5ub25lXG4gIGp1c3QgLS0+fGNvbnN0cnVjdCBhIG5ldyBjb21tYW5kfCB0YWxrIn0=)
+
+If no (new) speech was detected for this cycle, we need to reuse the old value.
+
+![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgbWF5YmVbOiBNYXliZSBDTVVTcGhpbng0QVNSRV1cbiAganVzdFtKdXN0IFNSZWNvZ25pc2VkXVxuICBub25lW05vdGhpbmddXG4gIG5vcGUocHJldmlvdXMgVFRTIHZhbHVlKVxuICB0YWxrW3Byb2R1Y2UgYSBUVFMgdmFsdWVdXG4gIG1heWJlIC0tPmp1c3RcbiAgbWF5YmUgLS0+bm9uZVxuICBqdXN0IC0tPiB0YWxrXG4gIG5vbmUgLS0+fGRvbid0IGNoYW5nZSBhbnl0aGluZ3wgbm9wZSJ9)
+
+We'll need a "fallback" TTS command for the time between when the system starts, and, when it first detects speech.
+If we examine the commands that can be sent to the sythesizer in `Mary.purs` we see that the `data` type is ...
+
+```purescript
+data LiveMaryS
+  = Silent
+	| Speak Number String
+```
+
+... which indicates that the `Silent` command can be constructed and sent with no addtional parameters.
+
+Converting the `SRecognised String` value to `Speak Number String` is problematic.
+This first `Number` is  the "start time" for the spoken text.
+The TTS system needs to be told when it should start playing the speech, simmilar to how a DJ might be told to start playing a song at a certain time.
+For us, this will *just* be the simulation's age, which we can find with the `openAge :: Effect (SF Unit Number)` from the `Scenario.purs` module.
+
+With the above in mind, we'll start implementing the functionality.
+
+Start by (testing your last version and then) adding `import Pdemo.Mary` to your import statements.
+
+We will start off by "fusing" the age and the ASR to get something that we can use to construct the TTS message.
+We can do this with the builtin function `fuselr :: forall i l r. SF i l -> SF i r -> SF i (Tuple l r)` so ...
+
+```purescript
+something_fused :: SF Unit (Maybe CMUSphinx4ASRE) -> SF Unit Number -> SF Unit (Tuple (Maybe CMUSphinx4ASRE) Number)
+something_fused asr age = fuselr asr age
+```
+
+While we need to "cycle" the age (it's a foreign signal function) we don't need it's value when the ASR value is nothing.
+[The "Data.Maybe" documentation](https://pursuit.purescript.org/packages/purescript-maybe/4.0.1/docs/Data.Maybe) describes the "`Functor` instance" as allowing ...
+
+```purescript
+(<$>) :: forall i o. (i -> o) -> Maybe i -> Maybe o
+```
+
+... and allowing us to do ...
+
+```purescript
+repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> (Maybe (Tuple CMUSphinx4ASRE Number))
+repack_the_asr_message (Tuple asr age) = (\just_asr_message -> Tuple just_asr_message age) <$> asr
+```
+
+This is closer ... but we can do better.
+We can make `repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> Maybe LiveMaryS` by constructing the `LiveMaryS` command instead of a `Tuple`.
+We do need an `unpack_asr` pattern matching function, so, we'll put that in a `where` block ...
+
+```purescript
+repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> (Maybe (Tuple CMUSphinx4ASRE Number))
+repack_the_asr_message (Tuple asr age) = (\just_asr_message -> Tuple just_asr_message age) <$> asr
+  where
+    unpack_asr :: CMUSphinx4ASRE -> String
+    unpack_asr (SRecognised text) = text
+```
+
+... but ... it would be simplest if we took the `age :: Number` and constructed the `LiveMaryS` in that sub-function.
+
+```purescript
+unpack_asr :: Number -> CMUSphinx4ASRE -> LiveMaryS
+unpack_asr age (SRecognised text) = Speak age text
+```
+
+We can use this instead of the/a lambda expression, and, finalise the `repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> Maybe LiveMaryS` function ...
+
+
+```purescript
+something_fused :: SF Unit (Maybe CMUSphinx4ASRE) -> SF Unit Number -> SF Unit (Tuple (Maybe CMUSphinx4ASRE) Number)
+something_fused asr age = fuselr asr age
+
+repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> Maybe LiveMaryS
+repack_the_asr_message (Tuple asr age) = (unpack_asr age) <$> asr
+  where
+    unpack_asr :: Number -> CMUSphinx4ASRE -> LiveMaryS
+    unpack_asr age (SRecognised text) = Speak age text
+```
+
+Test that these two functions compile before continuing.
+We're *almost* there - we can trivially concatenate these two into `: SF Unit (Maybe CMUSphinx4ASRE) -> SF Unit Number -> SF Unit (Maybe LiveMaryS)` which gets us closer.
+Let's do that here, and, "hide" the `repack_the_asr_message` in a `where` block.
+
+```purescript
+something_fused :: SF Unit (Maybe CMUSphinx4ASRE) -> SF Unit Number -> SF Unit (Maybe LiveMaryS)
+something_fused asr age =
+    (fuselr asr age) >>>> (Wrap repack_the_asr_message)
+  where
+    repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> Maybe LiveMaryS
+    repack_the_asr_message (Tuple asr age) = (unpack_asr age) <$> asr
+
+    unpack_asr :: Number -> CMUSphinx4ASRE -> LiveMaryS
+    unpack_asr age (SRecognised text) = Speak age text
+```
+
+
+
+We need someway to make `SF Unit (Maybe LiveMaryS)` into `SF Unit LiveMaryS` so that we can concatenate it to the (eventual) `mary_control :: SF LiveMaryS Unit`.
+
+The "Data.Maybe" module does offer `fromMaybe :: forall a. a -> Maybe a -> a` **BUT THIS WON'T WORK!**
+We don't want a value to use "whenever we get a `Nothing`" we need a value to use until we get `Just a` AND we then need to `repeat` that that last value until the next `Just a` value arrives.
+The `FRP.purs` module has a function `repeat :: forall i o. o -> SF i (Maybe o) -> SF i o` and operator `////` that does this.
+According to the comments on `repeat` it will do exactly what we need, so, instead of returning `(fuselr asr age) >>>> (Wrap repack_the_asr_message)` we can return ...
+
+```purescript
+something_fused asr age =
+    Silent //// (fuselr asr age) >>>> (Wrap repack_the_asr_message)
+  where
+    repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> Maybe LiveMaryS
+    repack_the_asr_message (Tuple asr age) = (unpack_asr age) <$> asr
+
+    unpack_asr :: Number -> CMUSphinx4ASRE -> LiveMaryS
+    unpack_asr age (SRecognised text) = Speak age text
+```
+
+Compile this ... and there's an error; update the function's return type to correct it.
+
+----
+> Peter
+----
+> Peter
+----
+> Peter
+----
+> Peter
+----
+> Peter
+----
+
+- open age and make the function eff
+- open mary and chain it all
+- now need to open it in the agetn
+  - ... and fuse it with heard
+  - ... and crunch the last value
+- it's alive!
+
+
+> Peter should remove the "start time" from the "Silence" command ... and remove this note from the tutorial
 
 ### what we're doing
 

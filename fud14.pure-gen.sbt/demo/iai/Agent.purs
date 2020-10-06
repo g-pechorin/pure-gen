@@ -12,6 +12,8 @@ import Pdemo.Scenario
 import Data.Maybe
 import Pdemo.Sphinx
 
+import Pdemo.Mary
+
 entry :: Effect (SF Unit Unit)
 entry = do
 
@@ -46,3 +48,17 @@ entry = do
 log_asr :: Maybe CMUSphinx4ASRE -> String
 log_asr Nothing = "there's no ASR data this cycle"
 log_asr (Just (SRecognised text)) = "the ASR heard `" <> text <> "`"
+
+
+
+
+
+something_fused :: SF Unit (Maybe CMUSphinx4ASRE) -> SF Unit Number -> SF Unit LiveMaryS
+something_fused asr age =
+    Silent //// (fuselr asr age) >>>> (Wrap repack_the_asr_message)
+  where
+    repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> Maybe LiveMaryS
+    repack_the_asr_message (Tuple asr age) = (unpack_asr age) <$> asr
+
+    unpack_asr :: Number -> CMUSphinx4ASRE -> LiveMaryS
+    unpack_asr age (SRecognised text) = Speak age text
