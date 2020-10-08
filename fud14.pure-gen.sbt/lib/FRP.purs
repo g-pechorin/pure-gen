@@ -1,6 +1,5 @@
 --
 -- don't edit this when writing agent/s
--- ... unles you're fixing something you intend to push upstream
 --
 
 module FRP where
@@ -9,7 +8,7 @@ module FRP where
 import Effect (Effect) -- dep: effect
 import Prelude (bind, pure, ($), Unit, unit) -- dep: prelude
 import Data.Tuple (Tuple(..), fst, snd) -- dep: tuples
-import Data.Maybe (Maybe, fromMaybe) -- dep: maybe
+import Data.Maybe -- dep: maybe
 
 -- signal functions will conform to this generic type
 data SF i o
@@ -39,11 +38,33 @@ consta o = Wrap $ \_ -> o
 
 
 -- make a signal function from some generic parameter "p" that's continually replaced
-foldp :: forall p i o. p -> (p -> i -> Effect (Tuple p o)) -> SF i o
-foldp p f = Next $ \i -> do
+fold_hard :: forall p i o. p -> (p -> i -> Effect (Tuple p o)) -> SF i o
+fold_hard p f = Next $ \i -> do
   t <- f p i
-  let n = foldp (fst t) f
+  let n = fold_hard (fst t) f
   pure $ Tuple n $ snd t
+
+--
+-- pseudo-constructor for SF. takes a parameter `p` and some function to compute the next p and output
+fold_soft :: forall p i o. p -> (p -> i -> (Tuple p o)) -> SF i o
+fold_soft par fun = Next $ inner
+  where
+    inner :: i -> Effect (Tuple (SF i o) o)
+    inner i = do
+      let pair = fun par i
+      let n = fst pair
+      let o = snd pair
+      pure $ Tuple (fold_soft n fun) o
+
+--
+-- construct a SF that emits the last "not-empty" Maybe and starts with the passed value
+cache :: forall v. v -> SF (Maybe v) v
+cache d = fold_soft d inner
+  where
+    inner :: v -> (Maybe v) -> Tuple v v
+    inner _ (Just n) = Tuple n n
+    inner o _ = Tuple o o
+
 
 --
 -- concatenate two signal functions into one
@@ -79,18 +100,6 @@ infixr 7 repeat as ////
 -- repeat = ?repeat
 -- -- ??/ :: o -> SF i (Maybe o) -> SF i o
 
-
---
--- pseudo-constructor for SF. takes a parameter `p` and some function to compute the next p and output
-roller :: forall p i o. p -> (p -> i -> (Tuple p o)) -> SF i o
-roller par fun = Next $ inner
-  where
-    inner :: i -> Effect (Tuple (SF i o) o)
-    inner i = do
-      let pair = fun par i
-      let n = fst pair
-      let o = snd pair
-      pure $ Tuple (roller n fun) o
 
 
 

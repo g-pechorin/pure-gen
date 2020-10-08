@@ -20,13 +20,9 @@ It is assumed that [the steps to install the system have been followed](INSTALL.
 	- [Connect the Microphone to the ASR](#connect-the-microphone-to-the-asr)
 	- [Logging ASR Values](#logging-asr-values)
 - [Speaking Out](#speaking-out)
-	- [what we're doing](#what-were-doing)
-	- [how we do it](#how-we-do-it)
-		- [forking to get both](#forking-to-get-both)
-		- [actual message](#actual-message)
-		- [final example](#final-example)
-	- [Listening Parrot](#listening-parrot)
-- [Google ASR](#google-asr)
+	- [Implementing the "Brain"](#implementing-the-brain)
+	- [Integrating the brain](#integrating-the-brain)
+	- [Summary](#summary)
 
 
 This is a tutorial for creating a "parrot" that repeats (in English) whatever speech it recognises (of English) using this Interactive Artificial Intelligence tool.
@@ -355,16 +351,16 @@ The author expected that the pattern ...
 
 ... would be commonly used.
 That is, for some known value ![p_0](https://render.githubusercontent.com/render/math?math=p_0) a function ![f\left(p, i\right)](https://render.githubusercontent.com/render/math?math=f\left(p,%20i\right)) would be known to produce an output pair ![\left(p, o\right)](https://render.githubusercontent.com/render/math?math=\left(p,%20o\right)) containing both the next value ![p_1](https://render.githubusercontent.com/render/math?math=p_1) and the output value for ![f](https://render.githubusercontent.com/render/math?math=f).
-A PureScript constructor is included of the form `roller :: forall p i o. p -> (p -> i -> (Tuple p o)) -> SF i o` to build these entitites.
+A PureScript constructor is included of the form `fold_soft :: forall p i o. p -> (p -> i -> (Tuple p o)) -> SF i o` to build these entitites.
 We'll need to import `import Data.Tuple` at the top for this to work.
 We can use it as shown here;
 
 ```purescript
 --
 --
--- uses roller :: forall p i o. p -> (p -> i -> (Tuple p o)) -> SF i o
+-- uses fold_soft :: forall p i o. p -> (p -> i -> (Tuple p o)) -> SF i o
 cycle_count :: SF Unit Int
-cycle_count = roller 0 suc
+cycle_count = fold_soft 0 suc
   where
     suc :: Int -> Unit -> (Tuple Int Int)
     suc i _ = Tuple (i + 1) i
@@ -401,7 +397,7 @@ message:: SF Unit String
 message = cycle_count >>>> (Wrap $ \i -> "Hello World " <> show i) -- new
   where
     cycle_count :: SF Unit Int
-    cycle_count = roller 0 suc
+    cycle_count = fold_soft 0 suc
       where
         suc :: Int -> Unit -> (Tuple Int Int)
         suc i _ = Tuple (i + 1) i
@@ -435,7 +431,7 @@ entry = do
     cycle_message = cycle_count >>>> (Wrap $ \i -> "cycle #" <> show i <> " finished")
       where
         cycle_count :: SF Unit Int
-        cycle_count = roller 0 successor
+        cycle_count = fold_soft 0 successor
           where
             successor :: Int -> Unit -> (Tuple Int Int)
             successor i _ = Tuple (i + 1) i
@@ -626,11 +622,10 @@ caught an exception during the cycle
 We have made progress, in the next section we'll perform the final step by mapping the
 So this means ... we've made progress.
 
-----
 
 ### Logging ASR Values
 
-ASR data enters teh agent with the form `Maybe CMUSphinx4ASRE`.
+ASR data enters the agent with the form `Maybe CMUSphinx4ASRE`.
 This can be pattern matched, translated to a string, and passed out to the `"heard"` log column.
 We start with a strong function prototype ... and try to compile it.
 (Thus far - we haven't had compilation errors in this chapter)
@@ -650,9 +645,9 @@ log_asr Nothing = "there's no ASR data this cycle"
 
 When you compile & run again - you'll get a different compilation error.
 The gist of it is that you've handled "no value" and now you need to handle `Just a` value.
-So you need to provide matchign deconstructros for each constructor of `CMUSphinx4ASRE`.
+So you need to provide matching deconstructors for each constructor of `CMUSphinx4ASRE`.
 
-There's only one constructor for `CMUSphinx4ASRE` it's `SRecognised String` so let's add that, and construct a striong from it.
+There's only one constructor for `CMUSphinx4ASRE` it's `SRecognised String` so let's add that, and construct a string from it.
 
 ```purescript
 log_asr :: Maybe CMUSphinx4ASRE -> String
@@ -660,7 +655,7 @@ log_asr Nothing = "there's no ASR data this cycle"
 log_asr (Just (SRecognised text)) = "the ASR heard `" <> text <> "`"
 ```
 
-This will compile and run again, but, imediatly halt becauyse we're still on consuming the `hear :: SF Unit CMUSphinx4ASRE` message.
+This will compile and run again, but, immediately halt because we're still on consuming the `hear :: SF Unit CMUSphinx4ASRE` message.
 So, the last step here is to compose `hear` with `Wrap $ log_asr` and `log` and add it to the `pure` return value.
 
 ```purescript
@@ -669,9 +664,9 @@ So, the last step here is to compose `hear` with `Wrap $ log_asr` and `log` and 
 pure $ connect_microphone >>>> cycle_message >>>> cycle_column >>>> hear >>>> (Wrap $ log_asr) >>>> log
 ```
 
-Try stating "oh" or "no" or other monosyllabic words to set off the speech detectiong.
-It's quite rough - likely it'd work better if it was tuend, but, that's beyond the scope of this exercise.
-Tapping the `Ok` button should lead to messages that a cycle executed withouth speech data.
+Try stating "oh" or "no" or other monosyllabic words to set off the speech detection.
+It's quite rough - likely it'd work better if it was tuned, but, that's beyond the scope of this exercise.
+Tapping the `Ok` button should lead to messages that a cycle executed without speech data.
 
 When you're ready, close the demo.
 
@@ -719,7 +714,7 @@ entry = do
     cycle_message = cycle_count >>>> (Wrap $ \i -> "cycle #" <> show i <> " finished")
       where
         cycle_count :: SF Unit Int
-        cycle_count = roller 0 successor
+        cycle_count = fold_soft 0 successor
           where
             successor :: Int -> Unit -> (Tuple Int Int)
             successor i _ = Tuple (i + 1) i
@@ -734,7 +729,7 @@ log_asr (Just (SRecognised text)) = "the ASR heard `" <> text <> "`"
 
 The agent can now log data about its state after a cycle, and, recognise (some) speech from the user.
 This chapter expands on the previous one by adding functionality to convert the text to speech (TTS) and play it back to the user.
-This faces an noteworthy hurdle - the agents are "reactive" and when speaking need to function as a "DJ" rather than a "singer" in that they choose which speech to emit (i.e. which song to play) then monitor incoming events to see if they should "switch" that value, but, otherwise don't actively do anything.
+This faces a noteworthy hurdle - the agents are "reactive" and when speaking need to function as a "DJ" rather than a "singer" in that they choose which speech to emit (i.e. which song to play) then monitor incoming events to see if they should "switch" that value, but, otherwise don't actively do anything.
 
 
 The last chapter touched on the nature of "optional" values such as the `Maybe a` type.
@@ -749,617 +744,187 @@ If no (new) speech was detected for this cycle, we need to reuse the old value.
 
 ![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgbWF5YmVbOiBNYXliZSBDTVVTcGhpbng0QVNSRV1cbiAganVzdFtKdXN0IFNSZWNvZ25pc2VkXVxuICBub25lW05vdGhpbmddXG4gIG5vcGUocHJldmlvdXMgVFRTIHZhbHVlKVxuICB0YWxrW3Byb2R1Y2UgYSBUVFMgdmFsdWVdXG4gIG1heWJlIC0tPmp1c3RcbiAgbWF5YmUgLS0+bm9uZVxuICBqdXN0IC0tPiB0YWxrXG4gIG5vbmUgLS0+fGRvbid0IGNoYW5nZSBhbnl0aGluZ3wgbm9wZSJ9)
 
-We'll need a "fallback" TTS command for the time between when the system starts, and, when it first detects speech.
-If we examine the commands that can be sent to the sythesizer in `Mary.purs` we see that the `data` type is ...
+We'll need a "fallback" TTS command for the time between when the system starts, and when it first detects speech.
+If we examine the commands that can be sent to the synthesizer in `Mary.purs` we see that the `data` type is ...
 
 ```purescript
 data LiveMaryS
   = Silent
-	| Speak Number String
-```
-
-... which indicates that the `Silent` command can be constructed and sent with no addtional parameters.
-
-Converting the `SRecognised String` value to `Speak Number String` is problematic.
-This first `Number` is  the "start time" for the spoken text.
-The TTS system needs to be told when it should start playing the speech, simmilar to how a DJ might be told to start playing a song at a certain time.
-For us, this will *just* be the simulation's age, which we can find with the `openAge :: Effect (SF Unit Number)` from the `Scenario.purs` module.
-
-With the above in mind, we'll start implementing the functionality.
-
-Start by (testing your last version and then) adding `import Pdemo.Mary` to your import statements.
-
-We will start off by "fusing" the age and the ASR to get something that we can use to construct the TTS message.
-We can do this with the builtin function `fuselr :: forall i l r. SF i l -> SF i r -> SF i (Tuple l r)` so ...
-
-```purescript
-something_fused :: SF Unit (Maybe CMUSphinx4ASRE) -> SF Unit Number -> SF Unit (Tuple (Maybe CMUSphinx4ASRE) Number)
-something_fused asr age = fuselr asr age
-```
-
-While we need to "cycle" the age (it's a foreign signal function) we don't need it's value when the ASR value is nothing.
-[The "Data.Maybe" documentation](https://pursuit.purescript.org/packages/purescript-maybe/4.0.1/docs/Data.Maybe) describes the "`Functor` instance" as allowing ...
-
-```purescript
-(<$>) :: forall i o. (i -> o) -> Maybe i -> Maybe o
-```
-
-... and allowing us to do ...
-
-```purescript
-repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> (Maybe (Tuple CMUSphinx4ASRE Number))
-repack_the_asr_message (Tuple asr age) = (\just_asr_message -> Tuple just_asr_message age) <$> asr
-```
-
-This is closer ... but we can do better.
-We can make `repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> Maybe LiveMaryS` by constructing the `LiveMaryS` command instead of a `Tuple`.
-We do need an `unpack_asr` pattern matching function, so, we'll put that in a `where` block ...
-
-```purescript
-repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> (Maybe (Tuple CMUSphinx4ASRE Number))
-repack_the_asr_message (Tuple asr age) = (\just_asr_message -> Tuple just_asr_message age) <$> asr
-  where
-    unpack_asr :: CMUSphinx4ASRE -> String
-    unpack_asr (SRecognised text) = text
-```
-
-... but ... it would be simplest if we took the `age :: Number` and constructed the `LiveMaryS` in that sub-function.
-
-```purescript
-unpack_asr :: Number -> CMUSphinx4ASRE -> LiveMaryS
-unpack_asr age (SRecognised text) = Speak age text
-```
-
-We can use this instead of the/a lambda expression, and, finalise the `repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> Maybe LiveMaryS` function ...
-
-
-```purescript
-something_fused :: SF Unit (Maybe CMUSphinx4ASRE) -> SF Unit Number -> SF Unit (Tuple (Maybe CMUSphinx4ASRE) Number)
-something_fused asr age = fuselr asr age
-
-repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> Maybe LiveMaryS
-repack_the_asr_message (Tuple asr age) = (unpack_asr age) <$> asr
-  where
-    unpack_asr :: Number -> CMUSphinx4ASRE -> LiveMaryS
-    unpack_asr age (SRecognised text) = Speak age text
-```
-
-Test that these two functions compile before continuing.
-We're *almost* there - we can trivially concatenate these two into `: SF Unit (Maybe CMUSphinx4ASRE) -> SF Unit Number -> SF Unit (Maybe LiveMaryS)` which gets us closer.
-Let's do that here, and, "hide" the `repack_the_asr_message` in a `where` block.
-
-```purescript
-something_fused :: SF Unit (Maybe CMUSphinx4ASRE) -> SF Unit Number -> SF Unit (Maybe LiveMaryS)
-something_fused asr age =
-    (fuselr asr age) >>>> (Wrap repack_the_asr_message)
-  where
-    repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> Maybe LiveMaryS
-    repack_the_asr_message (Tuple asr age) = (unpack_asr age) <$> asr
-
-    unpack_asr :: Number -> CMUSphinx4ASRE -> LiveMaryS
-    unpack_asr age (SRecognised text) = Speak age text
-```
-
-
-
-We need someway to make `SF Unit (Maybe LiveMaryS)` into `SF Unit LiveMaryS` so that we can concatenate it to the (eventual) `mary_control :: SF LiveMaryS Unit`.
-
-The "Data.Maybe" module does offer `fromMaybe :: forall a. a -> Maybe a -> a` **BUT THIS WON'T WORK!**
-We don't want a value to use "whenever we get a `Nothing`" we need a value to use until we get `Just a` AND we then need to `repeat` that that last value until the next `Just a` value arrives.
-The `FRP.purs` module has a function `repeat :: forall i o. o -> SF i (Maybe o) -> SF i o` and operator `////` that does this.
-According to the comments on `repeat` it will do exactly what we need, so, instead of returning `(fuselr asr age) >>>> (Wrap repack_the_asr_message)` we can return ...
-
-```purescript
-something_fused asr age =
-    Silent //// (fuselr asr age) >>>> (Wrap repack_the_asr_message)
-  where
-    repack_the_asr_message :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> Maybe LiveMaryS
-    repack_the_asr_message (Tuple asr age) = (unpack_asr age) <$> asr
-
-    unpack_asr :: Number -> CMUSphinx4ASRE -> LiveMaryS
-    unpack_asr age (SRecognised text) = Speak age text
-```
-
-Compile this ... and there's an error; update the function's return type to correct it.
-
-----
-> Peter
-----
-> Peter
-----
-> Peter
-----
-> Peter
-----
-> Peter
-----
-
-- open age and make the function eff
-- open mary and chain it all
-- now need to open it in the agetn
-  - ... and fuse it with heard
-  - ... and crunch the last value
-- it's alive!
-
-
-> Peter should remove the "start time" from the "Silence" command ... and remove this note from the tutorial
-
-### what we're doing
-
-
-- weh ave made an agent
-	- it reacts
-	- it emits text
-	- not great, but, it obeys all the conventions of what we need it to
-- what next
-	- make it speak outloud
-	- show's slightly complex io
-	- shows using time
-	- show using fork
-
-### how we do it
-
-- start with the program from the last section
-
-- it does ...
-
-![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgbWljIC0tPnw+Pj4+fGxpbmVcblxuICB3cmFwW1wiZnJvbU1heWJlICdub3RoaW5nIHdhcyBoZWFyZCdcIl1cblxuICBoZWFyIC0tPnw+Pj4+fHVucGFja1xuXG4gIHVucGFjay0tPnw+Pj4+fHdyYXBcbiAgd3JhcCAtLT58Pj4+Pnxsb2cifQ==)
-
-... but we want
-
-
-![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgbWljIC0tPnw+Pj4+fGxpbmVcblxuICB3cmFwW1wiZnJvbU1heWJlICdub3RoaW5nIHdhcyBoZWFyZCdcIl1cblxuICBoZWFyIC0tPnw+Pj4+fHVucGFja1xuXG4gIHVucGFjay0tPnw+Pj4+fHdyYXBcbiAgd3JhcCAtLT58Pj4+Pnxsb2dcblxuICB1bnBhY2sgLS0+fD4+Pj58c29tZXRoaW5nXG4gIHNvbWV0aGluZ1tcInNvbWV0aGluZyBlbHNlIHRvIHRyaWdnZXIgVFRTXCJdIn0=)
-
-- to get the new parts, we need to import and open the TTS system which is built on MaryTTS
-	- import and call
-		- `import Pdemo.Mary`
-		- `_ <- openLiveMary ""`
-			- ignore th string parameter for now ... sorry
-		- simple
-	- what is the "type" of mary?
-		- `(Tuple mary_signals mary_events) <- openLiveMary ""`
-	- the `mary_signals` is a SF we use to control what we want the TTS to "say"
-	- the `mary_events` is a SF we use to rect to when the TTS says something
-
-
-- `mary_events` will introduce an interesting issue tricky
-	- not going to use the `mary_events` SF in this tutorial
-		- so can silence it by as before ... but lets use a standard one
-			- `unitsf :: forall i o. SF i o -> SF i ()`
-			- ... or `>>>> (Wrap $ \_ -> unit)`
-			- or deadsf?
-	- this is "the way" in this design
-	- we're going to connect this at startup and forget about it
-
-- `mary_signals` is how we speak
-	- how it works will hihgligh difference between "columsn" and "behaviours"
-		* columsn - data with a value that's time-invariant
-		* behaviours - output that started at a specific time and changes over time withouth "changing"
-	- let's *justy* copy the heard test to it, test that, then come back to the disctinction
-	- this has the/a type `: SF LiveMaryS ()` and so we're going to need to convert the/a signal functions to make it work
-
-- we can put this/the "new logic" into a function that connects/converts the `Maybe String` to our `LiveMaryS` ...
-
-```purescript
-make_brain :: SF (Maybe String) LiveMaryS
-```
-
-... right? so we'd get ...
-
-![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcblx0bWljIC0tPnw+Pj4+fGxpbmVcblxuXHR3cmFwW1wiZnJvbU1heWJlICdub3RoaW5nIHdhcyBoZWFyZCdcIl1cblxuXHRoZWFyIC0tPnw+Pj4+fHVucGFja1xuXG5cdHVucGFjay0tPnw+Pj4+fHdyYXBcblx0d3JhcCAtLT58Pj4+Pnxsb2dcblxuXHR1bnBhY2sgLS0+fD4+Pj58bWFrZV9icmFpblxuXHRtYWtlX2JyYWluIC0tPnw+Pj4+fG1hcnlfc2lnbmFsc1xuXG5cdGRlYWRbXCJXcmFwICQgXFxfIC0+IHVuaXRcIl1cblx0bWFyeV9ldmVudHMgLS0+fD4+Pj58ZGVhZCJ9)
-... because we have to do something with the events.
-
-- Most of this should *look* "fine" but the "fork" between `unpack` and `something` is new.
-	- that's not too-too hard; `fuselr :: forall i l r. SF i l -> SF i r -> SF i (Tuple l r)` will do the work.
-	- we can "collect" the log stuff with a let, and, do the same with the tts stuff, then `fuselr` them before ignoring thge fused outoput with `>>>> (Wrap $ \_ -> unit)`
-
-so ...
-
-```purescript
-pure $ connect >>>> hear_1 >>>> (Wrap $ fromMaybe "nothing was heard") >>>> log
-```
-
-... becomes ...
-
-```purescript
-let logging = (Wrap $ fromMaybe "nothing was heard") >>>> log
-pure $ connect >>>> hear_1 >>>> logging
-```
-
-... which becomes ...
-
-
-```purescript
-let logging = (Wrap $ fromMaybe "nothing was heard") >>>> log
-let speaking = make_brain >>>> mary_signals
-pure $ connect >>>> hear_1 >>>> logging
-```
-
-... leaving us to *just* implement ...
-
-```purescript
-make_brain :: SF (Maybe String) LiveMaryS
-```
-
-... so make a function that takes "maybe a string" and returns a `LiveMaryS` instance.
-
-
-We can run this all now.
-Use `make_brain = ?make_brain_hole` to implement `make_brain` and observe that the only error suggests `Agent.make_brain` as a possible value.
-
-#### forking to get both
-
-So ... the middle likks like this
-
-
-```purescript
-...
-
--- simplify the ASR messages
-let hear_1 = hear1 hear
-
--- open mpore
-(Tuple mary_signals mary_events) <- openLiveMary ""
-
--- connect the things together
-let connect1 = connect >>>> mary_events >>>> unitsf
-
-let speaking = make_brain >>>> mary_signals
-
--- return an agent made of everything we've created so far
-pure $ connect1 >>>> hear_1 >>>> (Wrap $ fromMaybe "nothing was heard") >>>> log
-
-where
-	...
-```
-
-We want/need to do two things
-
-1. extract the logging "tail" with `: SF (Maybe String) ()`
-2. twin it with the speaking local `: SF (Maybe String) ()`
-
-- the `fuselr : SF i l -> SF i r -> SF i (l, r)` function will/does do this
-	- ... almost - we'll need to discard the/a value `: SF () ((), ())` at the end by `>>>> unitsf`
-
-- `let logging = (Wrap $ fromMaybe "nothing was heard") >>>> log` extract logging
-
-- `let fused = fuselr logging speaking`
-
-- make the output `pure $ connect1 >>>> hear_1 >>>> fused`
-
-#### actual message
-
-
-
--  `LiveMaryS` has two constructors ...
-
-```purescript
-data LiveMaryS
-  = Silent Number
   | Speak Number String
 ```
 
-- each of these instructs the `LiveMary` components to *start behaving as if ...* at some point in time
-	- `Silent` instructs the system to be silent
-	- `Speak` instructs the system to speak
-	- the `Number` controls when to start, or, when this vehaviour should have started
+... which indicates that the `Silent` command can be constructed and sent with no additional parameters.
 
-- this distinction is somewhat odd
-	- the log is (or can be) thought of a "column" where at each cycle a *value* is computed
-	- this speech is a "behaviour" where the value is *what action the system is doing,* which, includes *when it started*
+Converting the `SRecognised String` value to `Speak Number String` is problematic.
+This first `Number` is the "start-time" for the spoken text.
+The TTS system needs to be told when it should start playing the speech, similar to how a DJ might be told to start playing a song at a certain time.
+For us, this will *just* be the simulation's age, which we can find with the `openAge :: Effect (SF Unit Number)` from the `Scenario.purs` module.
 
+With the above in mind, we'll start implementing the functionality for this parrot's "brain."
 
+### Implementing the "Brain"
 
-- the practical effect of this is that we need a time-stamp<sup id='f_link6'>[6](#f_note6)</sup>
-
-
-- time stamps come from the `openAge` which is opened as `age <- openAge`
-	- we can *actually* open this in the `make_brain` funcntion
-	- ... if we change it to a `do`-notation and call it as such
-	- we can do the rest in a `where`
+Start by (testing your last version and then) adding `import Pdemo.Mary` to your import statements.
 
 
-```purescript
-make_brain :: Effect (SF (Maybe String) LiveMaryS)
-make_brain = do
-  age <- openAge
-  pure ?make_brain_hole
-```
-
-
-- fuse the two streams
+This section is *sort of* the "last" in this tutorial.
+Amongst other things, it tries to demonstrate approaching the problem as an exercise in transforming data.
+We're going to write the "brain" inside of a function named `parrot_brain` to keep it isolated.
+The signal function we construct will need to accept data from the speech recogniser and emit `: Unit`.<sup id='f_link6'>[6](#f_note6)</sup>
+So, naively we'd assume that the signature looks like ...
 
 ```purescript
-fuse :: SF Unit Number -> SF (Maybe String) (Tuple (Maybe String) Number)
-fuse age = fuselr passsf (unitsf >>>> age)
+parrot_brain :: SF (Maybe CMUSphinx4ASRE) Unit
 ```
 
-
-- join the two pieces of data
-	- this can be done with a single function
+... however; the function will need to open foreign signal functions.
+Any function that opens foreign signal functions will need to "bind to" the `Effect` monad.
+This means that the signature will affect and the body will be written in `do`-notation.
 
 ```purescript
-join :: SF (Tuple (Maybe String) Number) (Maybe (Tuple String Number))
-join = Wrap $ inner
-	where
-		inner :: (Tuple (Maybe String) Number) -> (Maybe (Tuple String Number))
-		inner (Tuple Nothing _) = Nothing
-		inner (Tuple (Just str) num) = Just $ Tuple str num
+parrot_brain :: Effect (SF (Maybe CMUSphinx4ASRE) Unit)
+parrot_brain = do
 ```
 
-- convert the/a paramters to a message
-	- can explot the `optional :: (i -> o) -> SF (Maybe i) (Maybe o)`
-	- `(option  $ \(Tuple s n) -> Speak n s)`
-	- `let convert = Wrap $ \v -> (\(Tuple s n) -> Speak n s) <$> v`
+The age signal function is opened easily.
 
 ```purescript
-make :: SF (Tuple String Number) LiveMaryS
-make = Wrap $ \(Tuple s n) -> Speak n s
-```
+-- age :: SF Unit Number
+age <- openAge
+````
 
-- now we can make/return the whole thing
-- need to turn "maybe o" to "maybe o or last o" while updating "last o"
-	- can use `repeat ::`
-	- need a default first value for time=0?
-		- HJEY! `Silent 0.0`
-- pull all logic into local
-	- `let logic = fuse age >>>> join >>>> convert`
-- call
-	- `pure $ repeat (Silent 0.0) logic`
+Just like the microphone, it's a `sample` and always returns a value.
+Unlike the microphone - it's a simple `Number`.
 
-- now we have ...
+To construct TTS messages, we need both an `age` value and the ASR data.
+To combine these, we use the `fuselr` function.
 
+Since we can't consume the "left" function that returns the ASR data, we use the `passsf` "identity" signal function to pass the message through.
+This is a bit of an odd approach, but, it works and we can fuse the signal functions.
 
 ```purescript
-make_brain :: Effect (SF (Maybe String) LiveMaryS)
-make_brain = do
-  age <- openAge
-
-  let convert = Wrap $ \v -> (\(Tuple s n) -> Speak n s) <$> v
-
-  let logic = fuse age >>>> join >>>> convert
-
-  pure $ repeat (Silent 0.0) logic
-  where
-
-    fuse :: SF Unit Number -> SF (Maybe String) (Tuple (Maybe String) Number)
-    fuse age = fuselr passsf (unitsf >>>> age)
-
-    join :: SF (Tuple (Maybe String) Number) (Maybe (Tuple String Number))
-    join = Wrap $ inner
-      where
-        inner :: (Tuple (Maybe String) Number) -> (Maybe (Tuple String Number))
-        inner (Tuple Nothing _) = Nothing
-        inner (Tuple (Just str) num) = Just $ Tuple str num
+-- left :: SF (Maybe ASR) (Tuple (Maybe ASR) Number)
+-- so it returns
+-- : (Tuple (Maybe ASR) Number)
+let left = passsf &&&& (unitsf >>>> age)
 ```
 
-- ... which won't run-run
+So, now instead of responding to `: Maybe ASR` we need to respond to `: (Tuple (Maybe ASR) Number)`.
+We've transformed the input data from ...
 
-#### final example
+1. (Maybe CMUSphinx4ASRE)
+  - the way that it comes in
+2. ((Maybe CMUSphinx4ASRE) Number)
+  - the message, but, with a timer
 
-We've constructed the proper function, but, we haven;t "connected it"
+We will continue to apply transformations ...
 
-It has the proper type ... so it should *just work* ... right?
+3. Maybe LiveMaryS
+  - which will be the `Speak` message
+4. LiveMaryS
+  - which will be not-a-maybe; it will always put out a valid message
+5. Unit
+  - which will be once we concatenate the SF with the mary_control fSF
+  - this will be the final form
 
-... we need to alter the siganture
-
-```
-!  Could not match type
-!
-!    Tuple Unit Unit
-!
-!  with type
-!
-!    Unit
-```
-
-... this is done with `>>>> unitsf` as before
+The next step is to convert teh `(Tuple (Maybe CMUSphinx4ASRE) Number)` to a `Maybe LiveMaryS`.
+Since the `CMUSphinx4ASRE` is a tagged union; it's easiest to do this step in a `where` block with pattern matching.
 
 ```purescript
--- broken!
--- pure $ connect1 >>>> hear_1 >>>> fused
-
--- works!
-pure $ connect1 >>>> hear_1 >>>> fused >>>> unitsf
+where
+  tts_maybe :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> (Maybe LiveMaryS)
+  tts_maybe (Tuple Nothing _) = Nothing
+  tts_maybe (Tuple (Just (SRecognised said)) age) = Just $ Speak age said
 ```
 
-### Listening Parrot
-
-You can now run ther complete example - shown below
-- warning; imprecise ASR tends to assume vulgarities
-- ASR seems to hear itself too ... leading to
-
+We can pass `tts_maybe` to `Wrap` and concatenate it with `left` to get `: SF (Maybe CMUSphinx4ASRE) (Maybe LiveMaryS)` which is closer.
+We need to "cache" a value inbetween *real* values so that the signal function we're creating can always do something meaningful.
+We *could* use `Wrap` and `fromMaybe :: a -> Maybe a -> a` again to get something with the correct type, but, that won't work when we start running.
+We need to "start it off" with `Silent` but once we get `Just SRecognised said` we need to cache that transformed value until it's replaced.
+This can be done with the generic function `cache :: forall v. v -> SF (Maybe v) v` from `FRP.purs`.
 
 ```purescript
-module Agent where
-
-import Effect
-import FRP
-import Prelude
-import Data.Tuple
-import Data.Maybe
-
-import Pdemo.Scenario
-import Pdemo.Mary
-import Pdemo.Sphinx
-
-
-make_brain :: Effect (SF (Maybe String) LiveMaryS)
-make_brain = do
-  age <- openAge
-
-  let convert = Wrap $ \v -> (\(Tuple s n) -> Speak n s) <$> v
-
-  let logic = fuse age >>>> join >>>> convert
-
-  pure $ repeat (Silent 0.0) logic
-  where
-
-    fuse :: SF Unit Number -> SF (Maybe String) (Tuple (Maybe String) Number)
-    fuse age = fuselr passsf (unitsf >>>> age)
-
-    join :: SF (Tuple (Maybe String) Number) (Maybe (Tuple String Number))
-    join = Wrap $ inner
-      where
-        inner :: (Tuple (Maybe String) Number) -> (Maybe (Tuple String Number))
-        inner (Tuple Nothing _) = Nothing
-        inner (Tuple (Just str) num) = Just $ Tuple str num
-
-
-entry :: Effect (SF Unit Unit)
-entry = do
-  -- open a microphone
-  mic <- openMicrophone
-
-  -- open the sphinx system
-  (Tuple line hear) <- openCMUSphinx4ASR
-
-  -- open our log
-  log <- openLogColumn "heard"
-
-  -- just connect the microphone to the recogniser always
-  let connect = mic >>>> (Wrap $ SConnect) >>>> line
-
-  -- simplify the ASR messages
-  let hear_1 = hear1 hear
-
-  -- open mpore
-  (Tuple mary_signals mary_events) <- openLiveMary ""
-
-  -- connect the things together
-  let connect1 = connect >>>> mary_events >>>> unitsf
-
-
-  mind <- make_brain
-  let speaking = mind >>>> mary_signals
-
-  let logging = (Wrap $ fromMaybe "nothing was heard") >>>> log
-
-  let fused = fuselr logging speaking
-
-  -- return an agent made of everything we've created
-  pure $ connect1 >>>> hear_1 >>>> fused >>>> unitsf
-
-  where
-    -- build the simplified "hear" function
-    hear1 :: SF Unit (Maybe CMUSphinx4ASRE) ->  SF Unit (Maybe String)
-    hear1 hear = hear >>>> (Wrap swap)
-      where
-        swap :: (Maybe CMUSphinx4ASRE) -> (Maybe String)
-        swap m = unpack <$> m
-          where
-            unpack :: CMUSphinx4ASRE -> String
-            unpack (SRecognised text) = text
+-- tts_cache :: SF (Maybe LiveMaryS) LiveMaryS
+let tts_cache = cache Silent
 ```
 
+That's the "hard part" done; we've transformed an incoming event and maybe changed what we're doing in response to it.
 
-## Google ASR
+The final steps here are to ...
 
-- this final step switches to the goog-cloud asr
-- you need a credential file (as noted) for this to work
+1. open the TTS system
+2. "squelch" events from the TTS system
+  - the TTS system provides some feedback about its present state
+  - we don't need it for this exercise
+3. concatenate the signal functions togeter and return them with `pure`
+4. update the agent to
+  1. call our function
+  2. `fuselr` the old and new outputs together
+  3. use the same "squelch" so that the final agent has the correct type
 
-- perform the following text swaps
-	- /CMUSphinx4ASR/GoogleASR/
-	- /SRecognised/GRecognised/
-	- /SConnect/GConnect/
-
-- run and shout "hello"
-	- it will repeat!
-- run and shout "hello there"
-	- it will likley say "hello there there"
-
-... because ... it's heard itself speaking
-
-the first workshop exercise is to use the/a `mary_events` to switch off recognition while the system is speaking
+The TTS system opens like the ASR, except, that it requires a `String` parameter.
+This can be used to adjust the way that it breaks up text - just pass `""` for this tutorial.
 
 ```purescript
-module Agent where
-
-import Effect
-import FRP
-import Prelude
-import Data.Tuple
-import Data.Maybe
-
-import Pdemo.Scenario
-import Pdemo.Mary
-import Pdemo.Sphinx
-
-
-
-
-
-
-make_brain :: Effect (SF (Maybe String) LiveMaryS)
-make_brain = do
-  age <- openAge
-
-  let convert = Wrap $ \v -> (\(Tuple s n) -> Speak n s) <$> v
-
-  let logic = fuse age >>>> join >>>> convert
-
-  pure $ repeat (Silent 0.0) logic
-  where
-
-    fuse :: SF Unit Number -> SF (Maybe String) (Tuple (Maybe String) Number)
-    fuse age = fuselr passsf (unitsf >>>> age)
-
-    join :: SF (Tuple (Maybe String) Number) (Maybe (Tuple String Number))
-    join = Wrap $ inner
-      where
-        inner :: (Tuple (Maybe String) Number) -> (Maybe (Tuple String Number))
-        inner (Tuple Nothing _) = Nothing
-        inner (Tuple (Just str) num) = Just $ Tuple str num
-
-
-
-
-entry :: Effect (SF Unit Unit)
-entry = do
-  -- open a microphone
-  mic <- openMicrophone
-
-  -- open the sphinx system
-  (Tuple line hear) <- openGoogleASR
-
-  -- open our log
-  log <- openLogColumn "heard"
-
-  -- just connect the microphone to the recogniser always
-  let connect = mic >>>> (Wrap $ GConnect) >>>> line
-
-  -- simplify the ASR messages
-  let hear_1 = hear1 hear
-
-  -- open mpore
-  (Tuple mary_signals mary_events) <- openLiveMary ""
-
-  -- connect the things together
-  let connect1 = connect >>>> mary_events >>>> unitsf
-
-
-  mind <- make_brain
-  let speaking = mind >>>> mary_signals
-
-  let logging = (Wrap $ fromMaybe "nothing was heard") >>>> log
-
-  let fused = fuselr logging speaking
-
-  -- return an agent made of everything we've created
-  pure $ connect1 >>>> hear_1 >>>> fused >>>> unitsf
-
-  where
-    -- build the simplified "hear" function
-    hear1 :: SF Unit (Maybe GoogleASRE) ->  SF Unit (Maybe String)
-    hear1 hear = hear >>>> (Wrap swap)
-      where
-        swap :: (Maybe GoogleASRE) -> (Maybe String)
-        swap m = unpack <$> m
-          where
-            unpack :: GoogleASRE -> String
-            unpack (GRecognised text) = text
-
+-- mary_control :: SF LiveMaryS Unit
+-- mary_events :: SF Unit (Maybe LiveMaryE)
+(Tuple mary_control mary_events) <- openLiveMary ""
 ```
+
+The two signal functions in the tuple are (here) called `mary_control` and `mary_events`.
+The `mary_control` is a SF we use to control what we want the TTS to "say."
+The `mary_events` would be used if we wanted to react to the TTS as it's working.
+
+
+Finally, we can then concatenate the five/six signal functions and then return it all with `pure`.
+
+```purescript
+pure $ left >>>> (Wrap tts_maybe) >>>> tts_cache >>>> mary_control >>>> mary_events >>>> unitsf
+```
+
+### Integrating the brain
+
+Integration of this `brain` is relatively simple.
+First, in our `entry :: Effect (SF Unit Unit)` we need to open it like anything else effectual.
+
+```purescript
+-- brain : SF (Maybe CMUSphinx4ASRE) ()
+brain <- parrot_brain
+```
+
+With the function open we can use `fuselr` to combine it with the old `log_asr_heard` ...
+
+```purescript
+--  output : SF (Maybe CMUSphinx4ASRE) (() ())
+let output = fuselr log_asr_heard brain
+```
+
+... oops!
+This has the "wrong" type so we need to concatenate `unitsf` to make something a little simpler.
+
+```purescript
+--  output : SF (Maybe CMUSphinx4ASRE) ()
+let output = (fuselr log_asr_heard brain) >>>> unitsf
+```
+
+Finally, we swap out where `log_asr_heard` used to be in the `pure` statement and use this new combined value.
+swap it into the agent's `pure`
+
+```purescript
+-- pure $ connect_microphone >>>> cycles >>>> hear >>>> log_asr_heard -- old
+pure $ connect_microphone >>>> cycles >>>> hear >>>> output
+```
+
+Now we can finally run our working parrot.
+
+### Summary
+
+There we have it, you can now run this complete example to see a working parrot that listens for what you say, before, repeating back what it heard.
+It might be worth mentioning that the CMUSphinx ASR we use here has a curious tendency to mix up words and no profanity filter.
+It's also worth noting that we'll get a lot of warnings from our `Agent.purs` about implicit imports.
+If you want to work through these, you can edit the file to *explicitly* import just what you want rather than relying on implicitly importing everything.
+You must avoid editing the generated files, as they may be using tricks to declare packages that need to be added to the build.
+
 
 ----
 
@@ -1390,6 +955,7 @@ It's exactly what it sounds like; a hole in the program that lets you compile it
 [?](#f_link5)
 
 <b id='f_note6'>[6](#f_link6)</b>
-or we could cheat and use an ascending counter ... but that's
+The function can emit whatever it feels like.
+`Unit` is used here for consistency.
 [?](#f_link6)
 
