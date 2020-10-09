@@ -1,7 +1,4 @@
 
-// connect to a live CMUSphinx thing
-event LiveSphinx() = text
-
 // the "data" from the audio system
 opaque AudioLine
 
@@ -9,7 +6,13 @@ opaque AudioLine
 sample Microphone() = AudioLine
 
 // connection to a stream-sphinx thing
-pipe FullSphinx()
-	! Connect(AudioLine)
-	! Disconnect()
-	? Recognised(text)
+pipe CMUSphinx4ASR()
+	! SConnect(AudioLine)
+	! SDisconnect()
+	? SRecognised(text)
+
+// connection to a stream-google-asr thing
+pipe GoogleASR()
+	! GConnect(AudioLine)
+	! GDisconnect()
+	? GRecognised(text)

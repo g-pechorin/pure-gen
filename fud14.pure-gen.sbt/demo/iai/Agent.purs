@@ -1,45 +1,83 @@
+
 module Agent where
 
--- system imports
-import Prelude (Unit, bind, pure, unit, ($), (<$>)) -- dep: prelude
-import Effect (Effect) -- dep: effect
-import Data.Tuple (Tuple(..)) -- dep: tuples
-import Data.Maybe (Maybe(..)) -- dep: maybe
+import Effect
+import FRP
+import Prelude
 
--- framework imports
-import FRP (SF(..), fuselr, repeat, (>>>>))
+import Data.Tuple
 
--- coponent imports
-import Pdemo.Scenario (openAge)
-import Pdemo.Sphinx (FullSphinxE(..), FullSphinxS(..), openFullSphinx, openMicrophone)
-import Pdemo.Mary (LiveMaryS(..), openLiveMary)
+import Pdemo.Scenario
 
----
--- this is the/a parrot demo
----
+import Data.Maybe
+import Pdemo.Sphinx
+
+import Pdemo.Mary
+
 entry :: Effect (SF Unit Unit)
 entry = do
+
+    -- open a microphone
+    mic <- openMicrophone
+
+    -- open the sphinx system
+    (Tuple line hear) <- openCMUSphinx4ASR
+
+    -- open our log
+    log <- openLogColumn "heard"
+    let log_asr_heard = (Wrap $ log_asr) >>>> log
+
+    -- just connect the microphone to the recogniser always
+    let connect_microphone = mic >>>> (Wrap $ SConnect) >>>> line
+
+    cycle_column <- openLogColumn "cycle"
+    let cycles = cycle_message >>>> cycle_column
+
+    brain <- parrot_brain
+
+    let output = (log_asr_heard &&&& brain)>>>> unitsf
+
+    pure $ connect_microphone >>>> cycles >>>> hear >>>> output
+  where
+    cycle_message:: SF Unit String
+    cycle_message = cycle_count >>>> (Wrap $ \i -> "cycle #" <> show i <> " finished")
+      where
+        cycle_count :: SF Unit Int
+        cycle_count = fold_soft 0 successor
+          where
+            successor :: Int -> Unit -> (Tuple Int Int)
+            successor i _ = Tuple (i + 1) i
+
+
+log_asr :: Maybe CMUSphinx4ASRE -> String
+log_asr Nothing = "there's no ASR data this cycle"
+log_asr (Just (SRecognised text)) = "the ASR heard `" <> text <> "`"
+
+
+
+
+
+parrot_brain :: Effect (SF (Maybe CMUSphinx4ASRE) Unit)
+parrot_brain = do
+  
+  -- age :: SF Unit Number
   age <- openAge
-  -- ear <- openLiveSphinx
-  mic <- openMicrophone
-  (Tuple audio recog) <- openFullSphinx
-  (Tuple speak spoke) <- openLiveMary ""
 
-  -- fuse the asr thing into one function
-  let asr = audio >>>> recog
+  -- left :: SF (Maybe ASR) (Tuple (Maybe ASR) Number)
+  let left = passsf &&&& (unitsf >>>> age)
 
-  -- 
-  let ear = mic >>>> (Wrap Connect) >>>> asr >>>> (Wrap eat)
+  -- tts_cache :: SF (Maybe LiveMaryS) LiveMaryS
+  let tts_cache = cache $ Silent
 
-  -- just bury the TTS status messages
-  let hushed = spoke >>>> (Wrap \_ -> unit)
-
-  -- start off silent
-  pure $ (fuselr age ear) >>>>
-    (repeat (Silent 0.0) (Wrap (\(Tuple now txt) -> (Speak now) <$> txt))) >>>>
-    speak >>>> hushed
+  -- mary_control :: SF LiveMaryS Unit
+  -- mary_events :: SF Unit (Maybe LiveMaryE)
+  (Tuple mary_control mary_events) <- openLiveMary ""
+  
+  pure $ left >>>> (Wrap tts_maybe) >>>> tts_cache >>>> mary_control >>>> mary_events >>>> unitsf
 
   where
-    eat :: Maybe FullSphinxE -> Maybe String
-    eat Nothing = Nothing
-    eat (Just (Recognised t)) = Just t
+    tts_maybe :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> (Maybe LiveMaryS)
+    tts_maybe (Tuple Nothing _) = Nothing
+    tts_maybe (Tuple (Just (SRecognised said)) age) = Just $ Speak age said
+
+    

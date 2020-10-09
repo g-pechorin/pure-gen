@@ -4,6 +4,7 @@ import pdemo.Scenario
 import peterlavalle.puregen.TModule.Sample
 
 class TryScenario(age: => Float) extends Scenario {
+	
 	override def openAge(): Sample[Float] =
 		sample {
 			age

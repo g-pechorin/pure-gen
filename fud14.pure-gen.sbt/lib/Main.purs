@@ -10,7 +10,7 @@ import Effect.Class.Console (log) -- dep: console
 import Data.Tuple (fst) -- dep: tuples
 
 
-import FRP (SF, react)
+import FRP (SF, react, concat, unitsf)
 
 import Agent (entry)
 
@@ -18,7 +18,8 @@ import Agent (entry)
 agent :: Unit -> Effect (SF Unit Unit)
 agent _ = do
   log "creating the entry signal-function"
-  entry
+  pearl <- entry
+  pure $ concat pearl unitsf
 
 cycle :: SF Unit Unit -> Effect (SF Unit Unit)
 cycle sf = do

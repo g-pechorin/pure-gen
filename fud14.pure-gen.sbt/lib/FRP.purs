@@ -1,15 +1,14 @@
 --
 -- don't edit this when writing agent/s
--- ... unles you're fixing something you intend to push upstream
 --
 
 module FRP where
 
 
 import Effect (Effect) -- dep: effect
-import Prelude (bind, pure, ($)) -- dep: prelude
+import Prelude (bind, pure, ($), Unit, unit) -- dep: prelude
 import Data.Tuple (Tuple(..), fst, snd) -- dep: tuples
-import Data.Maybe (Maybe, fromMaybe) -- dep: maybe
+import Data.Maybe -- dep: maybe
 
 -- signal functions will conform to this generic type
 data SF i o
@@ -31,6 +30,7 @@ react s@(Lift f) i = do
   pure (Tuple s o)
 react (Next f) i = f i
 
+
 -- construct a signal function that *just* emits the same value over and over again
 -- ... surprisingly useful in the construction of the fSF
 consta :: forall i o. o -> SF i o
@@ -38,11 +38,33 @@ consta o = Wrap $ \_ -> o
 
 
 -- make a signal function from some generic parameter "p" that's continually replaced
-foldp :: forall p i o. p -> (p -> i -> Effect (Tuple p o)) -> SF i o
-foldp p f = Next $ \i -> do
+fold_hard :: forall p i o. p -> (p -> i -> Effect (Tuple p o)) -> SF i o
+fold_hard p f = Next $ \i -> do
   t <- f p i
-  let n = foldp (fst t) f
+  let n = fold_hard (fst t) f
   pure $ Tuple n $ snd t
+
+--
+-- pseudo-constructor for SF. takes a parameter `p` and some function to compute the next p and output
+fold_soft :: forall p i o. p -> (p -> i -> (Tuple p o)) -> SF i o
+fold_soft par fun = Next $ inner
+  where
+    inner :: i -> Effect (Tuple (SF i o) o)
+    inner i = do
+      let pair = fun par i
+      let n = fst pair
+      let o = snd pair
+      pure $ Tuple (fold_soft n fun) o
+
+--
+-- construct a SF that emits the last "not-empty" Maybe and starts with the passed value
+cache :: forall v. v -> SF (Maybe v) v
+cache d = fold_soft d inner
+  where
+    inner :: v -> (Maybe v) -> Tuple v v
+    inner _ (Just n) = Tuple n n
+    inner o _ = Tuple o o
+
 
 --
 -- concatenate two signal functions into one
@@ -61,11 +83,6 @@ fuselr lsf rsf = Next $ \i -> do
   pure $ Tuple (fuselr (fst lno) (fst rno)) $ (Tuple (snd lno) (snd rno))
 infixr 7 fuselr as &&&&
 
--- -- this operator returns o when the SF returns Nothing
--- orElse :: forall i o. o -> SF i (Maybe o) -> SF i o
--- orElse = ?orElse
--- -- /?? :: o -> SF i (Maybe o) -> SF i o
-
 -- this operator starts with o but then returns the last Just-value coming out of the SF
 -- so it turns a SF that may or may not emit a value into something that always emits the value
 repeat :: forall i o. o -> SF i (Maybe o) -> SF i o
@@ -78,30 +95,23 @@ repeat last sf = Next $ \i -> do
   let out = fromMaybe last (next_out)
 
   pure $ Tuple (repeat out next_rsf) out
--- repeat last sf = Next step
---   where
---     step :: i -> Effect (Tuple (SF i o) o)
---     step i = do
---         n <- react sf i
-        
---         let next_rsf = fst n
---         let next_out = snd n
-        
---         let out = fromMaybe last (next_out)
-
---         pure $ Tuple (repeat out next_rsf) out
-      -- where
-        -- next_out :: (Tuple (SF i (Maybe o)) (Maybe o)) -> Maybe o
-        -- next_out n = snd n
-
-        -- nx :: o -> (Maybe o) -> o
-        -- nx d m = fromMaybe d m
-
-  -- | Next (i -> Effect (Tuple (SF i o) o))
-
+infixr 7 repeat as ////
 
 -- repeat = ?repeat
 -- -- ??/ :: o -> SF i (Maybe o) -> SF i o
+
+
+
+
+
+unitsf :: forall i. SF i Unit
+unitsf = (Wrap $ \_ -> unit)
+
+passsf :: forall v. SF v v
+passsf = (Wrap $ \v -> v)
+
+
+
 
 
 {-

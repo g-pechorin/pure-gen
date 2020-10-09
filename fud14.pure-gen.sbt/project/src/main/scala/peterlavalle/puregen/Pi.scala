@@ -8,25 +8,6 @@ import sbt.io.IO
 
 trait Pi {
 
-
-	implicit class PiSBTFile(file: File) {
-		def ioWriteLines(text: String): File =
-			ioWriteLines(text.split("[\r \t]*\n"))
-
-		def ioWriteLines(lines: Seq[String]): File = {
-
-			require(file.exists() == file.isFile)
-
-			IO.writeLines(
-				file.EnsureParent,
-				lines,
-				Charset.forName("UTF-8")
-			)
-
-			file
-		}
-	}
-
 	implicit class PiParsedYield[P](p: Parsed[P]) {
 		def flatMap[O](f: P => Parsed[O]): Parsed[O] =
 			p match {

@@ -1,22 +1,25 @@
 
 > I have only tested this on Windows, so, there are likely parts of it that will fail with a simple error message on Linux/macOS.
 > If you're interested in those platforms - let me know! (Maybe by opening a ticket?)
+>
+
+This document describes installing the system, but, relies on a functioning "demo" that may only be available int he default/master branch.
+The demo can be reconstructed by [following the tutorial](TUTORIAL.md).
 
 # Installation
 
 You will need a physical microphone (compatible with the Java Media Framework ... which all seem to be) and a few software packages to run this.
 Once those are set up, you can run the demonstration agent and get started "hacking on it" as folks say.
 
-- [Installation](#installation)
-	- [SDKs](#sdks)
-		- [Isolated (Windows only?)](#isolated-windows-only)
-		- [Integrated (easiest?)](#integrated-easiest)
-	- [Google ASR Credentials](#google-asr-credentials)
-	- [Download & Launch](#download--launch)
-	- [Trouble Shooting](#trouble-shooting)
-		- [GOOGLE_APPLICATION_CREDENTIALS](#google_application_credentials)
-		- [TargetDataLine](#targetdataline)
-		- [XSLT 'void' to 'boolean](#xslt-void-to-boolean)
+- [SDKs](#sdks)
+	- [Isolated (Windows only?)](#isolated-windows-only)
+	- [Integrated (easiest?)](#integrated-easiest)
+- [Google ASR Credentials](#google-asr-credentials)
+- [Download & Launch](#download--launch)
+- [Trouble Shooting](#trouble-shooting)
+	- [GOOGLE_APPLICATION_CREDENTIALS](#google_application_credentials)
+	- [TargetDataLine](#targetdataline)
+	- [XSLT 'void' to 'boolean](#xslt-void-to-boolean)
 
 Most of this system builds and runs as an [sbt](https://www.scala-sbt.org/) project, other than the PureScript build tools.
 This means that if you have the Java SDK setup correctly, sbt usable from the command line, and the PureScript tools; you won't need to install any other software to use this program.

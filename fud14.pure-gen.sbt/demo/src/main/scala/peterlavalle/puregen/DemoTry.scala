@@ -19,8 +19,7 @@ object DemoTry {
 
 	private def runAgent(): Unit = {
 
-
-		println("running from `" + System.getProperty("user.dir") + "`")
+		println("running with user.dir=`" + System.getProperty("user.dir") + "`")
 
 		val demo: File =
 			new File("demo").AbsoluteFile
@@ -111,15 +110,47 @@ object DemoTry {
 						.eff[Value, Value]("Main.cycle")
 
 				daemon {
-					var last: Value =
-						scriptValue
-							.eff[Null, Value]("Main.agent")
-							.apply(null)
 
+					def fail(status: Int, e: Exception, m: String): Exception = {
+						System.out.flush()
+						System.out.close()
+						// excuse the wall of text; not all modules want to close, so, I need/want a way to ensure this is seen
+						System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+						System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+						System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+						System.err.println("! ")
+						System.err.println("! " + e.getMessage)
+						System.err.println("! ")
+						System.err.println("======================================")
+						System.err.println("======================================")
+						e.printStackTrace(System.err)
+						System.err.println("======================================")
+						System.err.println("\n" + m + "\n")
+						System.err.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+						System.err.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+						System.err.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+						System.exit(status)
+						e
+					}
+
+					var last: Value =
+						try {
+							scriptValue
+								.eff[Null, Value]("Main.agent")
+								.apply(null)
+						} catch {
+							case e: Exception =>
+								throw fail(-1, e, "caught an exception during the setup")
+						}
 					while (starter()) {
-						cyclist.load()
-						last = cycle(last)
-						cyclist.send()
+						try {
+							cyclist.load()
+							last = cycle(last)
+							cyclist.send()
+						} catch {
+							case e: Exception =>
+								throw fail(-2, e, "caught an exception during the cycle")
+						}
 					}
 				}
 
