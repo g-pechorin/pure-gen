@@ -97,6 +97,8 @@ It goes;
 
 > This won't be needed iff you're part of the study and Peter has sent you a `pureGen-gasr.json`
 
+> You can also skip this step, and follow [the tutorial](TUTORIAL.md) and not use the GoogleASR.
+
 The system uses Google's Cloud Automatic Speech Recognition (GASR? - I'm calling it GASR) for its primary real-time speech recognition.
 There is the option to use [CMU Sphinx 4](https://github.com/cmusphinx/sphinx4) but it is not nearly as precise.
 

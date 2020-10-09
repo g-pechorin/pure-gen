@@ -1,18 +1,18 @@
 
 module Agent where
 
-import Effect
-import FRP
-import Prelude
+import Prelude (Unit, bind, pure, show, ($), (+), (<>))
 
-import Data.Tuple
+import Effect (Effect) 
 
-import Pdemo.Scenario
+import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple(..))
 
-import Data.Maybe
-import Pdemo.Sphinx
+import FRP (SF(..), cache, fold_soft, passsf, unitsf, (&&&&), (>>>>))
 
-import Pdemo.Mary
+import Pdemo.Sphinx (GoogleASRE(..), GoogleASRS(..), openGoogleASR, openMicrophone)
+import Pdemo.Scenario (openAge)
+import Pdemo.Mary (LiveMaryS(..), openLiveMary)
 
 entry :: Effect (SF Unit Unit)
 entry = do
@@ -20,25 +20,21 @@ entry = do
     -- open a microphone
     mic <- openMicrophone
 
-    -- open the sphinx system
-    (Tuple line hear) <- openCMUSphinx4ASR
+    -- open the google-cloud-asr system
+    (Tuple line hear) <- openGoogleASR
+    
+    -- open the "age" signal function
+    age <- openAge
 
-    -- open our log
-    log <- openLogColumn "heard"
-    let log_asr_heard = (Wrap $ log_asr) >>>> log
+    -- open the MaryTTS
+    (Tuple mary_control mary_events) <- openLiveMary ""
 
-    -- just connect the microphone to the recogniser always
-    let connect_microphone = mic >>>> (Wrap $ SConnect) >>>> line
-
-    cycle_column <- openLogColumn "cycle"
-    let cycles = cycle_message >>>> cycle_column
-
-    brain <- parrot_brain
-
-    let output = (log_asr_heard &&&& brain)>>>> unitsf
-
-    pure $ connect_microphone >>>> cycles >>>> hear >>>> output
+    -- build the parrot
+    pure $ mic >>>> (Wrap $ GConnect) >>>> line >>>> hear >>>> (passsf &&&& (unitsf >>>> age)) >>>> (Wrap tts_maybe) >>>> (cache $ Silent) >>>> mary_control >>>> mary_events >>>> unitsf
   where
+    tts_maybe :: (Tuple (Maybe GoogleASRE) Number) -> (Maybe LiveMaryS)
+    tts_maybe (Tuple Nothing _) = Nothing
+    tts_maybe (Tuple (Just (GRecognised said)) age) = Just $ Speak age said
     cycle_message:: SF Unit String
     cycle_message = cycle_count >>>> (Wrap $ \i -> "cycle #" <> show i <> " finished")
       where
@@ -48,36 +44,3 @@ entry = do
             successor :: Int -> Unit -> (Tuple Int Int)
             successor i _ = Tuple (i + 1) i
 
-
-log_asr :: Maybe CMUSphinx4ASRE -> String
-log_asr Nothing = "there's no ASR data this cycle"
-log_asr (Just (SRecognised text)) = "the ASR heard `" <> text <> "`"
-
-
-
-
-
-parrot_brain :: Effect (SF (Maybe CMUSphinx4ASRE) Unit)
-parrot_brain = do
-  
-  -- age :: SF Unit Number
-  age <- openAge
-
-  -- left :: SF (Maybe ASR) (Tuple (Maybe ASR) Number)
-  let left = passsf &&&& (unitsf >>>> age)
-
-  -- tts_cache :: SF (Maybe LiveMaryS) LiveMaryS
-  let tts_cache = cache $ Silent
-
-  -- mary_control :: SF LiveMaryS Unit
-  -- mary_events :: SF Unit (Maybe LiveMaryE)
-  (Tuple mary_control mary_events) <- openLiveMary ""
-  
-  pure $ left >>>> (Wrap tts_maybe) >>>> tts_cache >>>> mary_control >>>> mary_events >>>> unitsf
-
-  where
-    tts_maybe :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> (Maybe LiveMaryS)
-    tts_maybe (Tuple Nothing _) = Nothing
-    tts_maybe (Tuple (Just (SRecognised said)) age) = Just $ Speak age said
-
-    
