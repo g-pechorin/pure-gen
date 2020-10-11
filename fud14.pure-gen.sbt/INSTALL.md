@@ -6,6 +6,37 @@
 This document describes installing the system, but, relies on a functioning "demo" that may only be available int he default/master branch.
 The demo can be reconstructed by [following the tutorial](TUTORIAL.md).
 
+# Short Version
+
+```bash
+$ javac --version
+$ java --version
+```
+
+Both need-need to be 11 or later for this to work.
+If they are not, update them.
+
+```bash
+$ purs --version
+$ spago version
+```
+
+These should be 0.13.8 and 0.15.2 respectively.
+If they are not (or the command fails) install them with `npm`.
+
+... and if `npm` is not available - install Node.JS.
+
+```bash
+npm install -g purescript
+npm install -g spago
+```
+
+If something went wrong ... there's a longer version of setup below.
+
+[... but you'd probably rather continue to the tutorial](TUTORIAL.md).
+
+----
+
 # Installation
 
 You will need a physical microphone (compatible with the Java Media Framework ... which all seem to be) and a few software packages to run this.
