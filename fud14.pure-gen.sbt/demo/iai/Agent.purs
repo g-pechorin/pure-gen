@@ -43,4 +43,3 @@ entry = do
           where
             successor :: Int -> Unit -> (Tuple Int Int)
             successor i _ = Tuple (i + 1) i
-

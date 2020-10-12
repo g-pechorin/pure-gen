@@ -23,6 +23,7 @@ It is assumed that [the steps to install the system have been followed](INSTALL.
 	- [Implementing the "Brain"](#implementing-the-brain)
 	- [Integrating the brain](#integrating-the-brain)
 	- [Summary](#summary)
+- [Google ASR](#google-asr)
 
 
 This is a tutorial for creating a "parrot" that repeats (in English) whatever speech it recognises (of English) using this Interactive Artificial Intelligence tool.
@@ -121,6 +122,8 @@ These lines are equivalent;
 - `pure ( Wrap ( \_ -> unit))`
 - `pure ( Wrap $ \_ -> unit)`
 - `pure $ Wrap $ \_ -> unit`
+- `pure $ unitsf`
+- `pure   unitsf`
 
 It's worth noting that **do-notation** is a PureScript (et al) construct to help define an `Effect`.
 PureScript is (not TypeScript or JavaScript and) a pure functional programming language.
@@ -140,12 +143,17 @@ For any `value : a` you can pass it through `pure` to produce a value of type `E
 `Wrap :: forall i o. (i -> o) -> SF i o` is a constructor (from the `lib/FRP.purs` file) that *wraps* an otherwise "pure function" to be a signal function.<sup id='f_link4'>[4](#f_note4)</sup>
 
 The `\_ -> unit` statement is a function that takes any value and returns a/the value of type `Unit`.
-It is semantically identical to the snippet below;
+It is semantically identical to the snippet below ...
 
 ```purescript
 foo :: forall i. i -> Unit
 foo _ = unit
+
+unitsf :: forall i. SF i Unit
+unitsf = Wrap foo
 ```
+
+... and the "builtin" function `unitsf` in `FRP.purs` does exactly this.
 
 The type `Unit` is somewhat equivalent to `void` from C, and instances of `: Unit` are constructed/accessed by `unit :: Unit` here.
 This sort of *empty computation* has little value itself, but, is useful when we want something like an `Effect` or (here) a `SF () ()` that can carry `Effect`computes no value.
@@ -167,7 +175,7 @@ import Effect
 
 entry :: Effect (SF Unit Unit)
 entry = do
-  pure (Wrap (\_ -> unit))
+  pure unitsf
 ```
 
 ... and run it again.
@@ -182,7 +190,7 @@ import Prelude
 
 entry :: Effect (SF Unit Unit)
 entry = do
-  pure (Wrap (\_ -> unit))
+  pure unitsf
 ```
 
 ... and run with some warnings (3 of them?) but basically "run" and get to the "shall I tick it?" dialogue while doing nothing.
@@ -226,7 +234,7 @@ import Pdemo.Scenario -- import the LogColumn functions
 entry :: Effect (SF Unit Unit)
 entry = do
   hello <- openLogColumn "hello" -- open the log column
-  pure (Wrap (\_ -> unit))
+  pure unitsf
 ```
 
 When you run the agent, you'll see the usual warnings, the system will run (as before) but will immediately halt with a new exception ...
@@ -1006,6 +1014,106 @@ parrot_brain = do
 ```
 
 
+## Google ASR
+
+A final *optional* step is to switch the ASR system from the "on-chip" CMUSphinx4 to Google's Cloud ASR.
+You'll need a credentials file (tied to a Google Cloud Services account) for this to work.
+These are/were free at the time of writing, but there's a metered system in place so "lots of use" will incur fees.
+
+> It should be noted that the ASR component here is "crude" and, while working for short phrases may not be ideal for more serious applications.
+
+
+The CMUSphinx4 and GoogleASR components were built around the same interface, but, due to a technical oversight - can't consume messages with the same names.<sup id='f_link7'>[7](#f_note7)</sup>
+By replacing all instances of the string `CMUSphinx4ASR` in the agent program with `GoogleASR` the function calls and signatures will switch to GoogleASR.
+The `SRecognised` and `SConnect` messages need to be replaced with `GRecognised` and `GConnect` respectively.
+
+Running the demo again you should be able to get "better" responses from the parrot with short words like "hello" and other simple phrases.
+However ... longer phrases like "hello there" may produce an *echo* as the system hears itself and repeats what it hears.
+
+It is left as an exercise for the reader to;
+
+- inspect the interfaces and see what events come from the speech recogniser
+- use the `GDisconnect` (or `SDisconnect`) commands to disconnect the microphone when needed
+
+```purescript
+module Agent where
+
+import Effect
+import FRP
+import Prelude
+
+import Data.Tuple
+
+import Pdemo.Scenario
+
+import Data.Maybe
+import Pdemo.Sphinx
+
+import Pdemo.Mary
+
+entry :: Effect (SF Unit Unit)
+entry = do
+
+    -- open a microphone
+    mic <- openMicrophone
+
+    -- open the sphinx system
+    (Tuple line hear) <- openGoogleASR
+
+    -- open our log
+    log <- openLogColumn "heard"
+    let log_asr_heard = (Wrap $ log_asr) >>>> log
+
+    -- just connect the microphone to the recogniser always
+    let connect_microphone = mic >>>> (Wrap $ GConnect) >>>> line
+
+    cycle_column <- openLogColumn "cycle"
+    let cycles = cycle_message >>>> cycle_column
+
+    brain <- parrot_brain
+
+    let output = (log_asr_heard &&&& brain)>>>> unitsf
+
+    pure $ connect_microphone >>>> cycles >>>> hear >>>> output
+  where
+    cycle_message:: SF Unit String
+    cycle_message = cycle_count >>>> (Wrap $ \i -> "cycle #" <> show i <> " finished")
+      where
+        cycle_count :: SF Unit Int
+        cycle_count = fold_soft 0 successor
+          where
+            successor :: Int -> Unit -> (Tuple Int Int)
+            successor i _ = Tuple (i + 1) i
+
+
+log_asr :: Maybe GoogleASRE -> String
+log_asr Nothing = "there's no ASR data this cycle"
+log_asr (Just (GRecognised text)) = "the ASR heard `" <> text <> "`"
+
+
+parrot_brain :: Effect (SF (Maybe GoogleASRE) Unit)
+parrot_brain = do
+
+  -- age :: SF Unit Number
+  age <- openAge
+
+  -- left :: SF (Maybe ASR) (Tuple (Maybe ASR) Number)
+  let left = passsf &&&& (unitsf >>>> age)
+
+  -- tts_cache :: SF (Maybe LiveMaryS) LiveMaryS
+  let tts_cache = cache $ Silent
+
+  -- mary_control :: SF LiveMaryS Unit
+  -- mary_events :: SF Unit (Maybe LiveMaryE)
+  (Tuple mary_control mary_events) <- openLiveMary ""
+
+  pure $ left >>>> (Wrap tts_maybe) >>>> tts_cache >>>> mary_control >>>> mary_events >>>> unitsf
+
+  where
+    tts_maybe :: (Tuple (Maybe GoogleASRE) Number) -> (Maybe LiveMaryS)
+    tts_maybe (Tuple Nothing _) = Nothing
+    tts_maybe (Tuple (Just (GRecognised said)) age) = Just $ Speak age said
+```
 
 ----
 
@@ -1039,4 +1147,8 @@ It's exactly what it sounds like; a hole in the program that lets you compile it
 The function can emit whatever it feels like.
 `Unit` is used here for consistency.
 [?](#f_link6)
+
+<b id='f_note7'>[7](#f_link7)</b>
+Future work on this project should/would introduce this as an option.
+[?](#f_link7)
 

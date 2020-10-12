@@ -6,7 +6,7 @@
 This document describes installing the system, but, relies on a functioning "demo" that may only be available int he default/master branch.
 The demo can be reconstructed by [following the tutorial](TUTORIAL.md).
 
-# Short Version
+# Short Version (REALLY try this first)
 
 ```bash
 $ javac --version
@@ -33,11 +33,11 @@ npm install -g spago
 
 If something went wrong ... there's a longer version of setup below.
 
-[... but you'd probably rather continue to the tutorial](TUTORIAL.md).
+[... otherwise, continue to the tutorial](TUTORIAL.md).
 
 ----
 
-# Installation
+# Installation (only if the short version didn't work)
 
 You will need a physical microphone (compatible with the Java Media Framework ... which all seem to be) and a few software packages to run this.
 Once those are set up, you can run the demonstration agent and get started "hacking on it" as folks say.
