@@ -15,7 +15,7 @@ foreign import fsfi<@name/> :: (Maybe <@name/>E) -> <@alts/><@name/> -> Effect (
 foreign import fsfo<@name/>_<@send/>Effect Unit
 
 -- open<@name/> :: <@args/>Effect (SF <@name/>S (Maybe <@name/>E))
-open<@name/> :: <@args/>Effect (Tuple (SF <@name/>S Unit) (SF Unit (Maybe <@name/>E)))
+open<@name/> :: <@args/>Effect (SF <@name/>S (Maybe <@name/>E))
 open<@name/><@pass/> = do
   p <- fsfn<@name/><@pass/>
 
@@ -24,7 +24,7 @@ open<@name/><@pass/> = do
   let e = Lift $ fsfi p
 
   -- pure $ s >>>> e
-  pure $ Tuple s e
+  pure $ Pipe {take: s, send: e}
   where
     fsfi :: <@name/> -> Unit -> Effect (Maybe <@name/>E)
     fsfi p _ = fsfi<@name/> Nothing<@just/> p

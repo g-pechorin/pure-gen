@@ -22,6 +22,8 @@ data SF i o
   -- in theory; all construction could use this
   | Next (i -> Effect (Tuple (SF i o) o))
 
+  | Pipe {take :: SF i Unit, send :: SF Unit o}
+
 -- invoke a signal function
 react :: forall i o. SF i o -> i -> Effect (Tuple (SF i o) o)
 react s@(Wrap f) i = pure $ Tuple s $ f i
@@ -29,6 +31,10 @@ react s@(Lift f) i = do
   o <- f i
   pure (Tuple s o)
 react (Next f) i = f i
+react (Pipe {take: t, send: s}) i = do
+  (Tuple t unit) <- react t i
+  (Tuple s o) <- react s unit
+  pure $ Tuple (Pipe {take: t, send: s}) o
 
 
 -- construct a signal function that *just* emits the same value over and over again
@@ -88,10 +94,10 @@ infixr 7 fuselr as &&&&
 repeat :: forall i o. o -> SF i (Maybe o) -> SF i o
 repeat last sf = Next $ \i -> do
   n <- react sf i
-  
+
   let next_rsf = fst n
   let next_out = snd n
-  
+
   let out = fromMaybe last (next_out)
 
   pure $ Tuple (repeat out next_rsf) out
@@ -105,10 +111,10 @@ infixr 7 repeat as ////
 
 
 unitsf :: forall i. SF i Unit
-unitsf = (Wrap $ \_ -> unit)
+unitsf = Wrap $ \_ -> unit
 
 passsf :: forall v. SF v v
-passsf = (Wrap $ \v -> v)
+passsf = Wrap $ \v -> v
 
 
 

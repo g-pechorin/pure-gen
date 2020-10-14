@@ -29,7 +29,7 @@ foreign import fsfoTTS_Silent :: TTS -> Number -> Effect Unit
 foreign import fsfoTTS_Speak :: TTS -> Number -> String -> Effect Unit
 
 -- openTTS :: Effect (SF TTSS (Maybe TTSE))
-openTTS :: Effect (Tuple (SF TTSS Unit) (SF Unit (Maybe TTSE)))
+openTTS :: Effect (SF TTSS (Maybe TTSE))
 openTTS = do
   p <- fsfnTTS
 
@@ -37,7 +37,7 @@ openTTS = do
   let e = Lift $ fsfi p
 
   -- pure $ s >>>> e
-  pure $ Tuple s e
+  pure $ Pipe {take: s, send: e}
   where
     fsfi :: TTS -> Unit -> Effect (Maybe TTSE)
     fsfi p _ = fsfiTTS Nothing (\a0 -> Just $ Silence a0) (\a0 -> \a1 -> Just $ Speaking a0 a1) (\a0 -> \a1 -> Just $ Spoken a0 a1) p
