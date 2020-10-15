@@ -33,7 +33,7 @@ npm install -g spago
 
 If something went wrong ... there's a longer version of setup below.
 
-[... otherwise, continue to the tutorial](TUTORIAL.md).
+[... otherwise, just download and launch](INSTALL.md#download--launch).
 
 ----
 
@@ -166,7 +166,7 @@ If you're coming to this "later" and wish to use the GASR yourself, you can setu
 
 ## Download & Launch
 
-[Download and unzip the evaluation release](https://github.com/g-pechorin/pure-gen/archive/evaluation.zip) into a folder.
+[Download and unzip the evaluation release](https://github.com/g-pechorin/pure-gen/archive/master.zip) into a folder.
 
 Open a command line in the `fud14.pure-gen.sbt/` folder.
 If you're using the **Isolated** approach - you need to run your `setup.bat` now.
