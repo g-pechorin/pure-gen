@@ -65,15 +65,9 @@ object DemoTry {
 
 						override val bike: Cyclist = cyclist
 
-						lazy val start: Long = System.currentTimeMillis()
-
-						def age: Float =
-							((System.currentTimeMillis() - start) * 0.001)
-								.toFloat
-
 						import TModule._
 
-						override lazy val pdemo_Scenario: Scenario = new TryScenario(age)
+						override lazy val pdemo_Scenario: Scenario = new TryScenario()
 						override lazy val pdemo_Sphinx: Sphinx = new TrySphinx()
 						override lazy val pdemo_Mary: Mary = new TryMary()
 
