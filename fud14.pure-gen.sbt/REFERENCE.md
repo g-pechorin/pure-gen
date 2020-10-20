@@ -143,6 +143,46 @@ TODO: do this with the trans-mark thing
 
 
 
+### `SF i o`
+
+```purescript
+data SF i o
+```
+
+signal functions will conform to this generic type
+
+#### `Wrap (i -> o)`
+
+```purescript
+Wrap (i -> o)
+```
+
+this *wraps* an otherwise "pure function" to be a signal function
+
+#### `Lift (i -> Effect o)`
+
+```purescript
+Lift (i -> Effect o)
+```
+
+this is used for IO et al
+
+#### `Next (i -> Effect (Tuple (SF i o) o))`
+
+```purescript
+Next (i -> Effect (Tuple (SF i o) o))
+```
+
+in theory; all construction could use this
+this is the general version of a signal function
+
+#### `Pipe {take :: SF i Unit, send :: SF Unit o}`
+
+```purescript
+Pipe {take :: SF i Unit, send :: SF Unit o}
+```
+
+
 ### react
 
 ```purescript
@@ -276,9 +316,11 @@ It is specialised such that a devloper can decompose a signal function if they n
 ### react
 
 ```purescript
--- invoke a signal function
 react :: forall i o. SF i o -> i -> Effect (Tuple (SF i o) o)
 ```
+
+invoke a signal function
+
 
 ```purescript
 -- construct a signal function that *just* emits the same value over and over again
