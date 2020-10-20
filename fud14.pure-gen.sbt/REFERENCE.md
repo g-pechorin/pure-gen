@@ -142,7 +142,89 @@ pipe GoogleASR()
 TODO: do this with the trans-mark thing
 
 
-<<@ lib/FRP.purs
+
+### react
+
+```purescript
+react :: forall i o. SF i o -> i -> Effect (Tuple (SF i o) o)
+```
+
+invoke a signal function
+
+### consta
+
+```purescript
+consta :: forall i o. o -> SF i o
+```
+
+... surprisingly useful in the construction of the fSF
+construct a signal function that *just* emits the same value over and over again
+
+### fold_hard
+
+```purescript
+fold_hard :: forall p i o. p -> (p -> i -> Effect (Tuple p o)) -> SF i o
+```
+
+make a signal function from some generic parameter "p" that's continually replaced
+
+### fold_soft
+
+```purescript
+fold_soft :: forall p i o. p -> (p -> i -> (Tuple p o)) -> SF i o
+```
+
+pseudo-constructor for SF. takes a parameter `p` and some function to compute the next p and output
+
+
+### cache
+
+```purescript
+cache :: forall v. v -> SF (Maybe v) v
+```
+
+construct a SF that emits the last "not-empty" Maybe and starts with the passed value
+
+
+### concat
+
+```purescript
+concat :: forall i m o. SF i m -> SF m o -> SF i o
+```
+
+concatenate two signal functions into one
+
+
+### fuselr
+
+```purescript
+fuselr :: forall i l r. SF i l -> SF i r -> SF i (Tuple l r)
+```
+
+-- this "fuses" two signal functions to take one input and produce a paired output
+
+### repeat
+
+```purescript
+repeat :: forall i o. o -> SF i (Maybe o) -> SF i o
+```
+
+so it turns a SF that may or may not emit a value into something that always emits the value
+this operator starts with o but then returns the last Just-value coming out of the SF
+
+### unitsf
+
+```purescript
+unitsf :: forall i. SF i Unit
+```
+
+
+### passsf
+
+```purescript
+passsf :: forall v. SF v v
+```
+
 
 
 ### SF
