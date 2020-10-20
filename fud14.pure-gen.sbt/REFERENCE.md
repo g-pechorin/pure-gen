@@ -4,6 +4,7 @@
 	- [Mary](#mary)
 	- [Sphinx](#sphinx)
 - [FRP.purs](#frppurs)
+- [Last](#last)
 
 ## Components / pIDL
 
@@ -283,3 +284,6 @@ This can be useful when building signal functions to twist the structures around
 
 This is a signal function that *just* passes a value through.
 This is a pseudo-constant.
+
+
+## Last
