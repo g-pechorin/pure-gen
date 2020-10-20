@@ -137,7 +137,7 @@ TODO: do this with the trans-mark thing
 
 
 
-### `SF i o`
+### SF i o
 
 ```purescript
 data SF i o
@@ -145,7 +145,7 @@ data SF i o
 
 Signal functions will conform to this generic type.
 
-#### `Wrap (i -> o)`
+#### Wrap (i -> o)
 
 ```purescript
 Wrap (i -> o)
@@ -154,7 +154,7 @@ Wrap (i -> o)
 It *just* allows an otherwise pure function to be included in the signal-function networks.
 This is the most-basic constructor for signal functions.
 
-#### `Lift (i -> Effect o)`
+#### Lift (i -> Effect o)
 
 ```purescript
 Lift (i -> Effect o)
@@ -164,7 +164,7 @@ It is chiefly used for IO and such.
 It allows simple functions with side effects to be included in the signal-function networks.
 This is a slightly more elabourate constructor for signal functions.
 
-#### `Next (i -> Effect (Tuple (SF i o) o))`
+#### Next (i -> Effect (Tuple (SF i o) o))
 
 ```purescript
 Next (i -> Effect (Tuple (SF i o) o))
@@ -174,7 +174,7 @@ In practice - that would be unpleasant to implement.
 In theory - all other forms are [syntactical sugar](https://en.wikipedia.org/wiki/Syntactic_sugar) around Next.
 Next is the most general form of a signal function.
 
-#### `Pipe {take :: SF i Unit, send :: SF Unit o}`
+#### Pipe {take :: SF i Unit, send :: SF Unit o}
 
 ```purescript
 Pipe {take :: SF i Unit, send :: SF Unit o}
