@@ -57,19 +57,83 @@ The `Scenario.pidl` allows the/a agent to interface with the shell's "system" fu
 
 ... which means "time" and "logging" at this point.
 
-<<``` demo/src/main/pidl/pdemo/Scenario.pidl
+```
+
+
+// the age of the simulation
+sample Age() = real32
+
+// lets the agent dump a log status (at any time) with a named prefix
+signal LogColumn(text) = text
+```
 
 As these are rather "basic" concepts, it was deemed (by Peter) interesting to include the implementation here.
 
-<<```scala demo/src/main/scala/peterlavalle/puregen/TryScenario.scala
+```scala
+package peterlavalle.puregen
+
+import pdemo.Scenario
+import peterlavalle.puregen.TModule.Sample
+
+class TryScenario() extends Scenario {
+
+	private lazy val start: Long = System.currentTimeMillis()
+
+	private def age: Float =
+		((System.currentTimeMillis() - start) * 0.001)
+			.toFloat
+
+	override def openAge(): Sample[Float] =
+		sample {
+			age
+		}
+
+	override def openLogColumn(a0: String): TModule.Signal[String] =
+		signal {
+			text: String =>
+				System.out.println(s"[![a0] @ ](https://render.githubusercontent.com/render/math?math=a0]%20@%20)age")
+				text.split("[\r \t]*\n").foreach {
+					line: String =>
+						System.out.println(s"[![a0]: ](https://render.githubusercontent.com/render/math?math=a0]:%20)line")
+				}
+		}
+}
+```
 
 ### Mary
 
-<<``` demo/src/main/pidl/pdemo/Mary.pidl
+```
+
+// a live "mary" that can signal if it's talking or not
+pipe LiveMary(text)
+	! Silent()
+	! Speak(real32 text)
+	? Speaking(real32 text)
+	? Spoken(real32 text)
+```
 
 ### Sphinx
 
-<<``` demo/src/main/pidl/pdemo/Sphinx.pidl
+```
+
+// the "data" from the audio system
+opaque AudioLine
+
+// the Microphone connection
+sample Microphone() = AudioLine
+
+// connection to a stream-sphinx thing
+pipe CMUSphinx4ASR()
+	! SConnect(AudioLine)
+	! SDisconnect()
+	? SRecognised(text)
+
+// connection to a stream-google-asr thing
+pipe GoogleASR()
+	! GConnect(AudioLine)
+	! GDisconnect()
+	? GRecognised(text)
+```
 
 
 ## FRP.purs
