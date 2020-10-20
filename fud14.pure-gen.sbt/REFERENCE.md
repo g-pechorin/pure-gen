@@ -4,12 +4,6 @@
 	- [Mary](#mary)
 	- [Sphinx](#sphinx)
 - [FRP.purs](#frppurs)
-	- [SF](#sf)
-		- [Wrap](#wrap)
-		- [Lift](#lift)
-		- [Next](#next)
-		- [Pipe](#pipe)
-	- [react](#react)
 
 ## Components / pIDL
 
@@ -149,7 +143,7 @@ TODO: do this with the trans-mark thing
 data SF i o
 ```
 
-signal functions will conform to this generic type
+Signal functions will conform to this generic type.
 
 #### `Wrap (i -> o)`
 
@@ -157,7 +151,8 @@ signal functions will conform to this generic type
 Wrap (i -> o)
 ```
 
-this *wraps* an otherwise "pure function" to be a signal function
+It *just* allows an otherwise pure function to be included in the signal-function networks.
+This is the most-basic constructor for signal functions.
 
 #### `Lift (i -> Effect o)`
 
@@ -165,7 +160,9 @@ this *wraps* an otherwise "pure function" to be a signal function
 Lift (i -> Effect o)
 ```
 
-this is used for IO et al
+It is chiefly used for IO and such.
+It allows simple functions with side effects to be included in the signal-function networks.
+This is a slightly more elabourate constructor for signal functions.
 
 #### `Next (i -> Effect (Tuple (SF i o) o))`
 
@@ -173,8 +170,9 @@ this is used for IO et al
 Next (i -> Effect (Tuple (SF i o) o))
 ```
 
-in theory; all construction could use this
-this is the general version of a signal function
+In practice - that would be unpleasant to implement.
+In theory - all other forms are [syntactical sugar](https://en.wikipedia.org/wiki/Syntactic_sugar) around Next.
+Next is the most general form of a signal function.
 
 #### `Pipe {take :: SF i Unit, send :: SF Unit o}`
 
@@ -182,6 +180,10 @@ this is the general version of a signal function
 Pipe {take :: SF i Unit, send :: SF Unit o}
 ```
 
+As `pipe` was introduced late in the project and `Pipe` was introduced even later; this implementation was simple to carry out.
+<sup id='f_link1'>[1](#f_note1)</sup>:
+It is specialised such that a devloper can decompose a signal function if they need to do something unusual.<sup id='f_link1'>[1](#f_note1)</sup>
+Pipe constructs a specialised pair of signal functions used for IO from `pipe` type components.
 
 ### react
 
@@ -189,7 +191,8 @@ Pipe {take :: SF i Unit, send :: SF Unit o}
 react :: forall i o. SF i o -> i -> Effect (Tuple (SF i o) o)
 ```
 
-invoke a signal function
+likely should only be used internally.
+invoke a signal function.
 
 ### consta
 
@@ -197,8 +200,8 @@ invoke a signal function
 consta :: forall i o. o -> SF i o
 ```
 
-... surprisingly useful in the construction of the fSF
-construct a signal function that *just* emits the same value over and over again
+This is surprisingly useful in the construction/generation of foreign signal functions.
+This is a pseudo-constructor flr a signal function that *just* emits the same value over and over again.
 
 ### fold_hard
 
@@ -206,7 +209,9 @@ construct a signal function that *just* emits the same value over and over again
 fold_hard :: forall p i o. p -> (p -> i -> Effect (Tuple p o)) -> SF i o
 ```
 
-make a signal function from some generic parameter "p" that's continually replaced
+The fun parameter must be an effectual function.
+This constructs a signal function from some generic parameter "p" that's replaced after each cycle.
+This is a pseudo-constructor.
 
 ### fold_soft
 
@@ -214,8 +219,9 @@ make a signal function from some generic parameter "p" that's continually replac
 fold_soft :: forall p i o. p -> (p -> i -> (Tuple p o)) -> SF i o
 ```
 
-pseudo-constructor for SF. takes a parameter `p` and some function to compute the next p and output
-
+The fun parameter should be a pure function.
+This constructs a signal function from some generic parameter "p" that's replaced after each cycle.
+This is a pseudo-constructor.
 
 ### cache
 
@@ -223,8 +229,8 @@ pseudo-constructor for SF. takes a parameter `p` and some function to compute th
 cache :: forall v. v -> SF (Maybe v) v
 ```
 
-construct a SF that emits the last "not-empty" Maybe and starts with the passed value
-
+This constructs a SF that emits the last "not-empty" Maybe and starts with the passed value.
+This is a pseudo-constructor.
 
 ### concat
 
@@ -232,8 +238,8 @@ construct a SF that emits the last "not-empty" Maybe and starts with the passed 
 concat :: forall i m o. SF i m -> SF m o -> SF i o
 ```
 
-concatenate two signal functions into one
-
+This concatenate two signal functions into one.
+This is a pseudo-constructor which is also bound to the `>>>>` operator.
 
 ### fuselr
 
@@ -241,7 +247,8 @@ concatenate two signal functions into one
 fuselr :: forall i l r. SF i l -> SF i r -> SF i (Tuple l r)
 ```
 
--- this "fuses" two signal functions to take one input and produce a paired output
+This "fuses" two signal functions to take one input and produce a paired output.
+This is a pseudo-constructor which is also bound to the `&&&&` operator.
 
 ### repeat
 
@@ -249,8 +256,11 @@ fuselr :: forall i l r. SF i l -> SF i r -> SF i (Tuple l r)
 repeat :: forall i o. o -> SF i (Maybe o) -> SF i o
 ```
 
+This might be redundant given the existence of `cache`
+
 so it turns a SF that may or may not emit a value into something that always emits the value
-this operator starts with o but then returns the last Just-value coming out of the SF
+This operator starts with o but then returns the last Just-value coming out of the SF.
+This is a pseudo-constructor.
 
 ### unitsf
 
@@ -258,6 +268,10 @@ this operator starts with o but then returns the last Just-value coming out of t
 unitsf :: forall i. SF i Unit
 ```
 
+This is useful for converting chains of functions.
+
+This is a signal function that just crushes something to `: Unit`.
+This is a pseudo-constant.
 
 ### passsf
 
@@ -265,117 +279,7 @@ unitsf :: forall i. SF i Unit
 passsf :: forall v. SF v v
 ```
 
+This can be useful when building signal functions to twist the structures around.
 
-
-### SF
-
-```purescript
-data SF i o
-```
-
-Signal functions will conform to this generic type.
-
-#### Wrap
-
-```purescript
-= Wrap (i -> o)
-```
-
-This is the most-basic constructor for signal functions.
-It *just* allows an otherwise pure function to be included in the signal-function networks.
-
-#### Lift
-
-```purescript
-| Lift (i -> Effect o)
-```
-
-This is a slightly more elabourate constructor for signal functions.
-It allows simple functions with side effects to be included in the signal-function networks.
-It is chiefly used for IO and such.
-
-#### Next
-
-```purescript
-  | Next (i -> Effect (Tuple (SF i o) o))
-```
-
-Next is the most general form of a signal function.
-In theory - all other forms are [syntactical sugar](https://en.wikipedia.org/wiki/Syntactic_sugar) around Next.
-In practice - that would be unpleasant to implement.
-
-#### Pipe
-
-```purescript
-| Pipe {take :: SF i Unit, send :: SF Unit o}
-```
-
-Pipe constructs a specialised pair of signal functions used for IO from `pipe` type components.
-It is specialised such that a devloper can decompose a signal function if they need to do something unusual.<sup id='f_link1'>[1](#f_note1)</sup>
-
-### react
-
-```purescript
-react :: forall i o. SF i o -> i -> Effect (Tuple (SF i o) o)
-```
-
-invoke a signal function
-
-
-```purescript
--- construct a signal function that *just* emits the same value over and over again
--- ... surprisingly useful in the construction of the fSF
-consta :: forall i o. o -> SF i o
-```
-
-```purescript
--- make a signal function from some generic parameter "p" that's continually replaced
-fold_hard :: forall p i o. p -> (p -> i -> Effect (Tuple p o)) -> SF i o
-```
-
-```purescript
---
--- pseudo-constructor for SF. takes a parameter `p` and some function to compute the next p and output
-fold_soft :: forall p i o. p -> (p -> i -> (Tuple p o)) -> SF i o
-```
-
-```purescript
---
--- construct a SF that emits the last "not-empty" Maybe and starts with the passed value
-cache :: forall v. v -> SF (Maybe v) v
-```
-
-```purescript
---
--- concatenate two signal functions into one
-concat :: forall i m o. SF i m -> SF m o -> SF i o
-infixr 7 concat as >>>>
-```
-
-```purescript
--- -- this "fuses" two signal functions to take one input and produce a paired output
-fuselr :: forall i l r. SF i l -> SF i r -> SF i (Tuple l r)
-infixr 7 fuselr as &&&&
-```
-
-```purescript
--- this operator starts with o but then returns the last Just-value coming out of the SF
--- so it turns a SF that may or may not emit a value into something that always emits the value
-repeat :: forall i o. o -> SF i (Maybe o) -> SF i o
-infixr 7 repeat as ////
-```
-
-```purescript
-unitsf :: forall i. SF i Unit
-```
-
-```purescript
-passsf :: forall v. SF v v
-```
-
-----
-
-<b id='f_note1'>[1](#f_link1)</b>
-As `pipe` was introduced late in the project and `Pipe` was introduced even later; this implementation was simple to carry out.
-[?](#f_link1)
-
+This is a signal function that *just* passes a value through.
+This is a pseudo-constant.
