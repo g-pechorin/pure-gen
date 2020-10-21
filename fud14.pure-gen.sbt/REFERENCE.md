@@ -34,16 +34,10 @@ TODO: do this with a definition lists filter
 		`event`
 	</dt>
 	<dd>
-		: signal function
-	</dd>
-	<dd>
-		: is constructed with parameters
-	</dd>
-	<dd>
-		: might emit an event with `?` into the agent
-	</dd>
-	<dd>
-		: can use a simple type with `=`
+		signal function
+		is constructed with parameters
+		might emit an event with `?` into the agent
+		can use a simple type with `=`
 	</dd>
 </dl>
 
@@ -52,13 +46,9 @@ TODO: do this with a definition lists filter
 		`opaque`
 	</dt>
 	<dd>
-		: data type
-	</dd>
-	<dd>
-		: declares a type that the agent cannot examine
-	</dd>
-	<dd>
-		: used for data that the components will pass around
+		data type
+		declares a type that the agent cannot examine
+		used for data that the components will pass around
 	</dd>
 </dl>
 
@@ -68,19 +58,11 @@ TODO: do this with a definition lists filter
 		`pipe`
 	</dt>
 	<dd>
-		: signal function
-	</dd>
-	<dd>
-		: is constructed with parameters
-	</dd>
-	<dd>
-		: must recieve a behaviour with `!` from the agent
-	</dd>
-	<dd>
-		: might emit an event with `?` into the agent
-	</dd>
-	<dd>
-		: basically a combination of `signal` and `event`
+		signal function
+		is constructed with parameters
+		must recieve a behaviour with `!` from the agent
+		might emit an event with `?` into the agent
+		basically a combination of `signal` and `event`
 	</dd>
 </dl>
 
@@ -89,16 +71,10 @@ TODO: do this with a definition lists filter
 		`sample`
 	</dt>
 	<dd>
-		: signal function
-	</dd>
-	<dd>
-		: is constructed with parameters
-	</dd>
-	<dd>
-		: always emits an event with `?`
-	</dd>
-	<dd>
-		: can use a simple type with `=`
+		signal function
+		is constructed with parameters
+		always emits an event with `?`
+		can use a simple type with `=`
 	</dd>
 </dl>
 
@@ -107,16 +83,10 @@ TODO: do this with a definition lists filter
 		`signal`
 	</dt>
 	<dd>
-		: signal function
-	</dd>
-	<dd>
-		: is constructed with parameters
-	</dd>
-	<dd>
-		: must recieve a behaviour with `!` from the agent
-	</dd>
-	<dd>
-		: can use a simple type with `=`
+		signal function
+		is constructed with parameters
+		must recieve a behaviour with `!` from the agent
+		can use a simple type with `=`
 	</dd>
 </dl>
 
