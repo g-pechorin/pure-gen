@@ -5,6 +5,10 @@
 	- [Sphinx](#sphinx)
 - [FRP.purs](#frppurs)
 	- [`SF i o`](#sf-i-o)
+		- [`Wrap`](#wrap)
+		- [`Lift`](#lift)
+		- [`Next`](#next)
+		- [`Pipe`](#pipe)
 	- [`react`](#react)
 	- [`consta`](#consta)
 	- [`fold_hard`](#fold_hard)
@@ -169,6 +173,45 @@ data SF i o
 ```
 
 Signal functions will conform to this generic type.
+
+#### `Wrap`
+
+```purescript
+Wrap (i -> o)
+```
+
+This is the most-basic constructor for signal functions.
+It *just* allows an otherwise pure function to be included in the signal-function networks.
+
+#### `Lift`
+
+```purescript
+Lift (i -> Effect o)
+```
+
+This is a slightly more elabourate constructor for signal functions.
+It allows simple functions with side effects to be included in the signal-function networks.
+It is chiefly used for IO and such.
+
+#### `Next`
+
+```purescript
+Next (i -> Effect (Tuple (SF i o) o))
+```
+
+Next is the most general form of a signal function.
+In theory - all other forms are [syntactical sugar](https://en.wikipedia.org/wiki/Syntactic_sugar) around Next.
+In practice - that would be unpleasant to implement.
+
+#### `Pipe`
+
+```purescript
+Pipe {take :: SF i Unit, send :: SF Unit o}
+```
+
+Pipe constructs a specialised pair of signal functions used for IO from `pipe` type components.
+It is specialised such that a devloper can decompose a signal function if they need to do something unusual.
+As `pipe` was introduced late in the project and `Pipe` was introduced even later; this implementation was simple to carry out.
 
 ### `react`
 

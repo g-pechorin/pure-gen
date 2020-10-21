@@ -1104,39 +1104,39 @@ parrot_brain = do
 <b id='f_note1'>[1](#f_link1)</b>
 One of the author's previous supervisors felt that *novice* developers were frequently reluctant to utilise search engines to resolve problems.
 Later (mutual) speculation suggested that naive assumptions about software quality led to a mindset which was reluctant to *justfixit* and move on, even when the solution was something graceless.
-[?](#f_link1)
+[back](#f_link1)
 
 <b id='f_note2'>[2](#f_link2)</b>
 A meaningful introduction to [PureScript](https://www.purescript.org/) is regrettably beyond the scope of this document.
 I would suggest that an interested reader follow [the Quick Start Guide](https://github.com/purescript/documentation/blob/master/guides/Getting-Started.md) but would note that this system uses a different environment.
 > ... and the author hasn't followed the guide - generally searching for Haskell/Scala equivalency has been sufficient.
-[?](#f_link2)
+[back](#f_link2)
 
 <b id='f_note3'>[3](#f_link3)</b>
 As with the installation, there's a way to do this with "no privileges" using a "portable" package ... but I'll forgo detailing it here for the sake of brevity.
-[?](#f_link3)
+[back](#f_link3)
 
 <b id='f_note4'>[4](#f_link4)</b>
 This is something of an optimisation.
 The `Next :: forall i o. (i -> Effect (Tuple (SF i o) o)) -> SF i o` is the/a most-general type that any Signal Function needs to implement.
 `Wrap :: forall i o. (i -> o) -> SF i o` *just* simplifies this (in an obvious way) and *should* reduce system requirements.
-[?](#f_link4)
+[back](#f_link4)
 
 <b id='f_note5'>[5](#f_link5)</b>
 "Typed holes" are "holes" with a "data type" and a feature of some functional programming languages.
 It's exactly what it sounds like; a hole in the program that lets you compile it so you can check your progress before coming back and finishing.
-[?](#f_link5)
+[back](#f_link5)
 
 <b id='f_note6'>[6](#f_link6)</b>
 The type constructor used allows a developer to seperate these two from `: SF i I (Maybe o)` to  `: (SF i (), SF () (Maybe o))` should that be more convenient.
-[?](#f_link6)
+[back](#f_link6)
 
 <b id='f_note7'>[7](#f_link7)</b>
 The implementation doesn't *quite* work correctly for this at this point.
 The reader is unlikely to notice the distinction.
-[?](#f_link7)
+[back](#f_link7)
 
 <b id='f_note8'>[8](#f_link8)</b>
 Future work on this project should/would introduce this as an option.
-[?](#f_link8)
+[back](#f_link8)
 
