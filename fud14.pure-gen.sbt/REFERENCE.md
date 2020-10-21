@@ -5,10 +5,6 @@
 	- [Sphinx](#sphinx)
 - [FRP.purs](#frppurs)
 	- [`SF i o`](#sf-i-o)
-		- [`Wrap (i -> o)`](#wrap-i--o)
-		- [`Lift (i -> Effect o)`](#lift-i--effect-o)
-		- [`Next (i -> Effect (Tuple (SF i o) o))`](#next-i--effect-tuple-sf-i-o-o)
-		- [`Pipe {take :: SF i Unit, send :: SF Unit o}`](#pipe-take--sf-i-unit-send--sf-unit-o)
 	- [`react`](#react)
 	- [`consta`](#consta)
 	- [`fold_hard`](#fold_hard)
@@ -89,8 +85,6 @@ The `Scenario.pidl` allows the/a agent to interface with the shell's "system" fu
 ... which means "time" and "logging" at this point.
 
 ```
-
-
 // the age of the simulation
 sample Age() = real32
 
@@ -108,45 +102,43 @@ import peterlavalle.puregen.TModule.Sample
 
 class TryScenario() extends Scenario {
 
-	private lazy val start: Long = System.currentTimeMillis()
+  private lazy val start: Long = System.currentTimeMillis()
 
-	private def age: Float =
-		((System.currentTimeMillis() - start) * 0.001)
-			.toFloat
+  private def age: Float =
+    ((System.currentTimeMillis() - start) * 0.001)
+      .toFloat
 
-	override def openAge(): Sample[Float] =
-		sample {
-			age
-		}
+  override def openAge(): Sample[Float] =
+    sample {
+      age
+    }
 
-	override def openLogColumn(a0: String): TModule.Signal[String] =
-		signal {
-			text: String =>
-				System.out.println(s"[![a0] @ ](https://render.githubusercontent.com/render/math?math=a0]%20@%20)age")
-				text.split("[\r \t]*\n").foreach {
-					line: String =>
-						System.out.println(s"[![a0]: ](https://render.githubusercontent.com/render/math?math=a0]:%20)line")
-				}
-		}
+  override def openLogColumn(a0: String): TModule.Signal[String] =
+    signal {
+      text: String =>
+        System.out.println(s"[![a0] @ ](https://render.githubusercontent.com/render/math?math=a0]%20@%20)age")
+        text.split("[\r \t]*\n").foreach {
+          line: String =>
+            System.out.println(s"[![a0]: ](https://render.githubusercontent.com/render/math?math=a0]:%20)line")
+        }
+    }
 }
 ```
 
 ### Mary
 
 ```
-
 // a live "mary" that can signal if it's talking or not
 pipe LiveMary(text)
-	! Silent()
-	! Speak(real32 text)
-	? Speaking(real32 text)
-	? Spoken(real32 text)
+  ! Silent()
+  ! Speak(real32 text)
+  ? Speaking(real32 text)
+  ? Spoken(real32 text)
 ```
 
 ### Sphinx
 
 ```
-
 // the "data" from the audio system
 opaque AudioLine
 
@@ -155,15 +147,15 @@ sample Microphone() = AudioLine
 
 // connection to a stream-sphinx thing
 pipe CMUSphinx4ASR()
-	! SConnect(AudioLine)
-	! SDisconnect()
-	? SRecognised(text)
+  ! SConnect(AudioLine)
+  ! SDisconnect()
+  ? SRecognised(text)
 
 // connection to a stream-google-asr thing
 pipe GoogleASR()
-	! GConnect(AudioLine)
-	! GDisconnect()
-	? GRecognised(text)
+  ! GConnect(AudioLine)
+  ! GDisconnect()
+  ? GRecognised(text)
 ```
 
 
@@ -177,45 +169,6 @@ data SF i o
 ```
 
 Signal functions will conform to this generic type.
-
-#### `Wrap (i -> o)`
-
-```purescript
-Wrap (i -> o)
-```
-
-This is the most-basic constructor for signal functions.
-It *just* allows an otherwise pure function to be included in the signal-function networks.
-
-#### `Lift (i -> Effect o)`
-
-```purescript
-Lift (i -> Effect o)
-```
-
-This is a slightly more elabourate constructor for signal functions.
-It allows simple functions with side effects to be included in the signal-function networks.
-It is chiefly used for IO and such.
-
-#### `Next (i -> Effect (Tuple (SF i o) o))`
-
-```purescript
-Next (i -> Effect (Tuple (SF i o) o))
-```
-
-Next is the most general form of a signal function.
-In theory - all other forms are [syntactical sugar](https://en.wikipedia.org/wiki/Syntactic_sugar) around Next.
-In practice - that would be unpleasant to implement.
-
-#### `Pipe {take :: SF i Unit, send :: SF Unit o}`
-
-```purescript
-Pipe {take :: SF i Unit, send :: SF Unit o}
-```
-
-Pipe constructs a specialised pair of signal functions used for IO from `pipe` type components.
-It is specialised such that a devloper can decompose a signal function if they need to do something unusual.
-As `pipe` was introduced late in the project and `Pipe` was introduced even later; this implementation was simple to carry out.
 
 ### `react`
 
