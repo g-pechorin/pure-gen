@@ -201,6 +201,15 @@ Another future goal would be to add [ICL's ASR](https://github.com/peterlavalle/
 ## FRP.purs
 
 
+The `FRP.purs` module contains a lot of PureScript functionality to construct signal functions that form the system.
+Central to this is the `SF i o` type used to define signal functions.
+There are several constructors, though only the `Next` one is strictly speaking necessary.<sup id='f_link7'>[7](#f_note7)</sup>
+Through the `Next` signal function, a developer can (effectively) construct any functionality that they need.
+
+The file offers several "pseudo constructor" functions that cover "common" cases in development and help developers work consistently.
+These include a selection of "operators" to combine or manipulate existing signal functions.
+
+
 ### `SF i o`
 
 ```purescript
@@ -379,4 +388,8 @@ An active area of development (by Peter) is to expand these two APIs to emit som
 Yet.
 The two definitions can't share messages *yet* and while an approach to resolve this is practical the time expenditure to develop and implement it is not.
 [back](#f_link6)
+
+<b id='f_note7'>[7](#f_link7)</b>
+Since the `Pipe` constructor is so simple to match and decompose - one could argue that it is needed as well.
+[back](#f_link7)
 
