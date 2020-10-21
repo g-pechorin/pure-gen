@@ -211,7 +211,8 @@ Pipe {take :: SF i Unit, send :: SF Unit o}
 
 Pipe constructs a specialised pair of signal functions used for IO from `pipe` type components.
 It is specialised such that a devloper can decompose a signal function if they need to do something unusual.
-As `pipe` was introduced late in the project and `Pipe` was introduced even later; this implementation was simple to carry out.
+
+As the `Pipe` constructor was introduced even late, implementing the functionality in this way was the simplest approach.
 
 ### `react`
 
