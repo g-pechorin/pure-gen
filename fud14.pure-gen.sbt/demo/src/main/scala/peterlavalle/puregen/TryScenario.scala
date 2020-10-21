@@ -3,16 +3,18 @@ package peterlavalle.puregen
 import pdemo.Scenario
 import peterlavalle.puregen.TModule.Sample
 
-class TryScenario(age: => Float) extends Scenario {
-	
+class TryScenario() extends Scenario {
+
+	private lazy val start: Long = System.currentTimeMillis()
+
+	private def age: Float =
+		((System.currentTimeMillis() - start) * 0.001)
+			.toFloat
+
 	override def openAge(): Sample[Float] =
 		sample {
 			age
 		}
-
-	override def openKick(): TModule.Signal[Float] = {
-		error("this kick still fails in some parallel/edge cases - need to rethink it")
-	}
 
 	override def openLogColumn(a0: String): TModule.Signal[String] =
 		signal {
