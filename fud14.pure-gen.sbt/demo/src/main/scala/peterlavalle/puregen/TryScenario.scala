@@ -19,6 +19,8 @@ class TryScenario() extends Scenario {
 	override def openLogColumn(a0: String): TModule.Signal[String] =
 		signal {
 			text: String =>
+				// due to a bug, these won't appear correct on the public `.md` pages
+				// the source code in the `.scala` files will be fine
 				System.out.println(s"[$a0] @ $age")
 				text.split("[\r \t]*\n").foreach {
 					line: String =>
