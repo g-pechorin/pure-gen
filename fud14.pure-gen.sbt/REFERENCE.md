@@ -26,62 +26,32 @@ There are five "things" that one might see in the `.pidl` files.
 Four of them construct *foreign signal functions* to pass data in/out of the agent.
 The final one `opaque` just defines an (appropriately named) opaque data type that the agent can/will pass around.
 
-<dl>
-	<dt>
-		`event`
-	</dt>
-	<dd>
-		This defines a foreign signal function.
-		These may be constructed with parameters.
-		The `event` type foreign signal functions `Maybe` emit an event with `?` into the agent.
-		These can also use a simple type with `=` for their value - but the result is still wrapped in `Maybe`.
-	</dd>
-</dl>
-<dl>
-	<dt>
-		`signal`
-	</dt>
-	<dd>
-		This defines a foreign signal function.
-		These may be constructed with parameters.
-		At each cycle, these must receive a behaviour value with `!` from the agent.
-		These can also use a simple type with `=` for their value - the result still must always be present.
-	</dd>
-</dl>
-<dl>
-	<dt>
-		`sample`
-	</dt>
-	<dd>
-		This defines a foreign signal function.
-		These may be constructed with parameters.
-		The `sample` type foreign signal functions always emit a value with `?` into the agent.
-		These can also use a simple type with `=` for their value - the result is still always present.
-	</dd>
-</dl>
-<dl>
-	<dt>
-		`pipe`
-	</dt>
-	<dd>
-		This defines a foreign signal function.
-		These can be constructed with parameters.
-		At each cycle, these must receive a behaviour value with `!` from the agent.
-		The `pipe` type foreign signal functions `Maybe` emit an event with `?` into the agent.
-		These are (in many ways) a combination of `signal` and `event` constructs, but, are created at the same time for consistency reasons.
-	</dd>
-</dl>
-<dl>
-	<dt>
-		`opaque`
-	</dt>
-	<dd>
-		This defines an opaque data type that the agent will retain and pass back to the shell.
-		These cannot be constructed by the agent.
-		The agent cannot examine or manipulate these.
-		These are used for data that the components need the agent to retain and return.
-	</dd>
-</dl>
+- `event`
+  > This defines a foreign signal function.
+  > These may be constructed with parameters.
+  > The `event` type foreign signal functions `Maybe` emit an event with `?` into the agent.
+  > These can also use a simple type with `=` for their value - but the result is still wrapped in `Maybe`.
+- `signal`
+  > This defines a foreign signal function.
+  > These may be constructed with parameters.
+  > At each cycle, these must receive a behaviour value with `!` from the agent.
+  > These can also use a simple type with `=` for their value - the result still must always be present.
+- `sample`
+  > This defines a foreign signal function.
+  > These may be constructed with parameters.
+  > The `sample` type foreign signal functions always emit a value with `?` into the agent.
+  > These can also use a simple type with `=` for their value - the result is still always present.
+- `pipe`
+  > This defines a foreign signal function.
+  > These can be constructed with parameters.
+  > At each cycle, these must receive a behaviour value with `!` from the agent.
+  > The `pipe` type foreign signal functions `Maybe` emit an event with `?` into the agent.
+  > These are (in many ways) a combination of `signal` and `event` constructs, but, are created at the same time for consistency reasons.
+- `opaque`
+  > This defines an opaque data type that the agent will retain and pass back to the shell.
+  > These cannot be constructed by the agent.
+  > The agent cannot examine or manipulate these.
+  > These are used for data that the components need the agent to retain and return.
 
 ### Scenario
 
