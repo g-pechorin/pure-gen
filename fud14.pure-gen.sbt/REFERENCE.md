@@ -4,7 +4,21 @@
 	- [Mary](#mary)
 	- [Sphinx](#sphinx)
 - [FRP.purs](#frppurs)
-- [Last](#last)
+	- [SF i o](#sf-i-o)
+		- [Wrap (i -> o)](#wrap-i--o)
+		- [Lift (i -> Effect o)](#lift-i--effect-o)
+		- [Next (i -> Effect (Tuple (SF i o) o))](#next-i--effect-tuple-sf-i-o-o)
+		- [Pipe {take :: SF i Unit, send :: SF Unit o}](#pipe-take--sf-i-unit-send--sf-unit-o)
+	- [react](#react)
+	- [consta](#consta)
+	- [fold_hard](#fold_hard)
+	- [fold_soft](#fold_soft)
+	- [cache](#cache)
+	- [concat](#concat)
+	- [fuselr](#fuselr)
+	- [repeat](#repeat)
+	- [unitsf](#unitsf)
+	- [passsf](#passsf)
 
 ## Components / pIDL
 
@@ -134,7 +148,8 @@ pipe GoogleASR()
 ## FRP.purs
 
 
-TODO: do this with the trans-mark thing
+TODO: fix the headers with the thing
+TODO: ... which likely has to do with *where* it happens
 
 
 
@@ -182,8 +197,7 @@ Pipe {take :: SF i Unit, send :: SF Unit o}
 ```
 
 As `pipe` was introduced late in the project and `Pipe` was introduced even later; this implementation was simple to carry out.
-<sup id='f_link1'>[1](#f_note1)</sup>:
-It is specialised such that a devloper can decompose a signal function if they need to do something unusual.<sup id='f_link1'>[1](#f_note1)</sup>
+It is specialised such that a devloper can decompose a signal function if they need to do something unusual.
 Pipe constructs a specialised pair of signal functions used for IO from `pipe` type components.
 
 ### react
@@ -284,6 +298,3 @@ This can be useful when building signal functions to twist the structures around
 
 This is a signal function that *just* passes a value through.
 This is a pseudo-constant.
-
-
-## Last
