@@ -45,7 +45,7 @@ The final one `opaque` just defines an (appropriately named) opaque data type th
 		This defines a foreign signal function.
 		These may be constructed with parameters.
 		At each cycle, these must receive a behaviour value with `!` from the agent.
-		These can also use a simple type with `=` for their value - the result still must always ne present.
+		These can also use a simple type with `=` for their value - the result still must always be present.
 	</dd>
 </dl>
 <dl>
@@ -105,7 +105,7 @@ package peterlavalle.puregen
 import pdemo.Scenario
 import peterlavalle.puregen.TModule.Sample
 
-class TryScenario() extends Scenario {
+class TheScenario() extends Scenario {
 
   private lazy val start: Long = System.currentTimeMillis()
 
@@ -156,6 +156,13 @@ If the TTS system is interrupted before it finishes, then, a `Spoken` event will
 
 ### Sphinx
 
+The "Sphinx" component handles Automated Speech Recognition.
+The first system it could connect to was [the CMUSphinx4](https://cmusphinx.github.io/) software with [Google's Cloud ASR](https://cloud.google.com/speech-to-text) being added later.
+[Google's Cloud ASR](https://cloud.google.com/speech-to-text) would be the recommended approach as it seems "more accurate" most of the time.
+[CMUSphinx4](https://cmusphinx.github.io/) is somewhat simpler to set up though, and, "free as in free snacks" (and freedom) so will remain integrated for the foreseeable future.
+Due to limitations in the `.pidl` tools - the current approach needs both systems to appear in the same file/component if they wish to share the `Microphone` system.<sup id='f_link2'>[2](#f_note2)</sup>
+
+
 ```
 // the "data" from the audio system
 opaque AudioLine
@@ -175,6 +182,20 @@ pipe GoogleASR()
   ! GDisconnect()
   ? GRecognised(text)
 ```
+
+
+The system functions on a (unique?) abstraction - instead of passing around conventional "audio packets"<sup id='f_link3'>[3](#f_note3)</sup> it passes around an `AudioLine` instance which is analogous to a stream handle.
+
+The `Microphone` itself *just* opens the system's default microphone (whatever that means) and continually sends out an appropriate `AudioLine` instance for other systems.<sup id='f_link4'>[4](#f_note4)</sup>
+The returned `AudioLine` instance is suitable for use with multiple behaviours.
+
+
+The two ASR systems have similar APIs with (basically) identical functionality.
+Both are `pipe` type foreign signal functions that require a `Connect AudioLine` or `Disconnect` behvaiour and emit `Recognition String` events.<sup id='f_link5'>[5](#f_note5)</sup>
+Due to ... reasons ... the two `pipe` definitions can't share messages<sup id='f_link6'>[6](#f_note6)</sup> so each prefixes the message name with a letter.
+
+Another future goal would be to add [ICL's ASR](https://github.com/peterlavalle/AVP/tree/gift/ASR), [IBM's Watson](https://www.ibm.com/uk-en/cloud/watson-speech-to-text) and on-chip implemntation of [CMU PocketSphinx](https://github.com/cmusphinx/pocketsphinx) and [Mozilla's DeepSpeech](https://github.com/mozilla/DeepSpeech).
+
 
 
 ## FRP.purs
@@ -334,4 +355,28 @@ This functionality isn't currently "correct" but will work.
 "New" speech commands will be accepted `if startTime > currentCommandTime` but there's no way (yet) to skip/resume through speech.
 More work on/with the system would be needed to implement this.
 [back](#f_link1)
+
+<b id='f_note2'>[2](#f_link2)</b>
+Simply put - the `.pidl` DSL can't perform any sort of `import` action.
+*Fixing* this isn't a priority, but, it's an understood problem that I'd like to tackle.
+[back](#f_link2)
+
+<b id='f_note3'>[3](#f_link3)</b>
+"Audio Packets" would be time-sensitive in ways that feel inappropriate for this system's design.
+Using this "Audio Line" to control the audio sample *feels* more appropriate to the authors and requires less configuration.
+Also; the "Audio Line" approach doesn't need to cycle the FRP network whenever a new sample is available - this has rather important performance implications.
+[back](#f_link3)
+
+<b id='f_note4'>[4](#f_link4)</b>
+In an ideal implementation of `.pidl` the `MicroPhone` and `AudioLine` items would be in the `Scenario.pidl` module.
+[back](#f_link4)
+
+<b id='f_note5'>[5](#f_link5)</b>
+An active area of development (by Peter) is to expand these two APIs to emit some of the more detailed information from the ASR systems.
+[back](#f_link5)
+
+<b id='f_note6'>[6](#f_link6)</b>
+Yet.
+The two definitions can't share messages *yet* and while an approach to resolve this is practical the time expenditure to develop and implement it is not.
+[back](#f_link6)
 

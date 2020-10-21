@@ -3,7 +3,7 @@ package peterlavalle.puregen
 import pdemo.Scenario
 import peterlavalle.puregen.TModule.Sample
 
-class TryScenario() extends Scenario {
+class TheScenario() extends Scenario {
 
 	private lazy val start: Long = System.currentTimeMillis()
 

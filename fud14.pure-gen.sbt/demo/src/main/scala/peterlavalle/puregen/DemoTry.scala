@@ -67,7 +67,7 @@ object DemoTry {
 
 						import TModule._
 
-						override lazy val pdemo_Scenario: Scenario = new TryScenario()
+						override lazy val pdemo_Scenario: Scenario = new TheScenario()
 						override lazy val pdemo_Sphinx: Sphinx = new TrySphinx()
 						override lazy val pdemo_Mary: Mary = new TryMary()
 
