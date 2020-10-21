@@ -31,43 +31,10 @@ The final one `opaque` just defines an (appropriately named) opaque data type th
 		`event`
 	</dt>
 	<dd>
-		signal function
-		is constructed with parameters
-		might emit an event with `?` into the agent
-		can use a simple type with `=`
-	</dd>
-</dl>
-<dl>
-	<dt>
-		`opaque`
-	</dt>
-	<dd>
-		data type
-		declares a type that the agent cannot examine
-		used for data that the components will pass around
-	</dd>
-</dl>
-<dl>
-	<dt>
-		`pipe`
-	</dt>
-	<dd>
-		signal function
-		is constructed with parameters
-		must recieve a behaviour with `!` from the agent
-		might emit an event with `?` into the agent
-		basically a combination of `signal` and `event`
-	</dd>
-</dl>
-<dl>
-	<dt>
-		`sample`
-	</dt>
-	<dd>
-		signal function
-		is constructed with parameters
-		always emits an event with `?`
-		can use a simple type with `=`
+		This defines a foreign signal function.
+		These may be constructed with parameters.
+		The `event` type foreign signal functions `Maybe` emit an event with `?` into the agent.
+		These can also use a simple type with `=` for their value - but the result is still wrapped in `Maybe`.
 	</dd>
 </dl>
 <dl>
@@ -75,16 +42,50 @@ The final one `opaque` just defines an (appropriately named) opaque data type th
 		`signal`
 	</dt>
 	<dd>
-		signal function
-		is constructed with parameters
-		must recieve a behaviour with `!` from the agent
-		can use a simple type with `=`
+		This defines a foreign signal function.
+		These may be constructed with parameters.
+		At each cycle, these must receive a behaviour value with `!` from the agent.
+		These can also use a simple type with `=` for their value - the result still must always ne present.
+	</dd>
+</dl>
+<dl>
+	<dt>
+		`sample`
+	</dt>
+	<dd>
+		This defines a foreign signal function.
+		These may be constructed with parameters.
+		The `sample` type foreign signal functions always emit a value with `?` into the agent.
+		These can also use a simple type with `=` for their value - the result is still always present.
+	</dd>
+</dl>
+<dl>
+	<dt>
+		`pipe`
+	</dt>
+	<dd>
+		This defines a foreign signal function.
+		These can be constructed with parameters.
+		At each cycle, these must receive a behaviour value with `!` from the agent.
+		The `pipe` type foreign signal functions `Maybe` emit an event with `?` into the agent.
+		These are (in many ways) a combination of `signal` and `event` constructs, but, are created at the same time for consistency reasons.
+	</dd>
+</dl>
+<dl>
+	<dt>
+		`opaque`
+	</dt>
+	<dd>
+		This defines an opaque data type that the agent will retain and pass back to the shell.
+		These cannot be constructed by the agent.
+		The agent cannot examine or manipulate these.
+		These are used for data that the components need the agent to retain and return.
 	</dd>
 </dl>
 
 ### Scenario
 
-The `Scenario.pidl` allows the/a agent to interface with the shell's "system" functions.
+The `Scenario.pidl` allows an agent to interface with some "system" functions.
 
 ... which means "time" and "logging" at this point.
 
@@ -131,6 +132,9 @@ class TryScenario() extends Scenario {
 
 ### Mary
 
+The "Mary" component contains the functionality for the text-to-speech system.
+At present, it is *just* [the MaryTTS system](https://github.com/marytts/marytts) which functions in a "live" manner to play audio as quickly as possible.
+
 ```
 // a live "mary" that can signal if it's talking or not
 pipe LiveMary(text)
@@ -139,6 +143,14 @@ pipe LiveMary(text)
   ? Speaking(real32 text)
   ? Spoken(real32 text)
 ```
+
+Opening an instance of the system requires a regular expression `: String` to define how to split the text up before rendering it.
+The component will accept `""` to indicate that the defaults should be used.
+
+The foreign signal function instance accepts two commands, `Silent` indicates that the TTS system should immediately be silent, and `Speak` indicates that the system should be rendering speech from the passed (past) timestamp.<sup id='f_link1'>[1](#f_note1)</sup>
+The system emits two events, `Speaking` and `Spoken` which both carry the same data as `Speak` and are sent when the TTS system starts and finished speech respectively.
+If the TTS system is interrupted before it finishes, then, a `Spoken` event will not be emitted for the interrupted segment - as it never finished.
+
 
 ### Sphinx
 
@@ -312,3 +324,12 @@ This is a pseudo-constant.
 This is a signal function that *just* passes a value through.
 
 This can be useful when building signal functions to twist the structures around.
+
+----
+
+<b id='f_note1'>[1](#f_link1)</b>
+This functionality isn't currently "correct" but will work.
+"New" speech commands will be accepted `if startTime > currentCommandTime` but there's no way (yet) to skip/resume through speech.
+More work on/with the system would be needed to implement this.
+[back](#f_link1)
+
