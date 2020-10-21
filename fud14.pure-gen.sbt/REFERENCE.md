@@ -29,36 +29,96 @@ The final one `opaque` just defines an (appropriately named) opaque data type th
 
 TODO: do this with a definition lists filter
 
-`event`
-: signal function
-: is constructed with parameters
-: might emit an event with `?` into the agent
-: can use a simple type with `=`
+<dl>
+	<dt>
+		`event`
+	</dt>
+	<dd>
+		: signal function
+	</dd>
+	<dd>
+		: is constructed with parameters
+	</dd>
+	<dd>
+		: might emit an event with `?` into the agent
+	</dd>
+	<dd>
+		: can use a simple type with `=`
+	</dd>
+</dl>
 
-`opaque`
-: data type
-: declares a type that the agent cannot examine
-: used for data that the components will pass around
+<dl>
+	<dt>
+		`opaque`
+	</dt>
+	<dd>
+		: data type
+	</dd>
+	<dd>
+		: declares a type that the agent cannot examine
+	</dd>
+	<dd>
+		: used for data that the components will pass around
+	</dd>
+</dl>
 
 
-`pipe`
-: signal function
-: is constructed with parameters
-: must recieve a behaviour with `!` from the agent
-: might emit an event with `?` into the agent
-: basically a combination of `signal` and `event`
+<dl>
+	<dt>
+		`pipe`
+	</dt>
+	<dd>
+		: signal function
+	</dd>
+	<dd>
+		: is constructed with parameters
+	</dd>
+	<dd>
+		: must recieve a behaviour with `!` from the agent
+	</dd>
+	<dd>
+		: might emit an event with `?` into the agent
+	</dd>
+	<dd>
+		: basically a combination of `signal` and `event`
+	</dd>
+</dl>
 
-`sample`
-: signal function
-: is constructed with parameters
-: always emits an event with `?`
-: can use a simple type with `=`
+<dl>
+	<dt>
+		`sample`
+	</dt>
+	<dd>
+		: signal function
+	</dd>
+	<dd>
+		: is constructed with parameters
+	</dd>
+	<dd>
+		: always emits an event with `?`
+	</dd>
+	<dd>
+		: can use a simple type with `=`
+	</dd>
+</dl>
 
-`signal`
-: signal function
-: is constructed with parameters
-: must recieve a behaviour with `!` from the agent
-: can use a simple type with `=`
+<dl>
+	<dt>
+		`signal`
+	</dt>
+	<dd>
+		: signal function
+	</dd>
+	<dd>
+		: is constructed with parameters
+	</dd>
+	<dd>
+		: must recieve a behaviour with `!` from the agent
+	</dd>
+	<dd>
+		: can use a simple type with `=`
+	</dd>
+</dl>
 
 ### Scenario
 
@@ -148,11 +208,6 @@ pipe GoogleASR()
 ## FRP.purs
 
 
-TODO: fix the headers with the thing
-TODO: ... which likely has to do with *where* it happens
-
-
-
 ### `SF i o`
 
 ```purescript
@@ -167,8 +222,8 @@ Signal functions will conform to this generic type.
 Wrap (i -> o)
 ```
 
-It *just* allows an otherwise pure function to be included in the signal-function networks.
 This is the most-basic constructor for signal functions.
+It *just* allows an otherwise pure function to be included in the signal-function networks.
 
 #### `Lift (i -> Effect o)`
 
@@ -176,9 +231,9 @@ This is the most-basic constructor for signal functions.
 Lift (i -> Effect o)
 ```
 
-It is chiefly used for IO and such.
-It allows simple functions with side effects to be included in the signal-function networks.
 This is a slightly more elabourate constructor for signal functions.
+It allows simple functions with side effects to be included in the signal-function networks.
+It is chiefly used for IO and such.
 
 #### `Next (i -> Effect (Tuple (SF i o) o))`
 
@@ -186,9 +241,9 @@ This is a slightly more elabourate constructor for signal functions.
 Next (i -> Effect (Tuple (SF i o) o))
 ```
 
-In practice - that would be unpleasant to implement.
-In theory - all other forms are [syntactical sugar](https://en.wikipedia.org/wiki/Syntactic_sugar) around Next.
 Next is the most general form of a signal function.
+In theory - all other forms are [syntactical sugar](https://en.wikipedia.org/wiki/Syntactic_sugar) around Next.
+In practice - that would be unpleasant to implement.
 
 #### `Pipe {take :: SF i Unit, send :: SF Unit o}`
 
@@ -196,9 +251,9 @@ Next is the most general form of a signal function.
 Pipe {take :: SF i Unit, send :: SF Unit o}
 ```
 
-As `pipe` was introduced late in the project and `Pipe` was introduced even later; this implementation was simple to carry out.
-It is specialised such that a devloper can decompose a signal function if they need to do something unusual.
 Pipe constructs a specialised pair of signal functions used for IO from `pipe` type components.
+It is specialised such that a devloper can decompose a signal function if they need to do something unusual.
+As `pipe` was introduced late in the project and `Pipe` was introduced even later; this implementation was simple to carry out.
 
 ### `react`
 
@@ -206,8 +261,8 @@ Pipe constructs a specialised pair of signal functions used for IO from `pipe` t
 react :: forall i o. SF i o -> i -> Effect (Tuple (SF i o) o)
 ```
 
-likely should only be used internally.
 invoke a signal function.
+likely should only be used internally.
 
 ### `consta`
 
@@ -215,8 +270,8 @@ invoke a signal function.
 consta :: forall i o. o -> SF i o
 ```
 
-This is surprisingly useful in the construction/generation of foreign signal functions.
 This is a pseudo-constructor flr a signal function that *just* emits the same value over and over again.
+This is surprisingly useful in the construction/generation of foreign signal functions.
 
 ### `fold_hard`
 
@@ -224,9 +279,9 @@ This is a pseudo-constructor flr a signal function that *just* emits the same va
 fold_hard :: forall p i o. p -> (p -> i -> Effect (Tuple p o)) -> SF i o
 ```
 
-The fun parameter must be an effectual function.
-This constructs a signal function from some generic parameter "p" that's replaced after each cycle.
 This is a pseudo-constructor.
+This constructs a signal function from some generic parameter "p" that's replaced after each cycle.
+The fun parameter must be an effectual function.
 
 ### `fold_soft`
 
@@ -234,9 +289,9 @@ This is a pseudo-constructor.
 fold_soft :: forall p i o. p -> (p -> i -> (Tuple p o)) -> SF i o
 ```
 
-The fun parameter should be a pure function.
-This constructs a signal function from some generic parameter "p" that's replaced after each cycle.
 This is a pseudo-constructor.
+This constructs a signal function from some generic parameter "p" that's replaced after each cycle.
+The fun parameter should be a pure function.
 
 ### `cache`
 
@@ -244,8 +299,8 @@ This is a pseudo-constructor.
 cache :: forall v. v -> SF (Maybe v) v
 ```
 
-This constructs a SF that emits the last "not-empty" Maybe and starts with the passed value.
 This is a pseudo-constructor.
+This constructs a SF that emits the last "not-empty" Maybe and starts with the passed value.
 
 ### `concat`
 
@@ -253,8 +308,8 @@ This is a pseudo-constructor.
 concat :: forall i m o. SF i m -> SF m o -> SF i o
 ```
 
-This concatenate two signal functions into one.
 This is a pseudo-constructor which is also bound to the `>>>>` operator.
+This concatenate two signal functions into one.
 
 ### `fuselr`
 
@@ -262,8 +317,8 @@ This is a pseudo-constructor which is also bound to the `>>>>` operator.
 fuselr :: forall i l r. SF i l -> SF i r -> SF i (Tuple l r)
 ```
 
-This "fuses" two signal functions to take one input and produce a paired output.
 This is a pseudo-constructor which is also bound to the `&&&&` operator.
+This "fuses" two signal functions to take one input and produce a paired output.
 
 ### `repeat`
 
@@ -271,11 +326,11 @@ This is a pseudo-constructor which is also bound to the `&&&&` operator.
 repeat :: forall i o. o -> SF i (Maybe o) -> SF i o
 ```
 
-This might be redundant given the existence of `cache`
-
-so it turns a SF that may or may not emit a value into something that always emits the value
-This operator starts with o but then returns the last Just-value coming out of the SF.
 This is a pseudo-constructor.
+This operator starts with o but then returns the last Just-value coming out of the SF.
+so it turns a SF that may or may not emit a value into something that always emits the value
+
+This might be redundant given the existence of `cache`
 
 ### `unitsf`
 
@@ -283,10 +338,10 @@ This is a pseudo-constructor.
 unitsf :: forall i. SF i Unit
 ```
 
-This is useful for converting chains of functions.
-
-This is a signal function that just crushes something to `: Unit`.
 This is a pseudo-constant.
+This is a signal function that just crushes something to `: Unit`.
+
+This is useful for converting chains of functions.
 
 ### `passsf`
 
@@ -294,7 +349,7 @@ This is a pseudo-constant.
 passsf :: forall v. SF v v
 ```
 
-This can be useful when building signal functions to twist the structures around.
-
-This is a signal function that *just* passes a value through.
 This is a pseudo-constant.
+This is a signal function that *just* passes a value through.
+
+This can be useful when building signal functions to twist the structures around.
