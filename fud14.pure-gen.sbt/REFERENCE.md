@@ -1,4 +1,11 @@
 
+
+This document forms a reference manual for anyone authoring an `Agent.purs` with this system.
+A user is not expected to read it "from cover to cover"<sup id='f_link1'>[1](#f_note1)</sup> but rather browse it when stuck or curious.
+
+The document discusses the components of the system, and the FRP library used to construct the signal functions.
+
+
 - [Components / pIDL](#components--pidl)
 	- [Scenario](#scenario)
 	- [Mary](#mary)
@@ -22,6 +29,8 @@
 
 ## Components / pIDL
 
+While implemented in Scala, the components still need `.purs` and `.js` source code to integrate correctly with the `Agent.purs`.
+To assist in consistency and maintenance a code generator and IDL were developed and used to generate `.purs` and `.js` files and corresponding `.scala` sources with `trait` abstractions.
 There are five "things" that one might see in the `.pidl` files.
 Four of them construct *foreign signal functions* to pass data in/out of the agent.
 The final one `opaque` just defines an (appropriately named) opaque data type that the agent can/will pass around.
@@ -60,9 +69,7 @@ The final one `opaque` just defines an (appropriately named) opaque data type th
 
 ### Scenario
 
-The `Scenario.pidl` allows an agent to interface with some "system" functions.
-
-... which means "time" and "logging" at this point.
+The `Scenario.pidl` allows an agent to interface with system functionality to examine how long the scenario has been running and print out logging information.
 
 ```
 // the age of the simulation
@@ -72,7 +79,7 @@ sample Age() = real32
 signal LogColumn(text) = text
 ```
 
-As these are rather "basic" concepts, it was deemed (by Peter) interesting to include the implementation here.
+For reference, the implementation is included here.
 
 ```scala
 package peterlavalle.puregen
@@ -80,24 +87,44 @@ package peterlavalle.puregen
 import pdemo.Scenario
 import peterlavalle.puregen.TModule.Sample
 
+/**
+ * this class implements the scenario functionality for the Demo
+ */
 class TheScenario() extends Scenario {
 
+  /**
+   * we need to note when the scenario starts
+   */
   private lazy val start: Long = System.currentTimeMillis()
 
+  /**
+   * this function computes the current age
+   */
   private def age: Float =
     ((System.currentTimeMillis() - start) * 0.001)
       .toFloat
 
+  /**
+   * this creates a signal function that *just* returns the current age
+   *
+   * TODO; update some variable at the start of the/a cycle and use that. we want all of the sampled values to have the same value
+   */
   override def openAge(): Sample[Float] =
+    // signal here is a pseudo eDSL construct with the form `: (=> T) -> Sample[T]`
     sample {
       age
     }
-
+  /**
+   * this creates a so-called log column
+   *
+   * TODO; collect all log messages and them write them all at the end of a cycle as one group
+   * TODO; ... and write them to .csv columns?
+   * TODO; ... or maybe .json since that has more of a spec?
+   */
   override def openLogColumn(a0: String): TModule.Signal[String] =
+    // signal here is a pseudo eDSL construct with the form `: (T => Unit) -> Signal[T]`
     signal {
       text: String =>
-        // due to a bug, these won't appear correct on the public `.md` pages
-        // the source code in the `.scala` files will be fine
         System.out.println(s"[$a0] @ $age")
         text.split("[\r \t]*\n").foreach {
           line: String =>
@@ -124,7 +151,7 @@ pipe LiveMary(text)
 Opening an instance of the system requires a regular expression `: String` to define how to split the text up before rendering it.
 The component will accept `""` to indicate that the defaults should be used.
 
-The foreign signal function instance accepts two commands, `Silent` indicates that the TTS system should immediately be silent, and `Speak` indicates that the system should be rendering speech from the passed (past) timestamp.<sup id='f_link1'>[1](#f_note1)</sup>
+The foreign signal function instance accepts two commands, `Silent` indicates that the TTS system should immediately be silent, and `Speak` indicates that the system should be rendering speech from the passed (past) timestamp.<sup id='f_link2'>[2](#f_note2)</sup>
 The system emits two events, `Speaking` and `Spoken` which both carry the same data as `Speak` and are sent when the TTS system starts and finished speech respectively.
 If the TTS system is interrupted before it finishes, then, a `Spoken` event will not be emitted for the interrupted segment - as it never finished.
 
@@ -135,7 +162,7 @@ The "Sphinx" component handles Automated Speech Recognition.
 The first system it could connect to was [the CMUSphinx4](https://cmusphinx.github.io/) software with [Google's Cloud ASR](https://cloud.google.com/speech-to-text) being added later.
 [Google's Cloud ASR](https://cloud.google.com/speech-to-text) would be the recommended approach as it seems "more accurate" most of the time.
 [CMUSphinx4](https://cmusphinx.github.io/) is somewhat simpler to set up though, and, "free as in free snacks" (and freedom) so will remain integrated for the foreseeable future.
-Due to limitations in the `.pidl` tools - the current approach needs both systems to appear in the same file/component if they wish to share the `Microphone` system.<sup id='f_link2'>[2](#f_note2)</sup>
+Due to limitations in the `.pidl` tools - the current approach needs both systems to appear in the same file/component if they wish to share the `Microphone` system.<sup id='f_link3'>[3](#f_note3)</sup>
 
 
 ```
@@ -159,15 +186,15 @@ pipe GoogleASR()
 ```
 
 
-The system functions on a (unique?) abstraction - instead of passing around conventional "audio packets"<sup id='f_link3'>[3](#f_note3)</sup> it passes around an `AudioLine` instance which is analogous to a stream handle.
+The system functions on a (unique?) abstraction - instead of passing around conventional "audio packets"<sup id='f_link4'>[4](#f_note4)</sup> it passes around an `AudioLine` instance which is analogous to a stream handle.
 
-The `Microphone` itself *just* opens the system's default microphone (whatever that means) and continually sends out an appropriate `AudioLine` instance for other systems.<sup id='f_link4'>[4](#f_note4)</sup>
+The `Microphone` itself *just* opens the system's default microphone (whatever that means) and continually sends out an appropriate `AudioLine` instance for other systems.<sup id='f_link5'>[5](#f_note5)</sup>
 The returned `AudioLine` instance is suitable for use with multiple behaviours.
 
 
 The two ASR systems have similar APIs with (basically) identical functionality.
-Both are `pipe` type foreign signal functions that require a `Connect AudioLine` or `Disconnect` behvaiour and emit `Recognition String` events.<sup id='f_link5'>[5](#f_note5)</sup>
-Due to ... reasons ... the two `pipe` definitions can't share messages<sup id='f_link6'>[6](#f_note6)</sup> so each prefixes the message name with a letter.
+Both are `pipe` type foreign signal functions that require a `Connect AudioLine` or `Disconnect` behvaiour and emit `Recognition String` events.<sup id='f_link6'>[6](#f_note6)</sup>
+Due to ... reasons ... the two `pipe` definitions can't share messages<sup id='f_link7'>[7](#f_note7)</sup> so each prefixes the message name with a letter.
 
 Another future goal would be to add [ICL's ASR](https://github.com/peterlavalle/AVP/tree/gift/ASR), [IBM's Watson](https://www.ibm.com/uk-en/cloud/watson-speech-to-text) and on-chip implemntation of [CMU PocketSphinx](https://github.com/cmusphinx/pocketsphinx) and [Mozilla's DeepSpeech](https://github.com/mozilla/DeepSpeech).
 
@@ -178,7 +205,7 @@ Another future goal would be to add [ICL's ASR](https://github.com/peterlavalle/
 
 The `FRP.purs` module contains a lot of PureScript functionality to construct signal functions that form the system.
 Central to this is the `SF i o` type used to define signal functions.
-There are several constructors, though only the `Next` one is strictly speaking necessary.<sup id='f_link7'>[7](#f_note7)</sup>
+There are several constructors, though only the `Next` one is strictly speaking necessary.<sup id='f_link8'>[8](#f_note8)</sup>
 Through the `Next` signal function, a developer can (effectively) construct any functionality that they need.
 
 The file offers several "pseudo constructor" functions that cover "common" cases in development and help developers work consistently.
@@ -335,36 +362,40 @@ This can be useful when building signal functions to twist the structures around
 ----
 
 <b id='f_note1'>[1](#f_link1)</b>
-This functionality isn't currently "correct" but will work.
-"New" speech commands will be accepted `if startTime > currentCommandTime` but there's no way (yet) to skip/resume through speech.
-More work on/with the system would be needed to implement this.
+As the document is less than 300 lines, a cover-to-cover reading is currently practical.
 [back](#f_link1)
 
 <b id='f_note2'>[2](#f_link2)</b>
-Simply put - the `.pidl` DSL can't perform any sort of `import` action.
-*Fixing* this isn't a priority, but, it's an understood problem that I'd like to tackle.
+This functionality isn't currently "correct" but will work.
+"New" speech commands will be accepted `if startTime > currentCommandTime` but there's no way (yet) to skip/resume through speech.
+More work on/with the system would be needed to implement this.
 [back](#f_link2)
 
 <b id='f_note3'>[3](#f_link3)</b>
-"Audio Packets" would be time-sensitive in ways that feel inappropriate for this system's design.
-Using this "Audio Line" to control the audio sample *feels* more appropriate to the authors and requires less configuration.
-Also; the "Audio Line" approach doesn't need to cycle the FRP network whenever a new sample is available - this has rather important performance implications.
+Simply put - the `.pidl` DSL can't perform any sort of `import` action.
+*Fixing* this isn't a priority, but, it's an understood problem that I'd like to tackle.
 [back](#f_link3)
 
 <b id='f_note4'>[4](#f_link4)</b>
-In an ideal implementation of `.pidl` the `MicroPhone` and `AudioLine` items would be in the `Scenario.pidl` module.
+"Audio Packets" would be time-sensitive in ways that feel inappropriate for this system's design.
+Using this "Audio Line" to control the audio sample *feels* more appropriate to the authors and requires less configuration.
+Also; the "Audio Line" approach doesn't need to cycle the FRP network whenever a new sample is available - this has rather important performance implications.
 [back](#f_link4)
 
 <b id='f_note5'>[5](#f_link5)</b>
-An active area of development (by Peter) is to expand these two APIs to emit some of the more detailed information from the ASR systems.
+In an ideal implementation of `.pidl` the `MicroPhone` and `AudioLine` items would be in the `Scenario.pidl` module.
 [back](#f_link5)
 
 <b id='f_note6'>[6](#f_link6)</b>
-Yet.
-The two definitions can't share messages *yet* and while an approach to resolve this is practical the time expenditure to develop and implement it is not.
+An active area of development (by Peter) is to expand these two APIs to emit some of the more detailed information from the ASR systems.
 [back](#f_link6)
 
 <b id='f_note7'>[7](#f_link7)</b>
-Since the `Pipe` constructor is so simple to match and decompose - one could argue that it is needed as well.
+Yet.
+The two definitions can't share messages *yet* and while an approach to resolve this is practical the time expenditure to develop and implement it is not.
 [back](#f_link7)
+
+<b id='f_note8'>[8](#f_link8)</b>
+Since the `Pipe` constructor is so simple to match and decompose - one could argue that it is needed as well.
+[back](#f_link8)
 
