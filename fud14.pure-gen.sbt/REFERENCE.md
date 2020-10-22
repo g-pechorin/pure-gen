@@ -98,10 +98,10 @@ class TheScenario() extends Scenario {
       text: String =>
         // due to a bug, these won't appear correct on the public `.md` pages
         // the source code in the `.scala` files will be fine
-        System.out.println(s"[![a0] @ ](https://render.githubusercontent.com/render/math?math=a0]%20@%20)age")
+        System.out.println(s"[$a0] @ $age")
         text.split("[\r \t]*\n").foreach {
           line: String =>
-            System.out.println(s"[![a0]: ](https://render.githubusercontent.com/render/math?math=a0]:%20)line")
+            System.out.println(s"[$a0]: $line")
         }
     }
 }

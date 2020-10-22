@@ -245,25 +245,21 @@ Static error at xsl:strip-space on line 36 column 41
 Cannot start MARY server
 	at marytts.LocalMaryInterface.<init>(LocalMaryInterface.java:66)
 	at peterlavalle.puregen.MaryTalk$.apply(MaryTalk.scala:15)
-	at peterlavalle.puregen.MaryLive$![anon](https://render.githubusercontent.com/render/math?math=anon)1.<init>(MaryLive.scala:22)
+	at peterlavalle.puregen.MaryLive$$anon$1.<init>(MaryLive.scala:22)
 	at peterlavalle.puregen.MaryLive$.kirk(MaryLive.scala:21)
-	at peterlavalle.puregen.TryMary.$anonfun![openLiveMary](https://render.githubusercontent.com/render/math?math=openLiveMary)1(TryMary.scala:16)
+	at peterlavalle.puregen.TryMary.$anonfun$openLiveMary$1(TryMary.scala:16)
 	at peterlavalle.puregen.Cyclist.p(Cyclist.scala:68)
-	at pidl.B.$anonfun![apply](https://render.githubusercontent.com/render/math?math=apply)1(T.scala:48)
-	at peterlavalle.puregen.include![ScriptedGen](https://render.githubusercontent.com/render/math?math=ScriptedGen)![anon](https://render.githubusercontent.com/render/math?math=anon)2.apply(include.scala:28)
+	at pidl.B.$anonfun$apply$1(T.scala:48)
+	at peterlavalle.puregen.include$ScriptedGen$$anon$2.apply(include.scala:28)
 	at <js> :=>(Unnamed:6:153-166)
 	at <js> :=>(Unnamed:367:11146-11168)
 	at <js> __do(Unnamed:451:13926-13952)
 	at <js> __do(Unnamed:604:19591-19619)
 	at <js> __do(Unnamed:721:23480-23492)
 	at org.graalvm.polyglot.Value.execute(Value.java:454)
-	at peterlavalle.puregen.include![ScriptedValue.](https://render.githubusercontent.com/render/math?math=ScriptedValue.)anonfun![eff](https://render.githubusercontent.com/render/math?math=eff)2(include.scala:124)
-	at peterlavalle.puregen.DemoTry![.](https://render.githubusercontent.com/render/math?math=.)anonfun![runAgent](https://render.githubusercontent.com/render/math?math=runAgent)5(DemoTry.scala:140)
-	at peterlavalle.include
-
-![anon$2](https://render.githubusercontent.com/render/math?math=anon$2)
-
-anon$3.run(include.scala:117)
+	at peterlavalle.puregen.include$ScriptedValue.$anonfun$eff$2(include.scala:124)
+	at peterlavalle.puregen.DemoTry$.$anonfun$runAgent$5(DemoTry.scala:140)
+	at peterlavalle.include$$anon$2$$anon$3.run(include.scala:117)
 Caused by host exception: marytts.exceptions.MaryConfigurationException: Cannot start MARY server
 ======================================
 

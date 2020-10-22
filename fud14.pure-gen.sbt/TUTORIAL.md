@@ -71,18 +71,18 @@ running from `C:\Users\Peter\Desktop\portfolio-fud\fud14.pure-gen.sbt`
 ;Compiling Agent
 ;Compiling Main
 Exception in thread "main" java.lang.RuntimeException: no index.js in `C:/Users/Peter/Desktop/portfolio-fud/fud14.pure-gen.sbt/demo/target/spago`
-  at peterlavalle.puregen.SpagoBuild![.](https://render.githubusercontent.com/render/math?math=.)anonfun![apply](https://render.githubusercontent.com/render/math?math=apply)20(SpagoBuild.scala:109)
-  at peterlavalle.Err![Success.](https://render.githubusercontent.com/render/math?math=Success.)qmark(Err.scala:52)
-  at peterlavalle.puregen.SpagoBuild![.](https://render.githubusercontent.com/render/math?math=.)anonfun![apply](https://render.githubusercontent.com/render/math?math=apply)18(SpagoBuild.scala:105)
-  at peterlavalle.Err![Success.](https://render.githubusercontent.com/render/math?math=Success.)div(Err.scala:54)
+  at peterlavalle.puregen.SpagoBuild$.$anonfun$apply$20(SpagoBuild.scala:109)
+  at peterlavalle.Err$Success.$qmark(Err.scala:52)
+  at peterlavalle.puregen.SpagoBuild$.$anonfun$apply$18(SpagoBuild.scala:105)
+  at peterlavalle.Err$Success.$div(Err.scala:54)
   at peterlavalle.Err.foreach(Err.scala:12)
   at peterlavalle.Err$Success.foreach(Err.scala:48)
-  at peterlavalle.puregen.SpagoBuild![.](https://render.githubusercontent.com/render/math?math=.)anonfun![apply](https://render.githubusercontent.com/render/math?math=apply)9(SpagoBuild.scala:59)
-  at peterlavalle.Err![Success.](https://render.githubusercontent.com/render/math?math=Success.)div(Err.scala:54)
+  at peterlavalle.puregen.SpagoBuild$.$anonfun$apply$9(SpagoBuild.scala:59)
+  at peterlavalle.Err$Success.$div(Err.scala:54)
   at peterlavalle.Err.foreach(Err.scala:12)
   at peterlavalle.Err$Success.foreach(Err.scala:48)
-  at peterlavalle.puregen.SpagoBuild![.](https://render.githubusercontent.com/render/math?math=.)anonfun![apply](https://render.githubusercontent.com/render/math?math=apply)6(SpagoBuild.scala:50)
-  at peterlavalle.Err![Success.](https://render.githubusercontent.com/render/math?math=Success.)div(Err.scala:54)
+  at peterlavalle.puregen.SpagoBuild$.$anonfun$apply$6(SpagoBuild.scala:50)
+  at peterlavalle.Err$Success.$div(Err.scala:54)
   at peterlavalle.Err.foreach(Err.scala:12)
   at peterlavalle.Err$Success.foreach(Err.scala:48)
   at peterlavalle.puregen.SpagoBuild$.apply(SpagoBuild.scala:36)
@@ -243,16 +243,12 @@ When you run the agent, you'll see the usual warnings, the system will run (as b
 ```
 Exception in thread "Thread-4" java.lang.RuntimeException: an output:signal did not receive data java.lang.String
   at peterlavalle.puregen.Cyclist$Passable.send(Cyclist.scala:200)
-  at peterlavalle.puregen.Cyclist$![anon](https://render.githubusercontent.com/render/math?math=anon)2.send(Cyclist.scala:102)
-  at peterlavalle.puregen.Cyclist.$anonfun![send](https://render.githubusercontent.com/render/math?math=send)1(Cyclist.scala:157)
+  at peterlavalle.puregen.Cyclist$$anon$2.send(Cyclist.scala:102)
+  at peterlavalle.puregen.Cyclist.$anonfun$send$1(Cyclist.scala:157)
   at java.base/java.lang.Iterable.forEach(Iterable.java:75)
   at peterlavalle.puregen.Cyclist.send(Cyclist.scala:157)
-  at peterlavalle.puregen.DemoTry![.](https://render.githubusercontent.com/render/math?math=.)anonfun![runAgent](https://render.githubusercontent.com/render/math?math=runAgent)5(DemoTry.scala:122)
-  at peterlavalle.include
-
-![anon$2](https://render.githubusercontent.com/render/math?math=anon$2)
-
-anon$3.run(include.scala:117)
+  at peterlavalle.puregen.DemoTry$.$anonfun$runAgent$5(DemoTry.scala:122)
+  at peterlavalle.include$$anon$2$$anon$3.run(include.scala:117)
 ```
 
 This indicates that one of the outputs wasn't "written to" during the cycle.
@@ -549,20 +545,16 @@ creating the entry signal-function
 ======================================
 ======================================
 peterlavalle.puregen.Cyclist$CoolDownException: a loaded value was not consumed - likely an open signal function was not used this cycle
-        at peterlavalle.puregen.Cyclist![CoolDownException](https://render.githubusercontent.com/render/math?math=CoolDownException).apply(Cyclist.scala:23)
-        at peterlavalle.puregen.Cyclist![Loadable.](https://render.githubusercontent.com/render/math?math=Loadable.)anonfun![send](https://render.githubusercontent.com/render/math?math=send)6(Cyclist.scala:252)
-        at peterlavalle.puregen.Cyclist.peterlavalle![puregen](https://render.githubusercontent.com/render/math?math=puregen)Cyclist![](https://render.githubusercontent.com/render/math?math=)require(Cyclist.scala:36)
+        at peterlavalle.puregen.Cyclist$CoolDownException$.apply(Cyclist.scala:23)
+        at peterlavalle.puregen.Cyclist$Loadable.$anonfun$send$6(Cyclist.scala:252)
+        at peterlavalle.puregen.Cyclist.peterlavalle$puregen$Cyclist$$require(Cyclist.scala:36)
         at peterlavalle.puregen.Cyclist$Loadable.send(Cyclist.scala:252)
-        at peterlavalle.puregen.Cyclist$![anon](https://render.githubusercontent.com/render/math?math=anon)4.send(Cyclist.scala:156)
-        at peterlavalle.puregen.Cyclist.$anonfun![send](https://render.githubusercontent.com/render/math?math=send)2(Cyclist.scala:179)
+        at peterlavalle.puregen.Cyclist$$anon$4.send(Cyclist.scala:156)
+        at peterlavalle.puregen.Cyclist.$anonfun$send$2(Cyclist.scala:179)
         at java.base/java.lang.Iterable.forEach(Iterable.java:75)
         at peterlavalle.puregen.Cyclist.send(Cyclist.scala:179)
-        at peterlavalle.puregen.DemoTry![.](https://render.githubusercontent.com/render/math?math=.)anonfun![runAgent](https://render.githubusercontent.com/render/math?math=runAgent)5(DemoTry.scala:149)
-        at peterlavalle.include
-
-![anon$2](https://render.githubusercontent.com/render/math?math=anon$2)
-
-anon$3.run(include.scala:117)
+        at peterlavalle.puregen.DemoTry$.$anonfun$runAgent$5(DemoTry.scala:149)
+        at peterlavalle.include$$anon$2$$anon$3.run(include.scala:117)
 ======================================
 
 caught an exception during the cycle
@@ -669,7 +661,7 @@ So, the last step here is to compose `hear` with `Wrap $ log_asr` and `log` and 
 ```purescript
 -- pure $ cycle_message >>>> cycle_column
 -- pure $ connect_microphone >>>> cycle_message >>>> cycle_column
-pure ![ connect_microphone >>>> cycle_message >>>> cycle_column >>>> hear >>>> (Wrap ](https://render.githubusercontent.com/render/math?math=%20connect_microphone%20>>>>%20cycle_message%20>>>>%20cycle_column%20>>>>%20hear%20>>>>%20(Wrap%20) log_asr) >>>> log
+pure $ connect_microphone >>>> cycle_message >>>> cycle_column >>>> hear >>>> (Wrap $ log_asr) >>>> log
 ```
 
 Try stating "oh" or "no" or other monosyllabic words to set off the speech detection.
