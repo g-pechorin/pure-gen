@@ -15,8 +15,10 @@ It is assumed that [the steps to install the system have been followed](INSTALL.
 		- [Count](#count)
 - [Listening for Speech](#listening-for-speech)
 	- [Event and Sample Inputs (Background)](#event-and-sample-inputs-background)
-	- [Import Required Functionality](#import-required-functionality)
-	- [Open the Signal Functions](#open-the-signal-functions)
+	- [Open the Foreign Systems](#open-the-foreign-systems)
+		- [Import Required Functionality](#import-required-functionality)
+		- [Open the Signal Functions](#open-the-signal-functions)
+		- [Check that Errors Trigger](#check-that-errors-trigger)
 	- [Connect the Microphone to the ASR](#connect-the-microphone-to-the-asr)
 	- [Logging ASR Values](#logging-asr-values)
 - [Speaking Out](#speaking-out)
@@ -34,73 +36,82 @@ You'll need a text editor, I'm using [Visual Code](https://code.visualstudio.com
 
 
 > PureScript uses [the "off-side rule"](https://en.wikipedia.org/wiki/Off-side_rule) and (sensibly) enforces the indentation character.
-> Make sure you're not using `\t` to avoid compilation errors.
+>
+> If you use a `\t` you will get a compiler error reading `Illegal whitespace character U+0009`.
 
 
 ## Empty Agent
 
-Open the `fud14.pure-gen.sbt/` folder and run `sbt demo/run` or open the project in IntelliJ IDEA and run `demo/main/peterlavalle.puregen.DemoTry` whichever is simplest.
-Double-check that the agent works and recognises a word or two.
+Open the `fud14.pure-gen.sbt/` folder and run `sbt demo/run` at the command line.
 
-The first step will be to delete the demonstration agent.
-Get the `fud14.pure-gen.sbt/demo/` folder open in your editor and open the `fud14.pure-gen.sbt/demo/iai/Agent.purs` file - we'll end up with a different version.
-Replace the contents with ...
+> If you're using VSCode, and you've opened that folder; you can type `CTRL + SHIFT + B` and select `full build & run ; sbt demo/run` to do a "full build" from the popup menu.
+>
+> There are simpler approaches - but - we need to fully build it.
+
+After a few moments of compiling, a Java Swing window will appear ...
+
+![control prompt](doc/control-tick.png)
+
+... indicating that the system is up and running.
+Double-check that the agent works and recognises a word or two.
+Check for any error messages, and see if the ASR notices when you speak.
+
+> The CMU Sphinx4 ASR is imprecise, but, easy to set up - so it's used here.
+
+
+Now, open the `fud14.pure-gen.sbt/demo/iai/Agent.purs` file - we'll end up with a different version.
+Replace ALL OF the contents with ...
 
 ```purescript
 module Agent where
 ```
 
-... to make a file that doesn't work.
-Now re-run everything to see that, specifically, the PureScript doesn't compile.
-You should get a set of console messages similar to this;
+... and ONLY this to make technically correct `module` but one that won't work.
+Re-check this with `CTRL + SHIFT + B` and select `re-check the PureScript ; spago demo/build` to do *just* that.
+The output from the process should look like the below message.
 
 ```
-running from `C:\Users\Peter\Desktop\portfolio-fud\fud14.pure-gen.sbt`
-!Error found:
-!in module Main
-!at C:\Users\Peter\Desktop\portfolio-fud\fud14.pure-gen.sbt\lib\Main.purs:15:15 - 15:20 (line 15, column 15 - line 15, column 20)
-!
-!  Cannot import value entry from module Agent
-!  It either does not exist or the module does not export it.
-!
-!
-!See https://github.com/purescript/documentation/blob/master/errors/UnknownImport.md for more information,
-!or to contribute content related to this error.
-!
-!
-;Compiling Agent
-;Compiling Main
-Exception in thread "main" java.lang.RuntimeException: no index.js in `C:/Users/Peter/Desktop/portfolio-fud/fud14.pure-gen.sbt/demo/target/spago`
-  at peterlavalle.puregen.SpagoBuild$.$anonfun$apply$20(SpagoBuild.scala:109)
-  at peterlavalle.Err$Success.$qmark(Err.scala:52)
-  at peterlavalle.puregen.SpagoBuild$.$anonfun$apply$18(SpagoBuild.scala:105)
-  at peterlavalle.Err$Success.$div(Err.scala:54)
-  at peterlavalle.Err.foreach(Err.scala:12)
-  at peterlavalle.Err$Success.foreach(Err.scala:48)
-  at peterlavalle.puregen.SpagoBuild$.$anonfun$apply$9(SpagoBuild.scala:59)
-  at peterlavalle.Err$Success.$div(Err.scala:54)
-  at peterlavalle.Err.foreach(Err.scala:12)
-  at peterlavalle.Err$Success.foreach(Err.scala:48)
-  at peterlavalle.puregen.SpagoBuild$.$anonfun$apply$6(SpagoBuild.scala:50)
-  at peterlavalle.Err$Success.$div(Err.scala:54)
-  at peterlavalle.Err.foreach(Err.scala:12)
-  at peterlavalle.Err$Success.foreach(Err.scala:48)
-  at peterlavalle.puregen.SpagoBuild$.apply(SpagoBuild.scala:36)
-  at peterlavalle.puregen.DemoTry$.runAgent(DemoTry.scala:39)
-  at peterlavalle.puregen.DemoTry$.main(DemoTry.scala:17)
-  at peterlavalle.puregen.DemoTry.main(DemoTry.scala)
+> Executing task: spago -C bundle-module <
+
+[error] Executable was not found in path: "purs"
+[info] Installation complete.
+Compiling Agent
+Compiling Main
+Error found:
+in module Main
+at D:/VitualPeter/fun/fud14.pure-gen.sbt/lib/Main.purs:15:15 - 15:20 (line 15, column 15 - line 15, column 20)
+
+  Cannot import value entry from module Agent
+  It either does not exist or the module does not export it.
+
+
+See https://github.com/purescript/documentation/blob/master/errors/UnknownImport.md for more information,
+or to contribute content related to this error.
+
+
+[error] Failed to build.
+
+Terminal will be reused by tasks, press any key to close it.
 ```
 
-Two things have gone wrong;
+> The line `[error] Executable was not found in path: "purs"` is a Windows/PureScript/Spago thing - please don't worry.
+>
+> The line `[success] Executable "purs.exe" was found in path!` should follow - please don't worry.
+>
+> > ... but if you want to file PureScript/Spago GitHub tickets asking for it to be fixed; it'd lend weight to the argument that it should be fixed.
 
-- when `Main.purs` tried to compile the `Agent.purs` module didn't contain `entry :: Effect (SF Unit Unit)`
-  - because we just deleted it!
-  - this is the actual "PureScript compile" error
-- when the build this tried to run, it didn't find an `index.js` file
-  - because that previous error failed
+The important detail is these two lines.
+```
+Cannot import value entry from module Agent
+It either does not exist or the module does not export it.
+```
+
+Simply put, the provided `Main.purs` file tried to compile/import our `Agent.purs` module and didn't find a function `entry :: Effect (SF Unit Unit)`.
+
+> This is the function we just deleted.
 
 Making an empty (but valid) agent is simple.
-Add a function prototype `entry :: Effect (SF Unit Unit)` to `Agent.purs` so ... do ... that.
+Add a function prototype `entry :: Effect (SF Unit Unit)` to `Agent.purs` to give it the correct type.
 The file `fud14.pure-gen.sbt/demo/iai/Agent.purs` still won't work-work, but, should look like this;
 
 ```purescript
@@ -109,7 +120,7 @@ module Agent where
 entry :: Effect (SF Unit Unit)
 ```
 
-When you "run" the system again, you'll get a different error saying `The type declaration for entry should be followed by its definition` along with the previous `no index.js` error.
+When you "check" the system again, you'll get a different error saying `The type declaration for entry should be followed by its definition`.
 PureScript needs a function body to follow the type, so, we need to *create a function* that *returns an effect* of *creating a signal-function* value.
 
 ```purescript
@@ -161,26 +172,14 @@ This sort of *empty computation* has little value itself, but, is useful when we
 Whenever a `void` method is called in C++/Java/CSharp/ECMAScript - we don't care about the value that's computed, we care about the side effects that are caused.
 Saying "this function has side effects outside of the system" in PureScript is done with a do-notation and a block of the type `Effect`.
 
-... anyway, run the demo again ...
+... anyway, **check** the demo again ...
 
 If you see an error message `Illegal whitespace character U+0009` you have indented with a `\t`.
 PureScript doesn't like `\t` so find it and turn any `\t` into a pair of spaces.
 
 If you don't have a `\t` you'll just see an error of `Unknown type Effect` because you need to import `Effect`.
-Do that `import Effect` so that your file looks like this ...
-
-```purescript
-module Agent where
-
-import Effect
-
-entry :: Effect (SF Unit Unit)
-entry = do
-  pure unitsf
-```
-
-... and run it again.
-Now you need to get the `SF` type from the `FRP.purs` file, so `import FRP` and re-run to see `Unit` which is from `Prelude` at which point the agent will look like this ...
+**THIS IS GOOD** and indicates progress.
+Add `import Effect` `import FRP` and `import Prelude` so that your file looks like this ...
 
 ```purescript
 module Agent where
@@ -194,8 +193,21 @@ entry = do
   pure unitsf
 ```
 
-... and run with some warnings (3 of them?) but basically "run" and get to the "shall I tick it?" dialogue while doing nothing.
-You'll see numerous "warnings" because PureScript tends to be rather "strict" with `import` ... which we're not going to deal with in this tutorial.
+... and when you **check** it again, you'll see three warning message, and the "Windows can't find `purs`" message but it'll end with ...
+
+```
+[info] Build succeeded.
+[info] Bundling first...
+[info] Bundle succeeded and output file to index.js
+[info] Make module succeeded and output file to index.js
+
+Terminal will be reused by tasks, press any key to close it.
+```
+
+... indicating that the PureScript module compiled.
+We can now "run" it be typing `CTRL + SHIFT + B` and selecting the "full build & run" option.
+After a slower (and more strenuous) build - you will see the CONTROL window again.
+
 We're almost at a "Hello World" agent.
 
 ## Hello Log Agent
@@ -220,7 +232,7 @@ To a developer (such as the reader reading this document) this is somewhat analo
 These *foreign signal functions* are *opened* at agent setup, and have a value put into it at each cycle.
 
 Start by adding `hello <- openLogColumn "hello"` to the line after `do` in the agent to open our logging column.
-This function comes from the `Pdemo.Scenario` module, so, we need to `import Pdemo.Scenario` to access it.
+This function comes from the `S3.Scenario` module, so, we need to `import S3.Scenario` to access it.
 
 ```purescript
 module Agent where
@@ -229,7 +241,7 @@ import Effect
 import FRP
 import Prelude
 
-import Pdemo.Scenario -- import the LogColumn functions
+import S3.Scenario -- import the LogColumn functions
 
 
 entry :: Effect (SF Unit Unit)
@@ -240,26 +252,35 @@ entry = do
 
 When you run the agent, you'll see the usual warnings, the system will run (as before) but will immediately halt with a new exception ...
 
+
 ```
-Exception in thread "Thread-4" java.lang.RuntimeException: an output:signal did not receive data java.lang.String
-  at peterlavalle.puregen.Cyclist$Passable.send(Cyclist.scala:200)
-  at peterlavalle.puregen.Cyclist$$anon$2.send(Cyclist.scala:102)
-  at peterlavalle.puregen.Cyclist.$anonfun$send$1(Cyclist.scala:157)
-  at java.base/java.lang.Iterable.forEach(Iterable.java:75)
-  at peterlavalle.puregen.Cyclist.send(Cyclist.scala:157)
-  at peterlavalle.puregen.DemoTry$.$anonfun$runAgent$5(DemoTry.scala:122)
-  at peterlavalle.include$$anon$2$$anon$3.run(include.scala:117)
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+!
+! requirement failed: no data attached to Scenario/LogColumn(hello) likely; it was not called
+!
+======================================
+======================================
+java.lang.IllegalArgumentException: requirement failed: no data attached to Scenario/LogColumn(hello) likely; it was not called
+        at scala.Predef$.require(Predef.scala:281)
+        at peterlavalle.puregen.core.AComponent$BehaviourAtomic.cycleComplete(AComponent.scala:180)
+        at peterlavalle.puregen.BuiltIn$.$anonfun$apply$6(BuiltIn.scala:67)
+        at peterlavalle.puregen.BuiltIn$.$anonfun$apply$6$adapted(BuiltIn.scala:67)
+        at scala.collection.Iterator.foreach(Iterator.scala:941)
+        at scala.collection.Iterator.foreach$(Iterator.scala:941)
+        at scala.collection.AbstractIterator.foreach(Iterator.scala:1429)
+
 ```
 
-This indicates that one of the outputs wasn't "written to" during the cycle.
+This indicates that one of the outputs (specifically the **Scenario/LogColumn(hello)**) wasn't "written to" during the cycle.
 Each output (and input) needs to be accessed once (and only once) every cycle.
 This is "enforced" to be sure that the agent is functioning as intended.
+So, we need to set or send a log value for `"hello"` each cycle.
 
 ### Sending a Message
 
-Right now, the LogColumn has the form `: SF String Unit` and the system is creating a (useless) value with the type `: SF Unit Unit`.
-The agent has to implement properly typed `entry :: Effect (SF Unit Unit)` function to run.
-We need to transform the log function to `: SF Unit Unit` so that we can return it from the `entry` function - so we need to produce something to create the message with the form `: SF Unit String` and combine the functions.
+Right now the agent opens (but doesn't use) `hello <-` which has the form `: SF String Unit`.
+We need to connect some signal function of the form `: SF Unit String` to it and create a signal function `SF Unit Unit`.
+Once this is done, we can return it with `pure` instead of the placeholder `unitsf`.
 Two signal functions can be combined with the `concat` function or `>>>>` operator.
 
 ```purescript
@@ -267,14 +288,18 @@ concat :: forall i m o. SF i m -> SF m o -> SF i o
 infixr 7 concat as >>>>
 ```
 
-Given two signal functions `L: SF i m` and `R: SF m o` with the desired type, they can be composed with the `>>>>` operation.
+Which takes two functions ...
 
-![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgTFtMOiBTRiBpIG1dXG4gIFJbUjogU0YgbSBvXVxuXG4gIEwgLS0+fD4+Pj58UlxuXG4gIE9bTFIgOjogU0YgaSBvXSJ9)
+![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgTFttZXNzYWdlOiBTRiBVbml0IFN0cmluZ11cbiAgUltoZWxsbzogU0YgU3RyaW5nIFVuaXRdXG5cbiAgTCAtLT58Pj4+PnxSIn0=)
+
+... and creates a new one ...
+
+![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgT1thZ2VudCA6OiBTRiBVbml0IFVuaXRdIn0=)
 
 
-So, if we had a constructor `messages :: SF Unit String`, we could compose it with the `hello` and return the result value with `pure`.
+So, if we had a constructor `messages :: SF Unit String`, we could compose it with the `hello` and return the result value with `pure`
 Let's add this at the end of the agent in a `where` block to check the types.
-Add it with a hole<sup id='f_link5'>[5](#f_note5)</sup> first and then build it to see what happens ...
+Add it with a *typed hole*<sup id='f_link5'>[5](#f_note5)</sup> first and then build it to see what happens ...
 
 ```purescript
 module Agent where
@@ -300,13 +325,26 @@ entry = do
 ... which fails to build with an error message ...
 
 ```
-!  Hole 'todo' has the inferred type
-!
-!    SF Unit String
-!
-!  You could substitute the hole with one of these values:
-!
-!    message  :: SF Unit String
+Error found:
+in module Agent
+at C:\Users\Peter\Desktop\portfolio-fun\fud14.pure-gen.sbt\demo\iai\Agent.purs:18:15 - 18:20 (line 18, column 15 - line 18, column 20)
+
+  Hole 'todo' has the inferred type
+
+    SF Unit String
+
+  You could substitute the hole with one of these values:
+
+    message  :: SF Unit String
+
+
+in value declaration entry
+
+See https://github.com/purescript/documentation/blob/master/errors/HoleInferredType.md for more information,
+or to contribute content related to this error.
+
+
+[error] Failed to build.
 ```
 
 ... great.
@@ -327,6 +365,7 @@ But, there's a builtin function `consta :: forall i o. o -> SF i o` we could als
 message = consta "Hello World"
 ```
 
+It has the same effect, but, is shorter so is preferable.
 If you run this now, and press the "OK" button a few times, you should get;
 
 ```
@@ -345,7 +384,9 @@ So, that's us saying "Hello World" with an Interactive Artificial Intelligence.
 
 ### Cycle Counter
 
-This final goal of adding a cycle count to the "Hello Log" starts with changing the `message :: SF Unit String` function.
+As a final step in this lesson, let's add a cycle count to the "Hello Log."
+Just something that emits a new number each cycle so that the messages are different.
+This will take the form of replacing the `message :: SF Unit String` function.
 We'll do this in two steps;
 
 1. create a signal function `: SF Unit Int` that performs the "counting"
@@ -354,7 +395,6 @@ We'll do this in two steps;
 #### Count
 
 The author expected that the pattern ...
-
 
 
 
@@ -384,8 +424,6 @@ Going back to `message` we can hide `cycle_count :: SF Unit Int` in the `where` 
 message:: SF Unit String
 -- message = consta "Hello World"
 message = Wrap $ \i -> "Hello World" -- new
-  where
-    cycle_count :: SF Unit Int
 ```
 
 ... then "compose it" onto the `cycle_count :: SF Unit Int` ...
@@ -395,8 +433,6 @@ message:: SF Unit String
 -- message = consta "Hello World"
 -- message = Wrap $ \i -> "Hello World"
 message = cycle_count >>>> (Wrap $ \i -> "Hello World") -- new
-  where
-    cycle_count :: SF Unit Int
 ```
 
 ... before computing a `: String` value in the lambda ...
@@ -407,12 +443,6 @@ message:: SF Unit String
 -- message = Wrap $ \i -> "Hello World"
 -- message = cycle_count >>>> (Wrap $ \i -> "Hello World")
 message = cycle_count >>>> (Wrap $ \i -> "Hello World " <> show i) -- new
-  where
-    cycle_count :: SF Unit Int
-    cycle_count = fold_soft 0 suc
-      where
-        suc :: Int -> Unit -> (Tuple Int Int)
-        suc i _ = Tuple (i + 1) i
 ```
 
 ... to get a working program.
@@ -432,7 +462,7 @@ import Prelude
 
 import Data.Tuple
 
-import Pdemo.Scenario
+import S3.Scenario
 
 entry :: Effect (SF Unit Unit)
 entry = do
@@ -443,39 +473,47 @@ entry = do
     cycle_message = cycle_count >>>> (Wrap $ \i -> "cycle #" <> show i <> " finished")
       where
         cycle_count :: SF Unit Int
-        cycle_count = fold_soft 0 successor
+        cycle_count = fold_soft 0 suc
           where
-            successor :: Int -> Unit -> (Tuple Int Int)
-            successor i _ = Tuple (i + 1) i
+            suc :: Int -> Unit -> (Tuple Int Int)
+            suc i _ = Tuple (i + 1) i
 ```
 
 ## Listening for Speech
 
-We have an agent that responds to a cycle by updating its log status.
-Now we're going to connect a speech recogniser that triggers those cycles.
-We will use the `cycle_message >>>> cycle_column` from the last section to help us see what's happening with the system.
-Once we've prepared this, the next section will send the recognised speech to a speech synthesizer.
+We have an "empty agent" that responds to a cycle by updating its log status when manually triggered.
+This isn't great - let's connect a speech recogniser that triggers those cycles by sending speech recognition data into the system.
+We can use that data to create a more interesting message.
 
-> The CMUSphinx4 Speech Recogniser is neither accurate or precise in the author's experince.
+> The CMUSphinx4 Speech Recogniser is not particularly accurate or precise in the author's experience.
 > Many more competitive systems exist, but, they're metered or less easily embedded.
->
-> For our purposes - the Sphinx system should be *fine* for this.
-> At the end - we'll change to Google's Cloud ASR which performs much better, but, needs an account to bill.
+> It's also possible to tune the CMUSphinx4 to be more useful, but, for our purposes - the Sphinx system should be *fine* for this.
+> We largely need a "speech detector" rather than a "speech recogniser
+> At the end - we'll change to Google's Cloud ASR which performs much better, but, needs an account to bill usage too.
+
+First, we'll try to outline how events and samples work in "pure gen" to provide a background for what we're doing, and, make one's experience with the ASR more easily transferable.
+We'll then *just* open the foreign signal functions that connect everything and check that the expected error messages indicate that stuff is working.
+It may seem odd to purposefully crash the system, but, it's the easiest way of detaching difficult to diagnose problems here.
+The penultimate task of this section will be to connect the microphone to the ASR and prevent more errors, before finally translating the ASR data to a log message.
+
+
 
 ### Event and Sample Inputs (Background)
 
-We've already seen that output data leaves the agent via "foreign signal functions" which are "opened" at setup.
-Inputs are also done via "foreign signal functions" and generally work in one of two ways;
+We've already seen that output data leaves the agent via "foreign signal functions."
+These "Foreign Signal Functions" (FSFs) are "opened" similar to files would be in an imperative language, but, can only be (like a file) at setup.
+Input data also enters the system via FSF but works in one of two ways;
 
-* `sample` inputs are a value that's computed for the cycle
+* `sample` inputs are a value that's computed for the cycle and always "there"
   - these may be passed in as tagged `data` or simple values
-  - this input type is (currently only) used for the "simulation age" which will be used in the next chapter
+  - things like the agent's `age: Number` or a handle for the microphone are `sample` types
 * `event` inputs are a value that may or may not be present during a cycle update
-  - these are "events" that were recorded (immediately) prior to the cycle and necessitate "updating" the agent
+  - these are "events" that were recorded prior to the cycle and necessitate "updating" the agent
   - these are encoded as a `Maybe a` with `a` being either tagged `data` or a simple value
   - if the ASR detects a phrase, it will raise an event with the detected speech
-  - pressing the "Ok" button on the demo does not raise an event
-  - the passage of time (currently) does not raise an event
+
+> Pressing the "Ok" button on the demo does not raise an event - in effect raising an event presses the "Ok" button.
+> The passage of time (currently) does not raise an event - this is as intentional as forgoing mutable data.
 
 
 It would make no sense for the "simulation age" to enter the agent as an `event` since the simulation is always running.
@@ -483,12 +521,13 @@ It would make no sense for the "simulation age" to enter the agent as an `event`
   For this reason, *age* enters the agent as a `sample` value that's always available.
 It wouldn't make sense for the "speech recognised" data to enter the agent as a `sample` or any value which isn't "optional."
   There are technical justifications, beyond the scope of this document, for why two types of input are needed.
-  The use of a [sentinel value](https://en.wikipedia.org/wiki/Sentinel_value) here would be something of an [anti-pattern](https://en.wikipedia.org/wiki/Anti-pattern) when the `Maybe a` functionality is so idiomatic to functional programming.
+
+  > The use of a [sentinel value](https://en.wikipedia.org/wiki/Sentinel_value) here would be something of an [anti-pattern](https://en.wikipedia.org/wiki/Anti-pattern) when the `Maybe a` functionality is so idiomatic to functional programming.
 
 Frequently, `event` and `signal` are tied together as "pipes" and opened at the same time.
   This is the case for the speech synthesizer we'll see later which must report its status back to the agent.
   This is also the case for this speech recogniser which we wish to "listen to" and "connect/disconnect" from the system's microphone.
-  These `pipe`s are opened as a single signal function `: SF I (Maybe O)` which combines both the previous `signal` type of function (which performs output) with an `event` type of function to react to input.<sup id='f_link6'>[6](#f_note6)</sup>
+  These `pipe`s are opened as a single signal function `: SF I (Maybe O)` which combines both the previous `signal` type of function (which performs output) with an `event` type of function to react to the input.<sup id='f_link6'>[6](#f_note6)</sup>
 
 
 Audio samples (on their own or aggregated) are not passed through the agent.
@@ -502,7 +541,10 @@ With that in mind, we can get started.
   The old log can be easily "composed" to a `: SF Unit Unit` value and then combined with the microphone and speech recogniser control.
   The new functionality, *just* needs to map the incoming ASR result to a `: String` before passing it to the log - and that can be done with a `Wrap` lambda.
 
-### Import Required Functionality
+
+### Open the Foreign Systems
+
+#### Import Required Functionality
 
 For this example, we're going to require additional `import` statements.
 We need the `Maybe` package to manipulate these values.
@@ -511,12 +553,13 @@ Add these packages and check to ensure that (other than new wantings) the agent 
 
 ```purescript
 import Data.Maybe
-import Pdemo.Sphinx
+import S3.Sphinx
 ```
 
-### Open the Signal Functions
 
-The three signal functions need to be "opened" as effects  - just like the pre-exisng logging function.
+#### Open the Signal Functions
+
+The three signal functions need to be "opened" as effects  - just like the pre-existing logging function.
 You'll need to add these lines before `do` but before `pure` for it to work correctly.
 
 ```purescript
@@ -526,62 +569,56 @@ mic <- openMicrophone
 -- open the sphinx system
 asr <- openCMUSphinx4ASR
 
--- open our log
-log <- openLogColumn "heard"
+-- you can rename the old log or open a new one
+heard_column <- openLogColumn "heard"
 ```
 
-Remeber to use consistent indentation and compile/run the agent to check that it fails as expected.
+Remember to use consistent indentation and compile/run the agent to check that it fails as expected.
 
-Amidst a (figurative) swamp of output, you shgould see an error ...
+#### Check that Errors Trigger
+
+You should run this now as it is.
+It will emit many messages, including ...
 
 ```
-creating the entry signal-function
+...
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 !
-! a loaded value was not consumed - likely an open signal function was not used this cycle
+! requirement failed: didn't read the fSF Sphinx/Microphone():Sample-Pedal
 !
 ======================================
 ======================================
-peterlavalle.puregen.Cyclist$CoolDownException: a loaded value was not consumed - likely an open signal function was not used this cycle
-        at peterlavalle.puregen.Cyclist$CoolDownException$.apply(Cyclist.scala:23)
-        at peterlavalle.puregen.Cyclist$Loadable.$anonfun$send$6(Cyclist.scala:252)
-        at peterlavalle.puregen.Cyclist.peterlavalle$puregen$Cyclist$$require(Cyclist.scala:36)
-        at peterlavalle.puregen.Cyclist$Loadable.send(Cyclist.scala:252)
-        at peterlavalle.puregen.Cyclist$$anon$4.send(Cyclist.scala:156)
-        at peterlavalle.puregen.Cyclist.$anonfun$send$2(Cyclist.scala:179)
-        at java.base/java.lang.Iterable.forEach(Iterable.java:75)
-        at peterlavalle.puregen.Cyclist.send(Cyclist.scala:179)
-        at peterlavalle.puregen.DemoTry$.$anonfun$runAgent$5(DemoTry.scala:149)
-        at peterlavalle.include$$anon$2$$anon$3.run(include.scala:117)
-======================================
-
-caught an exception during the cycle
-
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+...
 ```
 
-(Sorry about the swamp)
-This isn't the error you saw before when the log hadn't been set, but, it's simmilar.
-This error indicates that an input was oepnend but not read, and it is the sibling of "output not set."
+This isn't the error you saw before when the log hadn't been set, but, it's similar.
+This error indicates that an input, specifically the microphone, was opened but not read from.
+This is a sibling of "output not set" message - so seeing this error means that we've set up a resource and forgotten to use it.
+The system has assumed that's a bug in the agent and issued a failure message.
 
-Seeing this error means that you've opened (at least one of) the signal functioons as dictated and can continue.
-Remever to kill the program with CTRL+C before you try to run it again.
+For now, exit the program and continue with the next section of this tutorial.
 
 ### Connect the Microphone to the ASR
 
-Connecting the microphone `AudioLine` is *simple*;
+We will now connect the microphone to the ASR module.
+Within pure-gen follows an abstraction reminiscent of physically connecting two components.
+  At each cycle, the microphone signal function will have a value that can be used to send data to other components.
+  This is in contrast to a more conventional approach which might operate a single stream or packets of data.
 
-1. read the `AudioLine` value from the microphone signal function
+Keeping this in mind, connecting the microphone `AudioLine` is *simple*;
+
+1. read the `AudioLine` value from the microphone foreign signal function
   - it's a `sample` so it always has a value to pass along
-2. construct a control message with the value
-  - an `SConnect` one in this case
-3. pass the control message to the `asr :: SF CMUSphinx4ASRS (Maybe CMUSphinx4ASRE)` signal function
+2. construct a control message with the microphone value
+  - a `SConnect` one in this case; which is in effect a "not empty" value
+3. pass the control message to the `asr :: SF CMUSphinx4ASRS (Maybe CMUSphinx4ASREvent)` signal function
+  - this is performed by constructing a signal function
 4. remember to hook this all into the `pure` statement
   - ... which means that you'll need to append `>>>> unitsf` to convert the return type
+    - ... for now; we'll shortly operate on this value.
+
 
 The first three steps are accomplished with this `let` statement.
 
@@ -591,61 +628,83 @@ let connect_microphone = mic >>>> (Wrap $ SConnect) >>>> asr
 ```
 
 This `let` statement has to appear after the `mic` and `line` signal functions are opened.
-The fourth step is accomplished by replacing the `pure $ ...` statement with the below one
+The only thing that should look odd is the `(Wrap $ SConnect)` part.
+This uses the `Wrap` constructor to construct a signal function that uses the `SConnect :: AudioLine -> CMUSphinx4ASRSignal` constructor to generate a signal function which can be composed with the (already existing) `asr` signal function.
+
+
+The fourth step is accomplished by replacing the `pure $ ...` statement at the end with the below one
 
 ```purescript
 -- pure $ cycle_message >>>> cycle_column
 pure $ cycle_message >>>> cycle_column >>>> connect_microphone >>>> unitsf
 ```
 
-At this point, if the program is run, one will (again) see a sea of logging data; but no errors.
-The agent will "run" fine.
-If a user speaks (or "barks") simple words like "hello" or "they" then the ASR (seems to) pick them up and "kick off" an update of the agent.
-We have made progress, in the next section we'll perform the final step by mapping the recognition messages (of type `: Maybe CMUSphinx4ASRE`) to data that can be put into a column.
+At this point, if the program is run, one will (again) see a sea of logging data, and, an immediate error.
+We have still not assigned a value for the speech logger.
+In the next section, we'll perform this final step by mapping the recognition messages (of type `: Maybe CMUSphinx4ASREvent`) to data that can be put into a text column.
+
 
 
 ### Logging ASR Values
 
-> The CMUSphinx recogniser seems to be tuned to pick up swear words.
+> The CMUSphinx recogniser seems to be tuned for profanities.
 >
 > I don't know why.
 
-ASR data enters the agent with the form `: Maybe CMUSphinx4ASRE`.
-This is [a Tagged Union](https://github.com/purescript/documentation/blob/master/language/Types.md#tagged-unions) nad can be pattern matched, translated to a `: String`, then passed out to the `"heard"` log column.
+ASR data enters the agent with the form `: Maybe CMUSphinx4ASREvent` - the full data structure can be found in a generated file `Sphinx.purs` and the source can be found in the `Sphinx.pidl` file.
+This is [a Tagged Union](https://github.com/purescript/documentation/blob/master/language/Types.md#tagged-unions) which bundles several pieces of data together.
+This means that it can be pattern matched, translated to a `: String`, then passed out to the `"heard"` log column.
 
 We're going to do just that.
-We'll create a pure function that maps `: Maybe CMUSphinx4ASRE` to `: String` which we'll then `Wrap` to get a `: SF (Maybe CMUSphinx4ASRE) String` which we can concatenate into the agent.
+We'll create a pure function that maps `: Maybe CMUSphinx4ASREvent` to `: String` which we'll then `Wrap` to get a `: SF (Maybe CMUSphinx4ASREvent) String` signal function which we can concatenate into the agent.
+
+
+
 
 To start - add a "full" function prototype ... and try to compile it.
 This should cause a compilation error, but, that's fine - we *just* want to check that all imports are ready and in place.
 This can be placed "anywhere" but I'm putting it at the end of the file.
 
 ```purescript
-log_asr :: Maybe CMUSphinx4ASRE -> String
+log_asr :: Maybe CMUSphinx4ASREvent -> String
 ```
 
 When you compile & run you'll get the error `The type declaration for log_asr should be followed by its definition.`
-Add a case for when there's "no value" - when the message is `Nothing`.
+  Good - let's fill in the function's body so that it does what the signature implies.
+Add a case for when there's "no value" - when the message is `Nothing` - then compile again.
 
 ```purescript
-log_asr :: Maybe CMUSphinx4ASRE -> String
+log_asr :: Maybe CMUSphinx4ASREvent -> String
 log_asr Nothing = "there's no ASR data this cycle"
 ```
 
 When you compile & run again - you'll get a different compilation error.
-The gist of it is that you've handled "no value" and now you need to handle `Just a` value.
-PureScript (like most pure functional languages) won't allow "incomplete" programs to be compiled ... which is a good thing.
-We need to provide matching deconstructors for each constructor of `CMUSphinx4ASRE`.
-There's only one constructor for `CMUSphinx4ASRE` it's `SRecognised String` so let's add that, and construct a string from it.
+
+```
+  A case expression could not be determined to cover all inputs.
+  The following additional cases are required to cover all inputs:
+
+    (Just _)
+
+  Alternatively, add a Partial constraint to the type of the enclosing value.
+```
+
+Essentially, this is a message saying that you haven't handled all possible values and now you need to handle `Just a` value.
+  PureScript (like most pure functional languages) won't allow "incomplete" programs to be compiled ... which is a good thing.
+  You can declare a function "partial" to get around this, but, that's not needed here - we'll just finish the function.
+We need to provide matching deconstructors for each constructor of `CMUSphinx4ASREvent`.
+There's only one constructor for `CMUSphinx4ASREvent` it's `SRecognised String _ _` so let's add that, and construct a string from it.
+  The other two parameters provide more detailed information which isn't useful to us here.
 
 ```purescript
-log_asr :: Maybe CMUSphinx4ASRE -> String
+log_asr :: Maybe CMUSphinx4ASREvent -> String
 log_asr Nothing = "there's no ASR data this cycle"
-log_asr (Just (SRecognised text)) = "the ASR heard `" <> text <> "`"
+log_asr (Just (SRecognised text _ _)) = "the ASR heard `" <> text <> "`"
 ```
 
 This will compile and run, but (again, other than updating the cycle count) it will not "do" anything when it detects speech.
-We need to connect the `log_asr :: Maybe CMUSphinx4ASRE -> String` between a `: SF String ()` logging function and the `: SF () CMUSphinx4ASRE` agent we've already created.
+We've added functionality to process the speech, but, we haven't connected that functionality anywhere.
+We need to connect the `log_asr :: Maybe CMUSphinx4ASREvent -> String` between a `: SF String ()` logging function and the `: SF () CMUSphinx4ASREvent` agent we've already created.
 (We'll replace that last `unitsf` entry with our new stuff)
 This is shown below.
 
@@ -653,15 +712,6 @@ This is shown below.
 heard_column <- openLogColumn "heard"
 -- pure $ cycle_message >>>> cycle_column >>>> connect_microphone >>>> unitsf
 pure $ cycle_message >>>> cycle_column >>>> connect_microphone >>>> (Wrap log_asr) >>>> heard_column
-```
-
- (other beyond, but, immediately halt because we're still on consuming the `hear :: SF Unit CMUSphinx4ASRE` message.
-So, the last step here is to compose `hear` with `Wrap $ log_asr` and `log` and add it to the `pure` return value.
-
-```purescript
--- pure $ cycle_message >>>> cycle_column
--- pure $ connect_microphone >>>> cycle_message >>>> cycle_column
-pure $ connect_microphone >>>> cycle_message >>>> cycle_column >>>> hear >>>> (Wrap $ log_asr) >>>> log
 ```
 
 Try stating "oh" or "no" or other monosyllabic words to set off the speech detection.
@@ -687,49 +737,57 @@ import FRP
 import Prelude
 
 import Data.Tuple
-import Data.Maybe
 
-import Pdemo.Sphinx
-import Pdemo.Scenario
+import S3.Scenario
+
+
+import Data.Maybe
+import S3.Sphinx
 
 entry :: Effect (SF Unit Unit)
 entry = do
-    cycle_column <- openLogColumn "cycle"
+    -- open a microphone
     mic <- openMicrophone
+
+    -- open the sphinx system
     asr <- openCMUSphinx4ASR
+
+    -- open both logs
+    heard_column <- openLogColumn "heard"
+    cycle_column <- openLogColumn "cycle"
+
     let connect_microphone = mic >>>> (Wrap $ SConnect) >>>> asr
 
-    heard_column <- openLogColumn "heard"
     pure $ cycle_message >>>> cycle_column >>>> connect_microphone >>>> (Wrap log_asr) >>>> heard_column
   where
     cycle_message:: SF Unit String
     cycle_message = cycle_count >>>> (Wrap $ \i -> "cycle #" <> show i <> " finished")
       where
         cycle_count :: SF Unit Int
-        cycle_count = fold_soft 0 successor
+        cycle_count = fold_soft 0 suc
           where
-            successor :: Int -> Unit -> (Tuple Int Int)
-            successor i _ = Tuple (i + 1) i
+            suc :: Int -> Unit -> (Tuple Int Int)
+            suc i _ = Tuple (i + 1) i
 
-log_asr :: Maybe CMUSphinx4ASRE -> String
+log_asr :: Maybe CMUSphinx4ASREvent -> String
 log_asr Nothing = "there's no ASR data this cycle"
-log_asr (Just (SRecognised text)) = "the ASR heard `" <> text <> "`"
+log_asr (Just (SRecognised text _ _)) = "the ASR heard `" <> text <> "`"
 ```
 
 ## Speaking Out
 
-
 This section is *sort of* the "last" in this tutorial.
-Amongst other things, it tries to demonstrate approaching the problem as an exercise in transforming data.
-The agent can now recognise speech from the user, and log data about that speech and the agent's state using as columns with rows cooresponding to the cycle.
+We've constructed a basic program and seen how we can adapt one sort of information (ASR data) to another sort (text output) in a reactive way.
 This chapter expands on this by adding functionality to convert and replay the recognised speech (or any text) back into an audio signal using [the text to speech (TTS) engine MaryTTS](https://github.com/marytts/marytts).
+We're going to create a sort of "parrot brain" to perform this transformation since the system needs to keep speaking until it's finished what it's saying.
 
 
 ### The Brain
 
-This chapter introduces a concept of continuing to do something (in this case - speaking) unless interupted by a "meaningful" event.
+This chapter introduces a concept of continuing to do something (in this case - speaking) unless interrupted by a "meaningful" event.
   Thus far - all "actions" we've performed have been completed at the end of a cycle.
-Now, we need the agent's "brain" to "continue saying what it was saying unless it has something else to say instead" which will mean that we can't *just* compute a value (like the heard-log) and send it.
+Now, we need the agent's "brain" to "continue saying what it was saying unless it has something else to say instead."
+  This is because we can't *just* compute a value (like the log) and send it, we need to "keep speaking."
 
 Put another way - the agents are "reactive" and when speaking need to function as a "DJ" rather than a "singer."
   Agents must they choose which speech to emit, as a DJ chooses the next song, and await instructions to change it.
@@ -737,8 +795,9 @@ Put another way - the agents are "reactive" and when speaking need to function a
 
 This analogy isn't perfect.
   In the real world, a DJ will await the end of a song to begin playing another - we're going to ignore that.
-    In theory - our agent could respond to the/a "done speaking" event `: LiveMaryE | Spoken Number String` and do something else.
-  In this example, the agent will await any speech recognition result and at that point imediately begin reciting what it heard.
+    In theory - our agent could respond to the/a "done speaking" event `: LiveMaryE | Spoken Utterance` and do something else.
+  In this example, the agent will await any speech recognition result and at that point immediately begin reciting what it heard.
+    This means that our example will be easily interrupted.
 
 The last chapter touched on the nature of ["optional" values such as the `Maybe a` type](https://github.com/purescript/purescript-maybe).
 
@@ -746,11 +805,11 @@ The last chapter touched on the nature of ["optional" values such as the `Maybe 
 
 For this chapter, when speech was detected by the ASR we need to produce a new speech synthesis command.
 
-![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgbWF5YmVbOiBNYXliZSBDTVVTcGhpbng0QVNSRV1cbiAganVzdFtKdXN0IFNSZWNvZ25pc2VkXVxuICBub25lW05vdGhpbmddXG4gIHRhbGtbcHJvZHVjZSBhIFRUUyB2YWx1ZV1cbiAgbWF5YmUgLS0+anVzdFxuICBtYXliZSAtLT5ub25lXG4gIGp1c3QgLS0+fGNvbnN0cnVjdCBhIG5ldyBjb21tYW5kfCB0YWxrIn0=)
+![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgbWF5YmVbOiBNYXliZSBDTVVTcGhpbng0QVNSRXZlbnRdXG4gIGp1c3RbSnVzdCBTUmVjb2duaXNlZF1cbiAgbm9uZVtOb3RoaW5nXVxuICB0YWxrW3Byb2R1Y2UgYSBUVFMgdmFsdWVdXG4gIG1heWJlIC0tPmp1c3RcbiAgbWF5YmUgLS0+bm9uZVxuICBqdXN0IC0tPnxjb25zdHJ1Y3QgYSBuZXcgY29tbWFuZHwgdGFsayJ9)
 
 If no (new) speech was detected for this cycle, we need to reuse the old value.
 
-![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgbWF5YmVbOiBNYXliZSBDTVVTcGhpbng0QVNSRV1cbiAganVzdFtKdXN0IFNSZWNvZ25pc2VkXVxuICBub25lW05vdGhpbmddXG4gIG5vcGUocHJldmlvdXMgVFRTIHZhbHVlKVxuICB0YWxrW3Byb2R1Y2UgYSBUVFMgdmFsdWVdXG4gIG1heWJlIC0tPmp1c3RcbiAgbWF5YmUgLS0+bm9uZVxuICBqdXN0IC0tPiB0YWxrXG4gIG5vbmUgLS0+fGRvbid0IGNoYW5nZSBhbnl0aGluZ3wgbm9wZSJ9)
+![](https://mermaid.ink/img/eyJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJjb2RlIjoiZ3JhcGggTFJcbiAgbWF5YmVbOiBNYXliZSBDTVVTcGhpbng0QVNSRXZlbnRdXG4gIGp1c3RbSnVzdCBTUmVjb2duaXNlZF1cbiAgbm9uZVtOb3RoaW5nXVxuICBub3BlKHByZXZpb3VzIFRUUyB2YWx1ZSlcbiAgdGFsa1twcm9kdWNlIGEgVFRTIHZhbHVlXVxuICBtYXliZSAtLT5qdXN0XG4gIG1heWJlIC0tPm5vbmVcbiAganVzdCAtLT4gdGFsa1xuICBub25lIC0tPnxkb24ndCBjaGFuZ2UgYW55dGhpbmd8IG5vcGUifQ==)
 
 We'll need a "fallback" TTS command for the time between when the system starts, and when it first detects speech.
 If we examine the commands that can be sent to the synthesizer in `Mary.purs` we see that the `data` type is ...
@@ -758,14 +817,15 @@ If we examine the commands that can be sent to the synthesizer in `Mary.purs` we
 ```purescript
 data LiveMaryS
   = Silent
-  | Speak Number String
+  | Speak Utterance
 ```
 
 ... which indicates that the `Silent` command can be constructed and sent with no additional parameters.
 This makes sense when we consider that, at any given point, a DJ can unplug the sound system - but - when playing a song, a sound system needs a "position" to play at.
 
 
-Converting the `SRecognised String` value to `Speak Number String` is problematic as we need a (valid) value for that first `: Number`.
+The `Utterance` here is just a data structure which can be constructed `newUtterance :: Number -> String -> Utterance` with a timestamp, indicating when to start speaking, and some text, which it speaks.
+Converting the `SRecognised String _ _` value to `Speak Utterance` is problematic as we need a (valid) time value for that first `: Number`.
 This first `: Number` is the "start-time" for the spoken text.
 The TTS system needs to be told when it should start playing the speech, similar to how a DJ might be told to start playing a song at a certain time.<sup id='f_link7'>[7](#f_note7)</sup>
 For us, this will *just* be the simulation's age, which we can find with the `openAge :: Effect (SF Unit Number)` from the `Scenario.purs` module.
@@ -774,14 +834,14 @@ With the above in mind, we'll start implementing the functionality for this parr
 
 ### Implementing the "Brain"
 
-Start by (testing your last version and then) adding `import Pdemo.Mary` to your import statements.
+Start by (testing your last version and then) adding `import S3.Mary` to your import statements.
 
 We're going to write the "brain" inside of a function named `parrot_brain` to keep it isolated.
 The signal function we construct will need to accept data from the speech recogniser and emit `: Unit`.
 So, naively we'd assume that the signature looks like ...
 
 ```purescript
-parrot_brain :: SF (Maybe CMUSphinx4ASRE) Unit
+parrot_brain :: SF (Maybe CMUSphinx4ASREvent) Unit
 ```
 
 ... however; the function will need to open foreign signal functions.
@@ -789,7 +849,7 @@ Any function that opens foreign signal functions will need to "bind to" the `Eff
 This means that the signature will affect and the body will be written in `do`-notation.
 
 ```purescript
-parrot_brain :: Effect (SF (Maybe CMUSphinx4ASRE) Unit)
+parrot_brain :: Effect (SF (Maybe CMUSphinx4ASREvent) Unit)
 parrot_brain = do
 ```
 
@@ -818,9 +878,9 @@ let left = fuselr passsf (unitsf >>>> age)
 So, now instead of responding to `: Maybe ASR` we can interact with `: ((Maybe ASR) Number)`.
 We've transformed the input data from ...
 
-1. (Maybe CMUSphinx4ASRE)
+1. (Maybe CMUSphinx4ASREvent)
   - the way that it comes in
-2. ((Maybe CMUSphinx4ASRE) Number)
+2. ((Maybe CMUSphinx4ASREvent) Number)
   - the message, but, with a timer
 
 We will continue to apply transformations ...
@@ -835,18 +895,18 @@ We will continue to apply transformations ...
   - we'll concatenate it with `unitsf` to make output simple
   - this will be the final form
 
-The next step is to convert the `: ((Maybe CMUSphinx4ASRE) Number)` to a `Maybe LiveMaryS`.
-Since the `CMUSphinx4ASRE` is a tagged union; it's easiest to do this step as a `let` that pattern matches.
+The next step is to convert the `: ((Maybe CMUSphinx4ASREvent) Number)` to a `Maybe LiveMaryS`.
+Since the `CMUSphinx4ASREvent` is a tagged union; it's easiest to do this step as a `let` that pattern matches.
 
 ```purescript
 where
-  --  tts_maybe :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> (Maybe LiveMaryS)
+  --  tts_maybe :: (Tuple (Maybe CMUSphinx4ASREvent) Number) -> (Maybe LiveMaryS)
   let tts_maybe (Tuple Nothing _) = Nothing
-      tts_maybe (Tuple (Just (SRecognised said)) age) = Just $ Speak age said
+      tts_maybe (Tuple (Just (SRecognised said _ _)) age) = Just $ Speak $ newUtterance age said
 ```
 
-We can pass `tts_maybe` to `Wrap` and concatenate it with `left` to get `: SF (Maybe CMUSphinx4ASRE) (Maybe LiveMaryS)` which is closer.
-We need to "cache" a value inbetween *real* values so that the signal function we're creating can always do something meaningful.
+We can pass `tts_maybe` to `Wrap` and concatenate it with `left` to get `: SF (Maybe CMUSphinx4ASREvent) (Maybe LiveMaryS)` which is closer.
+We need to "cache" a value between *real* values so that the signal function we're creating can always do something meaningful.
 We *could* use `Wrap` and `fromMaybe :: a -> Maybe a -> a` again to get something with the correct type, but, that won't work when we start running.
 We need to "start it off" with `Silent` but once we get `Just SRecognised said` we need to cache that transformed value until it's replaced.
 This can be done with the generic function `cache :: forall v. v -> SF (Maybe v) v` from `FRP.purs`.
@@ -864,7 +924,7 @@ The final steps here are to ...
 2. "squelch" events from the TTS system
   - the TTS system provides some feedback about its present state
   - we don't need it for this exercise
-3. concatenate the signal functions togeter and return them with `pure`
+3. concatenate the signal functions together and return them with `pure`
 4. update the agent to
   1. call our function
   2. `fuselr` the old and new outputs together
@@ -884,35 +944,66 @@ Finally, we can then concatenate the five/six signal functions and then **return
 pure $ left >>>> (Wrap tts_maybe) >>>> tts_cache >>>> mary_control >>>> mary_events >>>> unitsf
 ```
 
-We'll then need to *integrate* the parrot's brain.
+Here is the full `parrot_brain` function.
+
+```purescript
+parrot_brain :: Effect (SF (Maybe CMUSphinx4ASREvent) Unit)
+parrot_brain = do
+
+  -- age :: SF Unit Number
+  age <- openAge
+
+  -- left :: SF (Maybe ASR) (Tuple (Maybe ASR) Number)
+  -- so it returns
+  -- : (Tuple (Maybe ASR) Number)
+  let left = fuselr passsf (unitsf >>>> age)
+
+  --  tts_maybe :: (Tuple (Maybe CMUSphinx4ASREvent) Number) -> (Maybe LiveMaryS)
+  let tts_maybe (Tuple Nothing _) = Nothing
+      tts_maybe (Tuple (Just (SRecognised said _ _)) age) = Just $ Speak $ newUtterance age said
+
+
+  -- tts_cache :: SF (Maybe LiveMaryS) LiveMaryS
+  let tts_cache = cache Silent
+
+  -- mary_tts :: SF LiveMaryS (Maybe LiveMaryE)
+  mary_tts <- openLiveMary ""
+
+  pure $ left >>>> (Wrap tts_maybe) >>>> tts_cache >>>> mary_tts >>>> unitsf
+```
+
+We now need to *integrate* the parrot's brain.
 
 ### Integrating the brain
 
-Integration of this `brain` is relatively simple.
+Integration of this `parrot_brain` is relatively simple.
 First, in our `entry :: Effect (SF Unit Unit)` we need to open it like anything else effectual.
 
 ```purescript
--- brain : SF (Maybe CMUSphinx4ASRE) ()
+-- brain : SF (Maybe CMUSphinx4ASREvent) ()
 brain <- parrot_brain
 ```
 
-> If you run it at this point - you'll get the `a loaded value was not consumed - likely an open signal function was not used this cycle` message.
+
+> If you run it at this point - you'll see a message reading `requirement failed: didn't read the fSF Scenario/Age():Sample-Pedal` and the system should exit.
 
 With the brain open we can use `fuselr` to combine it with the old `log_asr_heard` ...
 
 ```purescript
---  output : SF (Maybe CMUSphinx4ASRE) (() ())
+--  output : SF (Maybe CMUSphinx4ASREvent) (() ())
 let output = fuselr brain $ (Wrap log_asr) >>>> heard_column
 ```
 
-This has the "wrong" type so we need to concatenate `unitsf` to make something a little simpler.
+... so that both signal functions can get the ASR data.
+
+This has the "wrong" type so we need to concatenate `unitsf` before we can return it.
 
 ```purescript
---  output : SF (Maybe CMUSphinx4ASRE) ()
+--  output : SF (Maybe CMUSphinx4ASREvent) ()
     let output = (fuselr brain $ (Wrap log_asr) >>>> heard_column) >>>> unitsf
 ```
 
-Finally, we swap `output` in where `(Wrap log_asr) >>>> heard_column` was **in the `pure` statement for entry** and use this new combined value.
+Finally, we swap `output` in where `(Wrap log_asr) >>>> heard_column` was **in the `pure` statement for `entry`** and use this new combined value.
 
 ```purescript
 -- pure $ cycle_message >>>> cycle_column >>>> connect_microphone >>>> (Wrap log_asr) >>>> heard_column
@@ -935,45 +1026,50 @@ import FRP
 import Prelude
 
 import Data.Tuple
-import Data.Maybe
 
-import Pdemo.Sphinx
-import Pdemo.Scenario
-import Pdemo.Mary
+import S3.Scenario
+
+
+import Data.Maybe
+import S3.Sphinx
+import S3.Mary
 
 entry :: Effect (SF Unit Unit)
 entry = do
-    cycle_column <- openLogColumn "cycle"
+    -- open a microphone
     mic <- openMicrophone
+
+    -- open the sphinx system
     asr <- openCMUSphinx4ASR
+
+    -- open both logs
+    heard_column <- openLogColumn "heard"
+    cycle_column <- openLogColumn "cycle"
+
     let connect_microphone = mic >>>> (Wrap $ SConnect) >>>> asr
 
-    heard_column <- openLogColumn "heard"
-
-    -- brain : SF (Maybe CMUSphinx4ASRE) ()
+    -- brain : SF (Maybe CMUSphinx4ASREvent) ()
     brain <- parrot_brain
 
-    --  output : SF (Maybe CMUSphinx4ASRE) ()
+    --  output : SF (Maybe CMUSphinx4ASREvent) (() ())
     let output = (fuselr brain $ (Wrap log_asr) >>>> heard_column) >>>> unitsf
 
-    -- pure $ cycle_message >>>> cycle_column >>>> connect_microphone >>>> (Wrap log_asr) >>>> heard_column
     pure $ cycle_message >>>> cycle_column >>>> connect_microphone >>>> output
   where
     cycle_message:: SF Unit String
     cycle_message = cycle_count >>>> (Wrap $ \i -> "cycle #" <> show i <> " finished")
       where
         cycle_count :: SF Unit Int
-        cycle_count = fold_soft 0 successor
+        cycle_count = fold_soft 0 suc
           where
-            successor :: Int -> Unit -> (Tuple Int Int)
-            successor i _ = Tuple (i + 1) i
+            suc :: Int -> Unit -> (Tuple Int Int)
+            suc i _ = Tuple (i + 1) i
 
-log_asr :: Maybe CMUSphinx4ASRE -> String
+log_asr :: Maybe CMUSphinx4ASREvent -> String
 log_asr Nothing = "there's no ASR data this cycle"
-log_asr (Just (SRecognised text)) = "the ASR heard `" <> text <> "`"
+log_asr (Just (SRecognised text _ _)) = "the ASR heard `" <> text <> "`"
 
-
-parrot_brain :: Effect (SF (Maybe CMUSphinx4ASRE) Unit)
+parrot_brain :: Effect (SF (Maybe CMUSphinx4ASREvent) Unit)
 parrot_brain = do
 
   -- age :: SF Unit Number
@@ -984,9 +1080,9 @@ parrot_brain = do
   -- : (Tuple (Maybe ASR) Number)
   let left = fuselr passsf (unitsf >>>> age)
 
-  --  tts_maybe :: (Tuple (Maybe CMUSphinx4ASRE) Number) -> (Maybe LiveMaryS)
+  --  tts_maybe :: (Tuple (Maybe CMUSphinx4ASREvent) Number) -> (Maybe LiveMaryS)
   let tts_maybe (Tuple Nothing _) = Nothing
-      tts_maybe (Tuple (Just (SRecognised said)) age) = Just $ Speak age said
+      tts_maybe (Tuple (Just (SRecognised said _ _)) age) = Just $ Speak $ newUtterance age said
 
 
   -- tts_cache :: SF (Maybe LiveMaryS) LiveMaryS
@@ -998,6 +1094,7 @@ parrot_brain = do
   pure $ left >>>> (Wrap tts_maybe) >>>> tts_cache >>>> mary_tts >>>> unitsf
 ```
 
+<!--
 
 ## Google ASR
 
@@ -1090,6 +1187,7 @@ parrot_brain = do
 
     pure $ left >>>> (Wrap tts_maybe) >>>> tts_cache >>>> mary_tts >>>> unitsf
 ```
+-->
 
 ----
 
@@ -1105,7 +1203,7 @@ I would suggest that an interested reader follow [the Quick Start Guide](https:/
 [back](#f_link2)
 
 <b id='f_note3'>[3](#f_link3)</b>
-As with the installation, there's a way to do this with "no privileges" using a "portable" package ... but I'll forgo detailing it here for the sake of brevity.
+As with the installation, there's a way to do this with "no privileges" using a "portable" package.
 [back](#f_link3)
 
 <b id='f_note4'>[4](#f_link4)</b>
@@ -1120,7 +1218,7 @@ It's exactly what it sounds like; a hole in the program that lets you compile it
 [back](#f_link5)
 
 <b id='f_note6'>[6](#f_link6)</b>
-The type constructor used allows a developer to seperate these two from `: SF i I (Maybe o)` to  `: (SF i (), SF () (Maybe o))` should that be more convenient.
+The type constructor used allows a developer to separate these two from `: SF i I (Maybe o)` to  `: (SF i (), SF () (Maybe o))` should that be more convenient.
 [back](#f_link6)
 
 <b id='f_note7'>[7](#f_link7)</b>

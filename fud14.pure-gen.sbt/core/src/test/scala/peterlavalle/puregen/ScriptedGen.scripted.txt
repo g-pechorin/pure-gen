@@ -1,0 +1,5 @@
+def scripted[<@tags/>O](f: (<@args/> => O)): (<@args/> => O) =
+	new (<@args/> => O) {
+		@HostAccess.Export
+		override def apply(<@take/>): O = f(<@pass/>)
+	}

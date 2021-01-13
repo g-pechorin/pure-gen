@@ -1,0 +1,30 @@
+def eff[<@tags/>O <: AnyRef : ClassTag](name: String): <@args/> => O = {
+
+	val call: Value =
+		find(
+			name.split("\\."): _ *
+		)
+
+	require(call.canExecute)
+
+	(<@take/>) =>
+		val eff: Value = call.execute(<@pass/>)
+
+		require(
+			eff.toString.startsWith("function __do() {\n"),
+			"it wasn't a PS Eff"
+		)
+
+		// do notation requires another call ... because
+		val open: Value =
+			try {
+				eff
+					.execute()
+			} catch {
+				case e: PolyglotException if e.getMessage == "TypeError: v.value0(...) is not a function" =>
+					e ! "something that was supposed to be a monad but was not"
+			}
+
+		// cast it ... yay?
+		open.asInstanceOf[O]
+}

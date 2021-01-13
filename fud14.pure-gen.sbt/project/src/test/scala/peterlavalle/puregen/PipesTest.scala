@@ -6,10 +6,6 @@ package peterlavalle.puregen
  * ... as of the point where i wrote this
  */
 class PipesTest extends
-	TGenScalaTest with
-	TGenPureInTest with
-	TGenJavaScriptTest with
-	TGenPureScriptTest with
 	TParseTest {
 
 	import IR.Pi._

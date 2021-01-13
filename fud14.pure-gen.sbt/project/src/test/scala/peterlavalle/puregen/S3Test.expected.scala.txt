@@ -1,0 +1,312 @@
+package foo.bar
+
+import java.util.Random
+
+import org.graalvm.polyglot.{Context, HostAccess, Value}
+import peterlavalle.Quick
+import peterlavalle.Quick._
+import peterlavalle.puregen.DeScriptPolyglot
+import peterlavalle.puregen.DeScriptPolyglot._
+import peterlavalle.puregen.core.AComponent
+
+object S3Test {
+	trait D {
+
+		final lazy val foo_bar_S3Test = new S3Test(asInstanceOf[S3].context, asInstanceOf[S3].hook.pedal, asInstanceOf[S3].cycle) {
+			protected def openAudioFeed(): () => AudioLine = foo_bar_S3Test_openAudioFeed()
+			protected def openLogOut(a0: String): String => Unit = foo_bar_S3Test_openLogOut(a0)
+			protected def openSphinx4(send: Sphinx4.Trigger): Sphinx4.Signal => Unit = foo_bar_S3Test_openSphinx4(send)
+		}
+
+		/**
+		 * add some action to happen BEFORE the cycle collects events
+		 */
+		def before(act: => Unit): Unit
+
+		/**
+		 * add some action to happen AFTER the cycle sends out signals
+		 *
+		 * @param act
+		 */
+		def follow(act: => Unit): Unit
+		def onExit(act: => Unit): Unit
+
+		protected def foo_bar_S3Test_openAudioFeed(): () => AudioLine
+		protected def foo_bar_S3Test_openLogOut(a0: String): String => Unit
+		protected def foo_bar_S3Test_openSphinx4(send: Sphinx4.Trigger): Sphinx4.Signal => Unit
+	}
+
+	@HostAccess.Export trait AudioLine extends AComponent.Opaque
+
+
+	case class Gable
+	(
+		startTime: Stream[Double],
+		work: Boolean
+	)
+
+	implicit object Gable extends DeScriptPolyglot.DeScripter[Gable] with Quick[Gable] {
+
+		override val parser: DeScriptPolyglot.DeScript[Gable] =
+			for {
+				startTime <- "startTime".stream[Double]
+				work <- "work".field[Boolean]
+			} yield Gable(
+				startTime,
+				work
+			)
+
+		override def generate(random: Random): Gable =
+			Gable(
+				random.doubles(314).toArray.toStream,
+				random.nextBoolean()
+			)
+
+		trait PureScript {
+			val newGable: Value
+
+			implicit def pureScriptGable: Gable => Value = {
+				case Gable(startTime: Stream[Double], work: Boolean) =>
+					newGable.execute(
+						startTime.map((v: Double) => v: java.lang.Double).toArray,
+						work: java.lang.Boolean
+					)
+			}
+		}
+	}
+
+	case class Retract
+	(
+		label: String,
+		edges: Stream[Gable]
+	)
+
+	implicit object Retract extends DeScriptPolyglot.DeScripter[Retract] with Quick[Retract] {
+
+		override val parser: DeScriptPolyglot.DeScript[Retract] =
+			for {
+				label <- "label".field[String]
+				edges <- "edges".stream[Gable]
+			} yield Retract(
+				label,
+				edges
+			)
+
+		override def generate(random: Random): Retract =
+			Retract(
+				random.randomString(),
+				random.limited[Gable](314)
+			)
+
+		trait PureScript {
+			this: Gable.PureScript =>
+
+			val newRetract: Value
+
+			implicit def pureScriptRetract: Retract => Value = {
+				case Retract(label: String, edges: Stream[Gable]) =>
+					newRetract.execute(
+						label: java.lang.String,
+						edges.map((v: Gable) => v: Value).toArray
+					)
+			}
+		}
+	}
+
+	case class WordInfo
+	(
+		startTime: Double,
+		endTime: Double,
+		word: String
+	)
+
+	implicit object WordInfo extends DeScriptPolyglot.DeScripter[WordInfo] with Quick[WordInfo] {
+
+		override val parser: DeScriptPolyglot.DeScript[WordInfo] =
+			for {
+				startTime <- "startTime".field[Double]
+				endTime <- "endTime".field[Double]
+				word <- "word".field[String]
+			} yield WordInfo(
+				startTime,
+				endTime,
+				word
+			)
+
+		override def generate(random: Random): WordInfo =
+			WordInfo(
+				random.nextDouble(),
+				random.nextDouble(),
+				random.randomString()
+			)
+
+		trait PureScript {
+			val newWordInfo: Value
+
+			implicit def pureScriptWordInfo: WordInfo => Value = {
+				case WordInfo(startTime: Double, endTime: Double, word: String) =>
+					newWordInfo.execute(
+						startTime: java.lang.Double,
+						endTime: java.lang.Double,
+						word: java.lang.String
+					)
+			}
+		}
+	}
+
+	object Sphinx4 {
+
+		// ======
+		// events
+		sealed trait Event
+
+		implicit val RandomEvent: Quick[Event] = {
+			(random: Random) =>
+				random.choose(
+					() =>
+						Recognised(
+							random.nextQuick[WordInfo]
+						),
+					() =>
+						Rotund(
+							random.limited[Gable](314),
+							random.nextQuick[Retract]
+						),
+				)
+		}
+
+		// ======
+		// signals
+		sealed trait Signal
+
+		trait Receiver extends (Signal => Unit) {
+			def Live(): Unit
+			def Mute(a0: Stream[Gable]): Unit
+			def Skip(a0: Int, a1: WordInfo, a2: Stream[Float], a3: Stream[Gable]): Unit
+
+			def apply(sent: Signal): Unit = sent match {
+				case Live() => this.Live()
+				case Mute(a0) => this.Mute(a0)
+				case Skip(a0, a1, a2, a3) => this.Skip(a0, a1, a2, a3)
+			}
+		}
+
+		case class Recognised(a0: WordInfo) extends Event
+		case class Rotund(a0: Stream[Gable], a1: Retract) extends Event
+
+		/**
+			* luxury class
+			*/
+		final class Trigger(send: Event => Unit) {
+			def apply(e: Event): Unit = send(e)
+
+			def Recognised(a0: WordInfo): Unit = send(new Recognised(a0))
+			def Rotund(a0: Stream[Gable], a1: Retract): Unit = send(new Rotund(a0, a1))
+		}
+
+		case class Live() extends Signal
+		case class Mute(a0: Stream[Gable]) extends Signal
+		case class Skip(a0: Int, a1: WordInfo, a2: Stream[Float], a3: Stream[Gable]) extends Signal
+
+		final class Handler(pass: Signal => Unit) {
+
+			@HostAccess.Export
+			def Live(): Unit =
+				pass(new Live())
+
+			@HostAccess.Export
+			def Mute(a0: Value): Unit =
+				pass(new Mute(a0.toValue[Stream[Gable]]))
+
+			@HostAccess.Export
+			def Skip(a0: Value, a1: Value, a2: Value, a3: Value): Unit =
+				pass(new Skip(a0.toValue[Int], a1.toValue[WordInfo], a2.toValue[Stream[Float]], a3.toValue[Stream[Gable]]))
+		}
+	}
+}
+
+abstract class S3Test
+(
+	context: Context,
+	hook: AComponent#TPedal[_, _] => Unit,
+	cycle: Runnable
+) extends AComponent(context, hook, cycle) {
+	import S3Test._
+
+
+	override final def bindName: String = "foo.bar:S3Test"
+
+
+	@HostAccess.Export
+	final def _new_AudioFeed
+	(
+	): SampleAtomic[AudioLine] = new SampleAtomic[AudioLine](
+		"S3Test/AudioFeed(" + ")",
+		openAudioFeed()
+	)
+
+	@HostAccess.Export
+	final def _new_LogOut
+	(
+		a0: String,
+	): BehaviourAtomic[String] = new BehaviourAtomic[String](
+		"S3Test/LogOut(" + a0 + ")",
+		openLogOut(a0)
+	)
+
+	@HostAccess.Export
+	final def _new_Sphinx4
+	(
+		// event constructors
+			eventRecognised: Value,
+			eventRotund: Value,
+		// struct constructors
+			structGable: Value,
+			structRetract: Value,
+			structWordInfo: Value,
+		// args to the constructor
+		// basic "null" constructor
+			eventNothing: Value
+	): TPipe[Sphinx4.Event, Sphinx4.Signal, Sphinx4.Handler] = new Object
+			with Gable.PureScript
+			with Retract.PureScript
+			with WordInfo.PureScript
+			with TPipe[Sphinx4.Event, Sphinx4.Signal, Sphinx4.Handler] {
+
+		override val newGable: Value = structGable
+		override val newRetract: Value = structRetract
+		override val newWordInfo: Value = structWordInfo
+
+		hook(this)
+
+		override protected[this] val handler: Sphinx4.Signal => Unit =
+			openSphinx4(new Sphinx4.Trigger(send))
+
+		@HostAccess.Export
+		override final def signal(): Sphinx4.Handler = new Sphinx4.Handler(store)
+
+		override protected[this] val simpleName: String = "S3Test/Sphinx4(" + ")"
+		override protected[this] val cycleRunnable: Runnable = cycle
+		override protected[this] val eventMap: Sphinx4.Event => Value = {
+			case null => eventNothing.execute()
+			case Sphinx4.Recognised(a0) =>
+				eventRecognised
+					.execute(
+						a0: Value,
+						null
+					).execute()
+			case Sphinx4.Rotund(a0, a1) =>
+				eventRotund
+					.execute(
+						a0.map((v: Gable) => v: Value).toArray,
+						a1: Value,
+						null
+					).execute()
+		}
+	}
+
+	protected def openAudioFeed(): () => AudioLine
+	protected def openLogOut(a0: String): String => Unit
+	protected def openSphinx4(send: Sphinx4.Trigger): Sphinx4.Signal => Unit
+
+}

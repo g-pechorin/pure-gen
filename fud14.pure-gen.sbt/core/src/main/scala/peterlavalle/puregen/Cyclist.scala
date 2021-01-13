@@ -12,32 +12,12 @@ import scala.reflect.ClassTag
  *
  * @param starter the control for "next frame"
  */
+@deprecated()
 class Cyclist(val starter: Starter) {
-
-	sealed trait CException extends Throwable
-
-	sealed trait CUserException extends CException
-
-	sealed trait CHardException extends CException
-
-	case class CoolDownException private(message: String) extends Exception(message) with CUserException
-
-	case class WarmUpException private(message: String) extends Exception(message) with CUserException
-
-	case class MainPhaseException private(message: String) extends Exception(message) with CUserException
-
-	case class DeepException private(message: String) extends Exception(message) with CHardException
-
-	case class SideException private(message: String) extends Exception(message) with CHardException
-
-	@throws[CException]
-	private def require(condition: Boolean)(thrown: => CException): Unit = {
-		if (!condition)
-			throw thrown
-	}
-
+	@deprecated()
 	private var state: State = Cold
 
+	@deprecated()
 	final def p[Ev: ClassTag, Si: ClassTag]
 	(
 		pipe: Pipe[Ev, Si]
@@ -45,75 +25,84 @@ class Cyclist(val starter: Starter) {
 		ev: TEnum[Ev],
 		si: TEnum[Si]
 	): AnyRef = {
-		pipe match {
-			case Pipe(call) =>
+		val Pipe(call) = pipe
 
-				// this is the queue of events we're readied
-				val queue = new util.LinkedList[ev.E]()
 
-				// this is the/a callback thing
-				val handler: Si = {
+		// this is the queue of events we're readied
+		val queue = new util.LinkedList[ev.E]()
 
-					// this instance can trigger events
-					val eventTrigger: Ev =
-						ev.read {
-							event: ev.E =>
-								queue.synchronized {
-									queue.add(event)
-									starter.run()
-								}
-						}
+		// this is the/a callback thing
+		val handler: Si = {
 
-					// create our handler by passing in our trigger thing
-					call(eventTrigger)
-				}
-
-				// this manager adapts the passed signal(s) to the handler
-				val passable = new Passable[si.E]((anyRef: si.E) => si.send(anyRef, handler))
-
-				// this manager (safely) pulls events into the system
-				val loadable = new Loadable[ev.E](
-					() =>
+			// this instance can trigger events
+			val eventTrigger: Ev =
+				ev.read {
+					event: ev.E =>
 						queue.synchronized {
-							if (queue.isEmpty)
-								null
-							else {
-								val out: ev.E = queue.pop()
-								if (!queue.isEmpty) {
-									starter.run()
-								}
-								out
-							}
-						},
-					"pipe-pedal[" + classFor[Ev].getName + "," + classFor[Ev].getName + "]"
-				)
-
-				// finally, this interface is what we will expose to JS
-				new Pedal with PipePedal[Ev, Si] {
-
-					@HostAccess.Export
-					override def post(): Si =
-						si.read {
-							signal: si.E =>
-								passable.pass(signal)
+							queue.add(event)
+							starter.run()
 						}
-
-					@HostAccess.Export
-					override def link(news: Array[Value]): Value = ev.link(news, loadable.take())
-
-					override def load(): Unit = {
-						loadable.load()
-						passable.load()
-					}
-
-					override def send(): Unit = {
-						loadable.send()
-						passable.send()
-					}
 				}
+
+			// create our handler by passing in our trigger thing
+			call(eventTrigger)
 		}
+
+		// this manager adapts the passed signal(s) to the handler
+		val passable = new Passable[si.E]((anyRef: si.E) => si.send(anyRef, handler))
+
+		// this manager (safely) pulls events into the system
+		val loadable = new Loadable[ev.E](
+			() =>
+				queue.synchronized {
+					if (queue.isEmpty)
+						null
+					else {
+						val out: ev.E = queue.pop()
+						if (!queue.isEmpty) {
+							starter.run()
+						}
+						out
+					}
+				},
+			"pipe-pedal[" + classFor[Ev].getName + "," + classFor[Ev].getName + "]"
+		)
+
+		// finally, this interface is what we will expose to JS
+		new Pedal with PipePedal[Ev, Si] {
+
+
+			override def toString: String = "pedal-for-pipe"
+
+			@HostAccess.Export
+			override def post(): Si =
+				si.read {
+					signal: si.E =>
+						passable.pass(signal)
+				}
+
+			@HostAccess.Export
+			override def link(news: Array[Value]): Value = {
+
+				sys.error("can i redo/rewrite and do this here/there")
+
+				ev.link(news, loadable.take())
+			}
+
+			override def load(): Unit = {
+				loadable.load()
+				passable.load()
+			}
+
+			override def send(): Unit = {
+				loadable.send()
+				passable.send()
+			}
+		}
+
 	}
 
+	@deprecated()
 	def signal[V: ClassTag](v: V => Unit): Any => Unit =
 		new Pedal with (Any => Unit) {
 
@@ -130,6 +119,7 @@ class Cyclist(val starter: Starter) {
 			}
 		}
 
+	@deprecated()
 	def event[V <: AnyRef](v: () => Option[V]): () => V = {
 		new Pedal with (() => V) {
 
@@ -147,6 +137,7 @@ class Cyclist(val starter: Starter) {
 		}
 	}
 
+	@deprecated()
 	def sample[V](v: () => V): () => V = {
 		new Pedal with (() => V) {
 			val data = new Loadable[V](v)
@@ -160,6 +151,7 @@ class Cyclist(val starter: Starter) {
 		}
 	}
 
+	@deprecated()
 	def load(): Unit =
 		pedals.synchronized {
 			if (Cold == state)
@@ -172,6 +164,7 @@ class Cyclist(val starter: Starter) {
 			state = Running
 		}
 
+	@deprecated()
 	def send(): Unit =
 		pedals.synchronized {
 			require(Running == state)(???)
@@ -180,12 +173,28 @@ class Cyclist(val starter: Starter) {
 			state = Waiting
 		}
 
+	@throws[CException]
+	private def require(condition: Boolean)(thrown: => CException): Unit = {
+		if (!condition)
+			throw thrown
+	}
+
+	@deprecated()
+	sealed trait CException extends Throwable
+
+	@deprecated()
+	sealed trait CUserException extends CException
+
+	@deprecated()
+	sealed trait CHardException extends CException
+
 	/**
 	 * we/I need a real base-class for Graal-JS to be happy
 	 *
 	 * @tparam Ev
 	 * @tparam Si
 	 */
+	@deprecated()
 	trait PipePedal[Ev, Si] {
 		@HostAccess.Export
 		def post(): Si
@@ -194,6 +203,7 @@ class Cyclist(val starter: Starter) {
 		def link(news: Array[Value]): Value
 	}
 
+	@deprecated()
 	trait Pedal {
 		def load(): Unit
 
@@ -205,8 +215,25 @@ class Cyclist(val starter: Starter) {
 		}
 	}
 
+	@deprecated()
 	private trait State
 
+	@deprecated()
+	case class CoolDownException private(message: String) extends Exception(message) with CUserException
+
+	@deprecated()
+	case class WarmUpException private(message: String) extends Exception(message) with CUserException
+
+	@deprecated()
+	case class MainPhaseException private(message: String) extends Exception(message) with CUserException
+
+	@deprecated()
+	case class DeepException private(message: String) extends Exception(message) with CHardException
+
+	@deprecated()
+	case class SideException private(message: String) extends Exception(message) with CHardException
+
+	@deprecated()
 	class Passable[Si: ClassTag](output: Si => Unit) {
 		var queued: Option[Si] = None
 
@@ -236,6 +263,7 @@ class Cyclist(val starter: Starter) {
 			}
 	}
 
+	@deprecated()
 	class Loadable[Ev](read: () => Ev, name: String = "a loaded value") {
 		var loaded: Option[Ev] = None
 
@@ -263,16 +291,22 @@ class Cyclist(val starter: Starter) {
 		}
 	}
 
+	@deprecated()
 	private case object Cold extends State
 
+	@deprecated()
 	private case object Loading extends State
 
+	@deprecated()
 	private case object Running extends State
 
+	@deprecated()
 	private case object Sending extends State
 
+	@deprecated()
 	private case object Waiting extends State
 
+	@deprecated()
 	private object pedals extends util.LinkedList[Pedal]()
 
 }

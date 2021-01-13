@@ -28,28 +28,23 @@ def conf: String => String = {
 // trying to fix mary xslt error
 // adding these fixes MaryTTS in the sbt CLI, but, breaks it under IDEA on Windows 7
 def maryXSLTFix = {
-	Seq(
-		// https://github.com/marytts/marytts/issues/455
-		"xalan" % "xalan" % "2.7.2",
+	// is this in the IntelliJ IDEA?
+	if ("true" == System.getProperty("idea.managed"))
+		Seq()
+	else
+		Seq(
+			// https://github.com/marytts/marytts/issues/455
+			"xalan" % "xalan" % "2.7.2",
 
-		// https://github.com/marytts/marytts/issues/740
-		"net.sf.saxon" % "Saxon-HE" % "9.7.0-18",
-	)
+			// https://github.com/marytts/marytts/issues/740
+			"net.sf.saxon" % "Saxon-HE" % "9.7.0-18",
+		)
 }
 
 //
 // trying to tell sbt exit
 fork in run := true
 //trapExit := false
-
-
-
-
-
-
-
-
-
 
 
 name := "pure-gen"

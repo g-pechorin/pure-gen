@@ -30,12 +30,20 @@ object protpi {
 	implicit class PiTKind(ir: IR.TKind) {
 		def toScala: String =
 			ir match {
+				case IR.Bool => "Bool"
+
+				case IR.Real32 => "Real32"
+				case IR.Real64 => "Real64"
+
+				case IR.SInt32 => "SInt32"
+				case IR.SInt64 => "SInt64"
+
 				case IR.Text => "String"
-				case IR.SInt32 => "Int"
-				case IR.Real32 => "Float"
-				case IR.Real64 => "Double"
+
+				case IR.ListOf(kind) => "Array[" + kind.toScala + "]"
 
 				case IR.Opaque(name) => name
+				case IR.Struct(name, _) => name
 			}
 	}
 

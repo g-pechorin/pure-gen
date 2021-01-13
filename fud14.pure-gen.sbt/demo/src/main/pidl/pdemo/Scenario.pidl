@@ -1,7 +1,7 @@
 
 
 // the age of the simulation
-sample Age() = real32
+sample Age() = real64
 
 // lets the agent dump a log status (at any time) with a named prefix
 signal LogColumn(text) = text

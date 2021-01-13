@@ -15,15 +15,22 @@ trait include
 		with PiHashMapT
 		with PiInputStreamT
 		with PiIterableT
+		with PiJTreeT
 		with PiNodeT
 		with PiObjectT
 		with PiOutputStreamT
 		with PiPairT
 		with PiPropertiesT
 		with PiStringT
+		with PiSwingT
 		with ToScalaImplicits
 		with PiThreadingT
 		with DecorateAsJava with DecorateAsScala {
+
+	implicit class PrimpThrowable(e: Throwable) {
+		def !(message: String) =
+			throw new Exception(message, e)
+	}
 
 	def md5(text: String): String = {
 		val messageDigest: MessageDigest = MessageDigest.getInstance("MD5")

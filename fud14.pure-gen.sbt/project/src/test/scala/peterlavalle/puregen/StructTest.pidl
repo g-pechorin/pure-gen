@@ -1,0 +1,12 @@
+
+
+struct WordInfo
+	startTime: real64
+	endTime: real64
+	word: text
+
+struct Alternative
+	confidence: real32
+	transcript: text
+	words: WordInfo
+

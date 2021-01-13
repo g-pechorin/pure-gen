@@ -103,16 +103,6 @@ trait PiFileT {
 					)
 			}
 
-		def $$(cmds: String*): Err[List[String]] = {
-
-			val str = new util.LinkedList[String]()
-
-			$(cmds: _ *)(str.add(_)) ? {
-				_ =>
-					str.toArray.toList.map(_.toString)
-			}
-		}
-
 		def $(cmds: String*)(log: String => Unit, ret: Int = 0): Err[Unit] = {
 			val out: Int = AbsoluteFile.$(cmds.toSeq, (o: String) => log(';' + o), (e: String) => log('!' + e))
 			if (out == ret)

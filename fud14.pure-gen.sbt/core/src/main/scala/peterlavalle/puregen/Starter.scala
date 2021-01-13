@@ -70,7 +70,7 @@ object Starter {
 			}
 
 			val worker: AutoCloseable =
-				daemon {
+				daemon() {
 
 					while (true) {
 						lock.synchronized {

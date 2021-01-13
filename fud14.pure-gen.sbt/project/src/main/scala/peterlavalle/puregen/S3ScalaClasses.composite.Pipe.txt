@@ -1,0 +1,43 @@
+
+object <@name/> {
+
+	// ======
+	// events
+	sealed trait Event
+
+	implicit val RandomEvent: Quick[Event] = {
+		(random: Random) =>
+			random.choose(
+				<@random/>
+			)
+	}
+
+	// ======
+	// signals
+	sealed trait Signal
+
+	trait Receiver extends (Signal => Unit) {
+		<@receiveType/>
+
+		def apply(sent: Signal): Unit = sent match {
+			<@receiveCall/>
+		}
+	}
+
+	<@eventCase/>
+
+	/**
+		* luxury class
+		*/
+	final class Trigger(send: Event => Unit) {
+		def apply(e: Event): Unit = send(e)
+
+		<@eventTrigger/>
+	}
+
+	<@behaviorsCase/>
+
+	final class Handler(pass: Signal => Unit) {
+		<@behaviorsHandler/>
+	}
+}

@@ -1,0 +1,9 @@
+
+@HostAccess.Export
+final def _new_<@name/>
+(
+	<@args/>
+): BehaviourAtomic[<@kind/>] = new BehaviourAtomic[<@kind/>](
+	"<@host/>/<@name/>(" + <@send/> ")",
+	open<@name/>(<@pass/>)
+)

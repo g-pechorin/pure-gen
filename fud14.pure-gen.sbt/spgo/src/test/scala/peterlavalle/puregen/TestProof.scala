@@ -19,7 +19,7 @@ class TestProof extends AnyFunSuite {
 		Context.create() using {
 			context: Context =>
 				context
-					.global("note") {
+					.global[String, Unit]("note") {
 						data: String =>
 							seen = Some(data)
 					}
@@ -60,7 +60,7 @@ class TestProof extends AnyFunSuite {
 
 				val call: Value =
 					context
-						.global("note") {
+						.global[String, Unit]("note") {
 							data: String =>
 								seen = Some(data)
 						}
@@ -85,7 +85,7 @@ class TestProof extends AnyFunSuite {
 						Context.create() using {
 							context: Context =>
 								context
-									.global("console.log") {
+									.global[String, Unit]("console.log") {
 										data: String =>
 											seen = Some(data)
 									}

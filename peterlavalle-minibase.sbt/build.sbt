@@ -17,6 +17,7 @@ def conf: String => String = {
 		).getString(key)
 }
 
+dependsOn(RootProject(hgRoot / "peterlavalle-ex-swing.sbt"))
 
 libraryDependencies ++=
 	Seq(

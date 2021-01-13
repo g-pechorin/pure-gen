@@ -1,0 +1,41 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "sbt <@name/>/run",
+      "type": "shell",
+      "command": "sbt",
+      "windows": {
+        "command": "sbt"
+      },
+      "args": [
+        "demo/run"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build"
+      }
+    },
+    {
+      "label": "spago <@name/>/build",
+      "type": "shell",
+      "command": "spago",
+      "windows": {
+        "command": "spago"
+      },
+      "args": [
+        "bundle-module"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "options": {
+				"cwd": "${workspaceFolder}/<@spago>"
+			}
+    }
+  ]
+}

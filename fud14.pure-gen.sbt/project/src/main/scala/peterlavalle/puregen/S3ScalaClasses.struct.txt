@@ -1,0 +1,32 @@
+
+case class <@name/>
+(
+	<@member/>
+)
+
+implicit object <@name/> extends DeScriptPolyglot.DeScripter[<@name/>] with Quick[<@name/>] {
+
+	override val parser: DeScriptPolyglot.DeScript[<@name/>] =
+		for {
+			<@field/>
+		} yield <@name/>(
+			<@yield/>
+		)
+
+	override def generate(random: Random): <@name/> =
+		<@name/>(
+			<@random/>
+		)
+
+	trait PureScript {
+		<@uses/>
+		val new<@name/>: Value
+
+		implicit def pureScript<@name/>: <@name/> => Value = {
+			case <@name/>(<@pure/>) =>
+				new<@name/>.execute(
+					<@exec/>
+				)
+		}
+	}
+}

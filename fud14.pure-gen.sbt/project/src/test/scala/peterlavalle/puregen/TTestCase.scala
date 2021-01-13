@@ -13,7 +13,10 @@ trait TTestCase extends AnyFunSuite {
 
 			lazy val traceCode: String =
 				TTestCase.this.getClass.getName + Math.abs(
-					(Thread.currentThread().getStackTrace.toList.foldLeft("")(_ + _))
+					Thread.currentThread()
+						.getStackTrace
+						.toList
+						.foldLeft("")((_: String) + (_: StackTraceElement))
 						.hashCode
 				).toString
 
@@ -22,18 +25,28 @@ trait TTestCase extends AnyFunSuite {
 			val ev: String = expected.replaceAll("([\t \r]*\n)+", "\n").trim
 			val av: String = actual.replaceAll("([\t \r]*\n)+", "\n").trim
 
+			val ef: File = target / (traceCode + ".expected")
+			val af: File = target / (traceCode + ".actual")
+
+			lazy val ep: String =
+				ef
+					.ioWriteLines(expected)
+					.AbsolutePath
+
+			lazy val ap: String =
+				af
+					.ioWriteLines(actual)
+					.AbsolutePath
+
+			if (ef.exists() || af.exists())
+				ep + ap
+
 			if (ev != av) {
-
+				System.out.flush()
 				System.err.println(
-					"kdiff3 " + (target / (traceCode + ".expected"))
-						.ioWriteLines(expected)
-						.AbsolutePath + " " +
-						(target / (traceCode + ".actual"))
-							.ioWriteLines(actual)
-							.AbsolutePath
+					"kdiff3 " + ep + " " + ap
 				)
-
-
+				System.err.flush()
 				assert(av == ev)
 			}
 		}

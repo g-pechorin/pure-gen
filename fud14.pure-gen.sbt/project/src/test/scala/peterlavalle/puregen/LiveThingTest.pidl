@@ -1,0 +1,11 @@
+struct Utterance
+	start: real32
+	words: text
+
+
+// a live "mary" that can signal if it's talking or not
+pipe LiveMary(text)
+	! Silent()
+	! Speak(Utterance)
+	? Speaking(real32 text)
+	? Spoken(real32 text)

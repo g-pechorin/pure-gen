@@ -1,12 +1,18 @@
 package peterlavalle
 
+/**
+ * used for the/a byte streams between speakers
+ *
+ * @tparam I
+ * @tparam O
+ */
 sealed trait Channel[I, O] {
 
 	def sub[V](v: V)(f: O => Unit): Unit = this += Subscription(v)(f)
 
 	def rem[V](v: V): Unit = this -= Subscription(v)((_: O) => ???)
 
-	def bind(f: O => T): Channel[I, T] = {
+	final def bind(f: O => T): Channel[I, T] = {
 		val from: Channel[I, O] = this
 		new Channel[I, T] {
 
@@ -22,7 +28,7 @@ sealed trait Channel[I, O] {
 		}
 	}
 
-	def link(f: T => I): Channel[T, O] = {
+	final def data(f: T => I): Channel[T, O] = {
 		val from: Channel[I, O] = this
 		new Channel[T, O] {
 			override def +=(sub: Channel.Subscriber[O]): Unit = from += sub
@@ -42,6 +48,7 @@ sealed trait Channel[I, O] {
 	private case class Subscription[V](v: V)(f: O => Unit) extends Channel.Subscriber[O] {
 		override def post(o: O): Unit = f(o)
 	}
+
 }
 
 object Channel {

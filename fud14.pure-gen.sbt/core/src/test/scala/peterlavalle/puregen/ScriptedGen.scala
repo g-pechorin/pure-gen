@@ -1,103 +1,53 @@
 package peterlavalle.puregen
 
-object ScriptedGen extends App {
-	val template: String =
-		"""
-			|	def scripted[<tags>O](f: (<args> => O)): (<args> => O) = new (<args> => O) {
-			|			@HostAccess.Export
-			|			override def apply(<take>): O = f(<pass>)
-			|		}
-			|""".stripMargin
+import java.io.{File, FileWriter}
 
-	private val argsValues =
-		(0 to 8)
-			.map {
-				i: Int =>
-					val ran: Seq[Int] = 0 until i
-					Map(
-						"<tags>" -> ran.foldLeft("")((_: String) + "A" + (_: Int) + " <: AnyRef : ClassTag, "),
-						"<args>" -> ("(" + ran.foldLeft("")((_: String) + ", A" + (_: Int)).drop(2) + ")"),
-						"<take>" ->
-							ran
-								.foldLeft("") {
-									case (l, i) =>
-										l + ", v" + i + ": A" + i
-								}.drop(2),
-						"<pass>" ->
-							ran.foldLeft("")((_: String) + ", v" + (_: Int)).drop(2)
-					)
+import peterlavalle.TemplateResource
+
+/**
+ * there's a large source file. this recreates it.
+ */
+object ScriptedGen extends TemplateResource {
+
+	val range: Seq[Int] = 0 to 8
+
+	def main(args: Array[String]): Unit = {
+
+		new FileWriter(new File("core") / "src/main/scala/peterlavalle/puregen/includeT.scala.orig")
+			.using {
+				writer: FileWriter =>
+
+
+					bind("txt") {
+						name: String =>
+							range.flatMap(template(name))
+
+					}.foreach(writer.append(_: String).append("\n"))
+
 			}
 
-	println(
-		"""	/**
-			|	 * generated elsewhere
-			|	 */
-			|	sealed trait ScriptedGen {
-			|""".stripMargin
-	)
+		def template(name: String)(i: Int): Stream[String] = {
 
-	argsValues
-		.map {
-			(_: Map[String, String]).foldLeft(
-				"""
-					|	def scripted[<tags>O](f: (<args> => O)): (<args> => O) = new (<args> => O) {
-					|			@HostAccess.Export
-					|			override def apply(<take>): O = f(<pass>)
-					|		}
-					|""".stripMargin
-			) {
-				case (l, (k, v)) =>
-					l.replace(k, v)
+			def ran: Seq[Int] = 0 until i
+
+			bind(s"$name.txt") {
+
+				case "tags" =>
+					ran.foldLeft("")((_: String) + "A" + (_: Int) + " <: AnyRef : ClassTag, ")
+
+				case "args" =>
+					"(" + ran.foldLeft("")((_: String) + ", A" + (_: Int)).drop(2) + ")"
+
+				case "take" =>
+					ran
+						.foldLeft("") {
+							case (l, i) =>
+								l + ", v" + i + ": A" + i
+						}.drop(2)
+
+				case "pass" =>
+					ran.foldLeft("")((_: String) + ", v" + (_: Int)).drop(2)
 			}
-		}.foreach(println)
-
-	println(
-		"""}
-			|
-			|sealed trait ScriptedValue {
-			|	def find(path: String*): Value
-			|
-			|""".stripMargin
-
-
-	)
-
-
-	argsValues
-		.map {
-			(_: Map[String, String]).foldLeft(
-				"""
-					|
-					|
-					|		def eff[<tags>O <: AnyRef : ClassTag](name: String): <args> => O = {
-					|
-					|			val call: Value =
-					|				find(
-					|					name.split("\\."): _ *
-					|				)
-					|
-					|			require(call.canExecute)
-					|
-					|			(<take>) =>
-					|    		val eff: Value = call.execute(<pass>)
-					|
-					|				require(
-					|					eff.toString.startsWith("function __do() {\n"),
-					|					"it wasn't a PS Eff"
-					|				)
-					|
-					|				// do notation requires another call ... because
-					|				val open: Value = eff.execute()
-					|
-					|				// cast it ... yay?
-					|				open.asInstanceOf[O]
-					|		}
-					|""".stripMargin
-			) {
-				case (l, (k, v)) =>
-					l.replace(k, v)
-			}
-		}.foreach(println)
-
-
+		}
+	}
 }

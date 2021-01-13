@@ -1,0 +1,20 @@
+exports._<@pipe/> =
+  // the null one
+    (eventNothing) =>
+  // events
+    <@eventTake/>
+  // structs
+    <@structTake/>
+  // args
+    <@argsTake/>
+  // the actual call
+  () => _S3_.<@pack/>.<@host/>._new_<@pipe/>(
+    // event constructors
+      <@eventWrap/>
+    // struct constructors
+      <@structWrap/>
+    // args
+      <@argsWrap/>
+    // basic "null" constructor
+      eventNothing
+  )

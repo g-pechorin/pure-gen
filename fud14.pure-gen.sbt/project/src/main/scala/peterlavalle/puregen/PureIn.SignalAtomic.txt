@@ -1,5 +1,0 @@
-.global[<@take/>, Any => Unit]("<@pack/>.<@name/>") {
-	<@args/> =>
-		import this.<@path/>._
-		o[<@kind/>](this.<@path/>.open<@name/>(<@pass/>))
-}

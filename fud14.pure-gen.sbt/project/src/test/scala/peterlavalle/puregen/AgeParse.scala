@@ -1,8 +1,6 @@
 package peterlavalle.puregen
 
 class AgeParse extends
-	TGenJavaScriptTest with
-	TGenPureScriptTest with
 	TParseTest {
 
 	import IR.Pi._

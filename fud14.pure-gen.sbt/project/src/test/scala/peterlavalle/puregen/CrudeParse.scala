@@ -1,9 +1,6 @@
 package peterlavalle.puregen
 
 class CrudeParse extends
-	TGenScalaTest with
-	TGenJavaScriptTest with
-	TGenPureScriptTest with
 	TParseTest {
 
 	import IR.Pi._

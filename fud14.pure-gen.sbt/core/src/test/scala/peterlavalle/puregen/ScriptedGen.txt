@@ -1,0 +1,35 @@
+package peterlavalle.puregen
+
+import java.io.{File, InputStream}
+import java.util.concurrent.atomic.AtomicBoolean
+
+import org.graalvm.polyglot.{Context, HostAccess, Value}
+
+import scala.annotation.tailrec
+import scala.io.{BufferedSource, Source}
+import scala.reflect.ClassTag
+
+/**
+ * generated elsewhere
+ *
+ * the `.orig` is the generator's output, copy it to the .scala
+ */
+object includeT {
+
+	trait ScriptedGen {
+		<@scripted/>
+	}
+
+	trait ScriptedValue {
+		def find(path: String*): Value
+
+		<@eff/>
+	}
+
+	trait ScriptedContext {
+		def context: Context
+
+		<@global/>
+
+	}
+}

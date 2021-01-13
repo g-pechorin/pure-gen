@@ -6,11 +6,11 @@ A user is not expected to read it "from cover to cover"<sup id='f_link1'>[1](#f_
 The document discusses the components of the system, and the FRP library used to construct the signal functions.
 
 
-- [Components / pIDL](#components--pidl)
+- [Components / p Interface Definition Language](#components--p-interface-definition-language)
 	- [Scenario](#scenario)
 	- [Mary](#mary)
 	- [Sphinx](#sphinx)
-- [FRP.purs](#frppurs)
+- [FRP PureScrpt Module](#frp-purescrpt-module)
 	- [`SF i o`](#sf-i-o)
 		- [`Wrap`](#wrap)
 		- [`Lift`](#lift)
@@ -27,13 +27,46 @@ The document discusses the components of the system, and the FRP library used to
 	- [`unitsf`](#unitsf)
 	- [`passsf`](#passsf)
 
-## Components / pIDL
+> overview of archotecture
+
+This system architecture was designed to divide any/all programming into three areas
+
+> **agent**
+> > The "agent" is the PureScript program that contains the "buisness logic" of any AI system developed with this software.
+> > The agent is specified by a single signal function, constructed within the effect monad, that accepts a "unit" non-value as input and emits a unit as output.
+>
+> `component`
+> >
+>
+> **shell**
+> > The "shell"
+>
+
+
+
+> example of emvedding
+
+## Components / p Interface Definition Language
+
+> clarify what this is
+
+> use language names instead of extensions
+
 
 While implemented in Scala, the components still need `.purs` and `.js` source code to integrate correctly with the `Agent.purs`.
 To assist in consistency and maintenance a code generator and IDL were developed and used to generate `.purs` and `.js` files and corresponding `.scala` sources with `trait` abstractions.
+
+> clarify this - we're detai.ing the idl
+
+> explain foriegn saignal fuynction
+
+> explain the syntax -> signasl function
+
 There are five "things" that one might see in the `.pidl` files.
 Four of them construct *foreign signal functions* to pass data in/out of the agent.
 The final one `opaque` just defines an (appropriately named) opaque data type that the agent can/will pass around.
+
+
 
 > `event`
 > > This defines a foreign signal function.
@@ -73,7 +106,7 @@ The `Scenario.pidl` allows an agent to interface with system functionality to ex
 
 ```
 // the age of the simulation
-sample Age() = real32
+sample Age() = real64
 
 // lets the agent dump a log status (at any time) with a named prefix
 signal LogColumn(text) = text
@@ -84,53 +117,51 @@ For reference, the implementation is included here.
 ```scala
 package peterlavalle.puregen
 
-import pdemo.Scenario
-import peterlavalle.puregen.TModule.Sample
+import java.util
 
-/**
- * this class implements the scenario functionality for the Demo
- */
-class TheScenario() extends Scenario {
+import S3.Scenario
+
+trait TheScenario extends Scenario.D {
+
 
   /**
    * we need to note when the scenario starts
    */
   private lazy val start: Long = System.currentTimeMillis()
 
-  /**
-   * this function computes the current age
-   */
-  private def age: Float =
-    ((System.currentTimeMillis() - start) * 0.001)
-      .toFloat
 
-  /**
-   * this creates a signal function that *just* returns the current age
-   *
-   * TODO; update some variable at the start of the/a cycle and use that. we want all of the sampled values to have the same value
-   */
-  override def openAge(): Sample[Float] =
-    // signal here is a pseudo eDSL construct with the form `: (=> T) -> Sample[T]`
-    sample {
-      age
-    }
-  /**
-   * this creates a so-called log column
-   *
-   * TODO; collect all log messages and them write them all at the end of a cycle as one group
-   * TODO; ... and write them to .csv columns?
-   * TODO; ... or maybe .json since that has more of a spec?
-   */
-  override def openLogColumn(a0: String): TModule.Signal[String] =
-    // signal here is a pseudo eDSL construct with the form `: (T => Unit) -> Signal[T]`
-    signal {
-      text: String =>
-        System.out.println(s"[$a0] @ $age")
-        text.split("[\r \t]*\n").foreach {
-          line: String =>
-            System.out.println(s"[$a0]: $line")
+  private var age: Double = -1
+
+  before {
+    age = (System.currentTimeMillis() - start) * 0.001
+  }
+
+  override protected def S3_Scenario_openAge(): () => Double = () => age
+
+  private val buffered = new util.HashMap[String, util.LinkedList[String]]()
+
+  override protected def S3_Scenario_openLogColumn(a0: String): String => Unit = {
+    require(!buffered.containsKey(a0))
+    buffered(a0) = new util.LinkedList[String]()
+    (_: String)
+      .split("[\r \t]*\n")
+      .foreach(buffered(a0).add)
+  }
+
+  follow {
+    if (buffered.nonEmpty) {
+      val out: String =
+        buffered.foldLeft("@ " + age) {
+          case (left, (key, lines)) =>
+            val list: List[String] = lines.toList
+            lines.clear()
+            list.foldLeft(left + "\n\t[" + key + "]")((_: String) + "\n\t\t" + (_: String))
         }
+
+      System.err.flush()
+      System.out.println(out)
     }
+  }
 }
 ```
 
@@ -140,12 +171,16 @@ The "Mary" component contains the functionality for the text-to-speech system.
 At present, it is *just* [the MaryTTS system](https://github.com/marytts/marytts) which functions in a "live" manner to play audio as quickly as possible.
 
 ```
+struct Utterance
+  start: real64
+  words: text
+
 // a live "mary" that can signal if it's talking or not
 pipe LiveMary(text)
   ! Silent()
-  ! Speak(real32 text)
-  ? Speaking(real32 text)
-  ? Spoken(real32 text)
+  ! Speak(Utterance)
+  ? Speaking(Utterance)
+  ? Spoken(Utterance)
 ```
 
 Opening an instance of the system requires a regular expression `: String` to define how to split the text up before rendering it.
@@ -172,17 +207,49 @@ opaque AudioLine
 // the Microphone connection
 sample Microphone() = AudioLine
 
+
+
+
+struct SphinxWord
+  confidence: real64
+  score: real64
+  start: real64  //start: sint64
+  end: real64  //end: sint64
+  filler: bool
+  spelling: text
+
+
+
+struct SphinxResult
+  hypothesis: text
+  bestFinalResultNoFiller: text
+  bestPronunciationResult: text
+  bestResultNoFiller: text
+
 // connection to a stream-sphinx thing
 pipe CMUSphinx4ASR()
   ! SConnect(AudioLine)
   ! SDisconnect()
-  ? SRecognised(text)
+  ? SRecognised(text SphinxResult [SphinxWord])
+
+
+
+struct WordInfo
+  startTime: real64
+  endTime: real64
+  word: text
+
+
+struct Alternative
+  confidence: real32
+  transcript: text
+  words: [WordInfo]
 
 // connection to a stream-google-asr thing
 pipe GoogleASR()
   ! GConnect(AudioLine)
   ! GDisconnect()
-  ? GRecognised(text)
+  ? GRecognised(text [Alternative])
 ```
 
 
@@ -190,6 +257,10 @@ The system functions on a (unique?) abstraction - instead of passing around conv
 
 The `Microphone` itself *just* opens the system's default microphone (whatever that means) and continually sends out an appropriate `AudioLine` instance for other systems.<sup id='f_link5'>[5](#f_note5)</sup>
 The returned `AudioLine` instance is suitable for use with multiple behaviours.
+
+> clarify ; audio line can be used with multiple consumers at once
+
+
 
 
 The two ASR systems have similar APIs with (basically) identical functionality.
@@ -200,7 +271,9 @@ Another future goal would be to add [ICL's ASR](https://github.com/peterlavalle/
 
 
 
-## FRP.purs
+## FRP PureScrpt Module
+
+> clarify that this is purescript
 
 
 The `FRP.purs` module contains a lot of PureScript functionality to construct signal functions that form the system.

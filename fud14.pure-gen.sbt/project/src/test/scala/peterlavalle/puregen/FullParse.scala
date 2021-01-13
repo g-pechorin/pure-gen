@@ -8,7 +8,7 @@ class FullParse extends TParseTest {
 	override def module: IR.Module =
 		IR.Module(
 			getClass.getSimpleName,
-			List(
+			Set(
 				IR.Signal("Foo", List(IR.Text),
 					Set(
 						IR.ActionSet("Trip", List()),
@@ -42,6 +42,6 @@ class FullParse extends TParseTest {
 					)
 				),
 
-			).sortBy(_.toString).toSet
+			)
 		)
 }

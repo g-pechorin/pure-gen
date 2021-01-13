@@ -34,7 +34,17 @@ sealed trait PCG {
 	def pActionAny[_: P]: P[FindDef => TAction] = pActionGet | pActionSet
 
 	def pKind[_: P]: P[NeedDef[TKind]] = {
-		(SInt32.p | Real32.p | Real64.p | Text.p).map((k: TAtomicKind) => (_: FindDef) => k) | T.tUpperName.map {
+
+		def pListOf: P[NeedDef[ListOf]] =
+			"[" ~ pKind ~ "]" map {
+				element: NeedDef[TKind] =>
+					(find: FindDef) =>
+						ListOf(
+							element(find)
+						)
+			}
+
+		pListOf | (Bool.p | Real32.p | Real64.p | SInt32.p | SInt64.p | Text.p).map((k: TAtomicKind) => (_: FindDef) => k) | T.tUpperName.map {
 			name: String =>
 				(find: FindDef) =>
 					find(name) match {
@@ -45,6 +55,7 @@ sealed trait PCG {
 						case None =>
 							sys.error(s"name `$name` isn't defined")
 					}
+
 		}
 	}
 
@@ -105,14 +116,25 @@ sealed trait PCG {
 		large | small
 	}
 
+	def pStruct[_: P]: P[FindDef => TDefinition] =
+		P("struct") ~ T.tUpperName ~ (T.tLowerName ~ P(":") ~ pKind).rep(1) map {
+			case (name, fields) =>
+				(f: FindDef) =>
+					Struct(
+						name,
+						fields.mapr((_: NeedDef[TKind]) apply f).toList
+					)
+		}
+
 	def pOpaque[_: P]: P[FindDef => TDefinition] =
 		P("opaque") ~ T.tUpperName map ((n: String) => (_: FindDef) => IR.Opaque(n))
 
 	def pPipe[_: P]: P[FindDef => TDefinition] =
 		P("pipe") ~ T.tUpperName ~ pArgs ~ pActionAny.rep map { case (name, args, gets) => (f: FindDef) => IR.Pipe(name, args(f), gets.toSet.map((_: FindDef => TAction) apply f)) }
 
+
 	def pDefinition[_: P]: P[FindDef => TDefinition] = {
-		pEvent | pSample | pSignal | pOpaque | pPipe
+		pEvent | pSample | pSignal | pOpaque | pPipe | pStruct
 	}
 
 	def pModule[_: P]: P[C1 => IR.Module] = {

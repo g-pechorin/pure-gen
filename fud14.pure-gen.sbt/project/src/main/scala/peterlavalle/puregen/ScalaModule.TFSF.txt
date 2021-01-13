@@ -1,1 +1,0 @@
-def open<@name/>(<@args/>): TModule.<@bind/>[<@kind/>]

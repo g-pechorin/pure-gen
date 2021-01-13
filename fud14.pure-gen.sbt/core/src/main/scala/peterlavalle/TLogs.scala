@@ -8,7 +8,7 @@ trait TLogs {
 
 object TLogs {
 
-	trait PrintLn {
+	trait PrintLogLn {
 		this: TLogs =>
 		def print(x: Any): Unit = logger.info(x.toString)
 

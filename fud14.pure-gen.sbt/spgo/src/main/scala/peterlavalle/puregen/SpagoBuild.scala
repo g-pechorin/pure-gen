@@ -2,7 +2,7 @@ package peterlavalle.puregen
 
 import java.io.File
 
-import peterlavalle.{Err, _}
+import peterlavalle._
 
 import scala.io.{BufferedSource, Source}
 import scala.util.matching.Regex
@@ -11,7 +11,13 @@ object SpagoBuild {
 
 	val rDep: Regex = "import .*--\\s*dep\\s*:(.*)".r
 
-	def apply[O](workIn: File)(source: File*)(act: File => O): Err[O] = {
+	def apply[O](
+								workIn: File
+							)(
+								source: File*
+							)(
+								actionOnResult: File => O
+							): O = {
 
 		lazy val sources: Seq[File] = {
 			val sources: Seq[File] =
@@ -30,25 +36,26 @@ object SpagoBuild {
 			sources
 		}
 
-		for {
+		// create the/a project (if missing)
+		val projectDhall: File = {
+			require(workIn.EnsureMkDirs.isDirectory)
 
-			// create the/a project (if missing)
-			file <- {
-				require(workIn.EnsureMkDirs.isDirectory)
-
-				if ((workIn / "spago.dhall").isFile) {
-					Err(workIn / "spago.dhall")
-				} else {
-					workIn.$(spago("init"): _ *)(System.err.println) ? {
-						_: Unit =>
-							workIn / "spago.dhall"
-					}
+			if ((workIn / "spago.dhall").isFile) {
+				workIn / "spago.dhall"
+			} else {
+				workIn.$(spago("init"): _ *)(System.err.println) ? {
+					_: Unit =>
+						workIn / "spago.dhall"
 				}
-			}
+			} need "needed to create the/a project folder"
+		}
+
+		(for {
+
 
 			// overwrite the source dirs
 			file <-
-				file.reWriteLine(", sources = \\[ .* \\]") {
+				projectDhall.reWriteLine(", sources = \\[ .* \\]") {
 					_: String =>
 						sources
 							.foldLeft(", sources = [ ")((_: String) + "\"" + (_: File).AbsolutePath + "/**/*.purs\", ")
@@ -94,8 +101,6 @@ object SpagoBuild {
 							.foldLeft(", dependencies = [ ")((_: String) + "\"" + (_: String) + "\", ")
 							.dropRight(2) + " ]"
 				}
-
-
 		} {
 			// compile it!
 			val index: File = file.ParentFile / "index.js"
@@ -109,11 +114,11 @@ object SpagoBuild {
 						s"no index.js in `${file.ParentFile.AbsolutePath}`"
 					)
 
-					act {
+					actionOnResult {
 						index
 					}
 			}
-		}
+		}) need "needed to compile that"
 	}
 
 	def spago(cmd: String*): Seq[String] = {

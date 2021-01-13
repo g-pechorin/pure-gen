@@ -1,35 +1,36 @@
 package peterlavalle.puregen
 
-import pdemo.Mary
-import peterlavalle.puregen.TModule.Pipe
-import peterlavalle.puregen.util.Newer
+import S3.{Mary, S3}
 
-class TryMary() extends Mary {
 
-	override def openLiveMary(split: String): Pipe[LiveMary.Ev, LiveMary.Si] = {
-		pipe {
-			e: LiveMary.Ev =>
+trait TryMary extends Mary.D {
 
-				val live: MaryLive =
-				//MaryLive.log("full-mary")
-					if ("" == split)
-						MaryLive.kirk()
-					else
-						MaryLive.kirk(split)
+	import Mary._
 
-				val ifNewer: Newer[Float] = Newer(-1.0f)
+	override protected def S3_Mary_openLiveMary(split: String, send: LiveMary.Trigger): LiveMary.Signal => Unit = {
+		//	override protected def demo_demo_Mary_openLiveMary(split: String, send: LiveMary.Trigger): LiveMary.Signal => Unit = {
 
-				new LiveMary.Si {
-					override def Silent(): Unit =
-						ifNewer() {
-							live.speak("", () => {}, (_: Boolean) => {})
-						}
+		TODO("have the  LiveMary.Receiver just implement apply(signal)unit")
 
-					override def Speak(a0: Float, a1: String): Unit =
-						ifNewer(a0) {
-							live.speak(a1, () => e.Speaking(a0, a1), (full: Boolean) => if (full) e.Spoken(a0, a1))
-						}
+		val live: MaryLive =
+			if ("" == split)
+				MaryLive.kirk()
+			else
+				MaryLive.kirk(split)
+
+		val ifNewer: Newer[Double] = Newer(-1.0)
+
+		new LiveMary.Receiver {
+			override def Silent(): Unit =
+				ifNewer() {
+					live.speak("", () => {}, (_: Boolean) => {})
+				}
+
+			override def Speak(a0: Utterance): Unit =
+				ifNewer(a0.start) {
+					live.speak(a0.words, () => send.Speaking(a0), (full: Boolean) => if (full) send.Spoken(a0))
 				}
 		}
 	}
+
 }

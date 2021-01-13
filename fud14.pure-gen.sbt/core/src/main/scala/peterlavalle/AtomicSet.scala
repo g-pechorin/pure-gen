@@ -18,7 +18,6 @@ class AtomicSet[V]() {
 		}
 
 	private object lock extends Locked {
-
 		var data: Set[V] = Set[V]()
 	}
 

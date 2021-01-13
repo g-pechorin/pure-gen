@@ -18,6 +18,16 @@ trait PiIterableT {
 
 
 	implicit class PiIterable[T](iterable: Iterable[T]) {
+
+		def mapIsLast[O](f: (T, Boolean) => O): Stream[O] =
+			iterable.toStream match {
+				case Empty => Empty
+				case Stream(last) =>
+					Stream(f(last, true))
+				case head #:: tail =>
+					f(head, false) #:: tail.mapIsLast(f)
+			}
+
 		def toStrings(f: T => String): String = iterable.foldLeft("")((_: String) + f(_: T))
 
 		def filterAs[Q <: T : ClassTag]: Iterable[Q] =

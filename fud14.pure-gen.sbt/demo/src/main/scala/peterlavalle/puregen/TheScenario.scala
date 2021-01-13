@@ -1,50 +1,48 @@
 package peterlavalle.puregen
 
-import pdemo.Scenario
-import peterlavalle.puregen.TModule.Sample
+import java.util
 
-/**
- * this class implements the scenario functionality for the Demo
- */
-class TheScenario() extends Scenario {
+import S3.Scenario
+
+trait TheScenario extends Scenario.D {
+
 
 	/**
 	 * we need to note when the scenario starts
 	 */
 	private lazy val start: Long = System.currentTimeMillis()
 
-	/**
-	 * this function computes the current age
-	 */
-	private def age: Float =
-		((System.currentTimeMillis() - start) * 0.001)
-			.toFloat
 
-	/**
-	 * this creates a signal function that *just* returns the current age
-	 *
-	 * TODO; update some variable at the start of the/a cycle and use that. we want all of the sampled values to have the same value
-	 */
-	override def openAge(): Sample[Float] =
-		// signal here is a pseudo eDSL construct with the form `: (=> T) -> Sample[T]`
-		sample {
-			age
-		}
-	/**
-	 * this creates a so-called log column
-	 *
-	 * TODO; collect all log messages and them write them all at the end of a cycle as one group
-	 * TODO; ... and write them to .csv columns?
-	 * TODO; ... or maybe .json since that has more of a spec?
-	 */
-	override def openLogColumn(a0: String): TModule.Signal[String] =
-		// signal here is a pseudo eDSL construct with the form `: (T => Unit) -> Signal[T]`
-		signal {
-			text: String =>
-				System.out.println(s"[$a0] @ $age")
-				text.split("[\r \t]*\n").foreach {
-					line: String =>
-						System.out.println(s"[$a0]: $line")
+	private var age: Double = -1
+
+	before {
+		age = (System.currentTimeMillis() - start) * 0.001
+	}
+
+	override protected def S3_Scenario_openAge(): () => Double = () => age
+
+	private val buffered = new util.HashMap[String, util.LinkedList[String]]()
+
+	override protected def S3_Scenario_openLogColumn(a0: String): String => Unit = {
+		require(!buffered.containsKey(a0))
+		buffered(a0) = new util.LinkedList[String]()
+		(_: String)
+			.split("[\r \t]*\n")
+			.foreach(buffered(a0).add)
+	}
+
+	follow {
+		if (buffered.nonEmpty) {
+			val out: String =
+				buffered.foldLeft("@ " + age) {
+					case (left, (key, lines)) =>
+						val list: List[String] = lines.toList
+						lines.clear()
+						list.foldLeft(left + "\n\t[" + key + "]")((_: String) + "\n\t\t" + (_: String))
 				}
+
+			System.err.flush()
+			System.out.println(out)
 		}
+	}
 }

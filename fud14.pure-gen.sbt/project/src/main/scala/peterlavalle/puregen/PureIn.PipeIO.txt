@@ -1,6 +1,0 @@
-.global[<@take/>, AnyRef]("<@pack/>.<@name/>") {
-	<@args/> =>
-		import this.<@path/>._
-		// generate an object that can be invoked from the PureScript as the generated PureScript expects
-		bike.p[<@kind/>](<@path/>.open<@name/>(<@pass/>))
-}

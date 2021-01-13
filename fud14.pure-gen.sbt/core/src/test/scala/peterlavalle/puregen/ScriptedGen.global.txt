@@ -1,0 +1,28 @@
+
+/**
+	* binds some n-arg function to a global path
+	*/
+def global[<@tags/>O](path: String)(f: <@args/> => O): Context = {
+
+	val full: List[String] =
+		path.split("\\.")
+			.toList
+
+	val into: String =
+		full.reverse.tail.reverse
+			.map((name: String) => s"\tinto = (into['$name'] || (into['$name'] = {}));\n")
+			.foldLeft("")((_: String) + (_: String))
+
+	val script: String =
+		s"""
+				|(call => {
+				|	var into = this;$into
+				|	into['${full.last}'] = ((<@pass/>) => call.apply(<@pass/>));
+				|})
+		""".stripMargin
+
+	context
+		.eval("js", script)
+		.execute(scripted(f))
+	context
+}

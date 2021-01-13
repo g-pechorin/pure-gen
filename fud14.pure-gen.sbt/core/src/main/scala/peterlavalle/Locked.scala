@@ -1,5 +1,8 @@
 package peterlavalle
 
+/**
+ * it's *like* synchronized but it checks/crashes on recursion
+ */
 class Locked() {
 	private var live = false
 

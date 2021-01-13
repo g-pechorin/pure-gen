@@ -2,7 +2,7 @@ package peterlavalle.puregen
 
 import peterlavalle.puregen.IR.Pi._
 
-class TestParse extends TParseTest with TGenScalaTest {
+class TestParse extends TParseTest {
 	override def module: IR.Module =
 		IR.Module(
 			getClass.getSimpleName,

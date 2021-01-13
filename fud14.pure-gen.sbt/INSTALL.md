@@ -1,10 +1,11 @@
 
-> I have only tested this on Windows, so, there are likely parts of it that will fail with a simple error message on Linux/macOS.
-> If you're interested in those platforms - let me know! (Maybe by opening a ticket?)
+> I have only tested this on Windows, so, there are likely parts of it that will fail on Linux/macOS.
+>
+> File a ticket!
 >
 
-This document describes installing the system, but, relies on a functioning "demo" that may only be available int he default/master branch.
-The demo can be reconstructed by [following the tutorial](TUTORIAL.md).
+You will need a physical microphone (compatible with the Java Media Framework ... which all seem to be) and a few software packages to run this.
+Once those are set up, you can run the demonstration agent and get started "hacking on it" as folks say.
 
 # Short Version (REALLY try this first)
 
@@ -38,9 +39,6 @@ If something went wrong ... there's a longer version of setup below.
 ----
 
 # Installation (only if the short version didn't work)
-
-You will need a physical microphone (compatible with the Java Media Framework ... which all seem to be) and a few software packages to run this.
-Once those are set up, you can run the demonstration agent and get started "hacking on it" as folks say.
 
 - [SDKs](#sdks)
 	- [Isolated (Windows only?)](#isolated-windows-only)
@@ -218,9 +216,7 @@ FATAL ERROR:  'Cannot convert data-type 'void' to 'boolean'.'
 				   :Cannot convert data-type 'void' to 'boolean'.
 ```
 
-Then (like me) you're using Windows 7 and something in the MaryTTS XSLT has gone wrong.
-
-My (current) solution is to open the project in JetBrains DIEA and directly execute `fud14.pure-gen.sbt\demo\src\main\scala\peterlavalle\puregen\DemoTry.scala` as a Java program.
+Then "the old bug" is back and the MaryTTS XSLT has gone wrong.
 
 ### XTSE0280: Element name *|text() is not a valid QName
 

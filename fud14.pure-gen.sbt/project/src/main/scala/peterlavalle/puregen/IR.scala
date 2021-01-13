@@ -2,11 +2,13 @@ package peterlavalle.puregen
 
 object IR {
 
-	sealed trait TDefinition {
+	sealed trait IR
+
+	sealed trait TDefinition extends IR {
 		def name: String
 	}
 
-	sealed trait TKind {
+	sealed trait TKind extends IR {
 		def name: String
 	}
 
@@ -19,7 +21,7 @@ object IR {
 		}
 	}
 
-	sealed trait TAction {
+	sealed trait TAction extends IR {
 		def name: String
 
 		if ("" != name)
@@ -37,6 +39,10 @@ object IR {
 		def actions: Set[A]
 	}
 
+	case class ListOf(e: TKind) extends TKind {
+		override val name: String = "[" + e.name + "]"
+	}
+
 	case class Opaque(name: String) extends TDefinition with TKind
 
 	case class Sample(name: String, args: List[TKind], actions: Set[ActionGet]) extends TFSF[ActionGet]
@@ -46,6 +52,9 @@ object IR {
 	case class Event(name: String, args: List[TKind], actions: Set[ActionGet]) extends TFSF[ActionGet]
 
 	case class Pipe(name: String, args: List[TKind], actions: Set[TAction]) extends TFSF[TAction]
+
+	case class Struct(name: String, args: List[(String, TKind)]) extends TDefinition with TKind
+
 
 	/**
 	 * for signals
@@ -87,30 +96,57 @@ object IR {
 	}
 
 	object EventAtomic {
-		def unapply(arg: Event): Option[(String, List[TKind], TKind)] =
-			arg.actions.toList match {
-				case List(ActionGet("=", List(kind))) =>
-					Some((arg.name, arg.args, kind))
+		def unapply(arg: TFSF[_]): Option[(String, List[TKind], TKind)] =
+			arg match {
+				case arg: Sample =>
+					arg.actions.toList match {
+						case List(ActionGet("=", List(kind))) =>
+							Some((arg.name, arg.args, kind))
+						case _ =>
+							None
+					}
 				case _ =>
 					None
 			}
+	}
+
+	object FSFAtomic {
+		def unapply(arg: TFSF[_]): Option[(String, List[TKind], TKind)] =
+			SampleAtomic.unapply(arg)
+				.orElse(
+					BehaviourAtomic.unapply(arg)
+				)
+				.orElse(
+					EventAtomic.unapply(arg)
+				)
+
 	}
 
 	object SampleAtomic {
-		def unapply(arg: Sample): Option[(String, List[TKind], TKind)] =
-			arg.actions.toList match {
-				case List(ActionGet("=", List(kind))) =>
-					Some((arg.name, arg.args, kind))
+		def unapply(arg: TFSF[_]): Option[(String, List[TKind], TKind)] =
+			arg match {
+				case arg: Sample =>
+					arg.actions.toList match {
+						case List(ActionGet("=", List(kind))) =>
+							Some((arg.name, arg.args, kind))
+						case _ =>
+							None
+					}
 				case _ =>
 					None
 			}
 	}
 
-	object SignalAtomic {
-		def unapply(arg: Signal): Option[(String, List[TKind], TKind)] =
-			arg.actions.toList match {
-				case List(ActionSet("=", List(kind))) =>
-					Some((arg.name, arg.args, kind))
+	object BehaviourAtomic {
+		def unapply(arg: TFSF[_]): Option[(String, List[TKind], TKind)] =
+			arg match {
+				case arg: Signal =>
+					arg.actions.toList match {
+						case List(ActionSet("=", List(kind))) =>
+							Some((arg.name, arg.args, kind))
+						case _ =>
+							None
+					}
 				case _ =>
 					None
 			}
@@ -135,10 +171,14 @@ object IR {
 
 	case object SInt32 extends TAtomicKind
 
+	case object SInt64 extends TAtomicKind
+
 	case object Real32 extends TAtomicKind
 
 	case object Real64 extends TAtomicKind
 
 	case object Text extends TAtomicKind
+
+	case object Bool extends TAtomicKind
 
 }

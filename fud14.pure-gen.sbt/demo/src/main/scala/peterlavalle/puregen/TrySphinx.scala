@@ -1,62 +1,150 @@
 package peterlavalle.puregen
 
-import com.google.cloud.speech.v1.SpeechRecognitionResult
+import S3.Sphinx
+import com.google.cloud.speech.v1
+import com.google.cloud.speech.v1.{SpeechRecognitionAlternative, SpeechRecognitionResult}
 import edu.cmu.sphinx.api.SpeechResult
-import pdemo.Sphinx
-import peterlavalle.puregen.TModule.Sample
-import peterlavalle.{Channel, TLogs}
+import edu.cmu.sphinx.result.WordResult
+import peterlavalle.Channel
 
-class TrySphinx() extends Sphinx with TLogs {
+trait TrySphinx extends Sphinx.D {
 
-	override def openMicrophone(): Sample[AudioLine] = {
+	import Sphinx._
 
-		val line = new MikeAudio(Micro())
 
-		sample {
-			line
+	val line = new MikeAudio(Micro())
+
+	override protected def S3_Sphinx_openMicrophone(): () => AudioLine = {
+		() => line
+	}
+
+	override protected def S3_Sphinx_openCMUSphinx4ASR(send: CMUSphinx4ASR.Trigger): CMUSphinx4ASR.Signal => Unit = {
+		new CMUSphinx4ASR.Receiver {
+
+			val wSon: TWSon.I =
+				WSonSphinx4
+					.bind {
+						(speechResult: SpeechResult) =>
+
+							CMUSphinx4ASR.SRecognised(
+
+								speechResult.getHypothesis,
+
+								SphinxResult(
+									hypothesis = speechResult.getHypothesis,
+
+									bestFinalResultNoFiller = speechResult.getResult.getBestFinalResultNoFiller,
+									bestPronunciationResult = speechResult.getResult.getBestPronunciationResult,
+									bestResultNoFiller = speechResult.getResult.getBestResultNoFiller
+								),
+
+								speechResult.getWords.toStream
+									.map {
+										word: WordResult =>
+											SphinxWord(
+												confidence = word.getConfidence,
+												score = word.getScore,
+												start = word.getTimeFrame.getStart * 0.001,
+												end = word.getTimeFrame.getEnd * 0.001,
+												filler = word.getWord.isFiller,
+												spelling = word.getWord.getSpelling,
+											)
+									}
+							)
+					}
+					.open(send(_: CMUSphinx4ASR.SRecognised))
+
+			var last: Channel[Array[Byte], Array[Byte]] = null
+
+			override def SConnect(a0: AudioLine): Unit =
+				a0 match {
+					case mikeAudio: MikeAudio =>
+						if (last != mikeAudio.channel) {
+							if (null != last)
+								last.rem(wSon)
+
+							last = mikeAudio.channel
+
+							last.sub(wSon) {
+								data: Array[Byte] =>
+									wSon.send(data)
+							}
+						}
+				}
+
+			override def SDisconnect(): Unit =
+				if (null != last) {
+					last.rem(wSon)
+					last = null
+				}
 		}
 	}
 
-	override def openCMUSphinx4ASR(): TModule.Pipe[CMUSphinx4ASR.Ev, CMUSphinx4ASR.Si] =
-		pipe {
-			send: CMUSphinx4ASR.Ev =>
+	override protected def S3_Sphinx_openGoogleASR(send: GoogleASR.Trigger): GoogleASR.Signal => Unit =
 
-				val wSon: TWSon.I =
-					WSonSphinx4
-						.bind((_: SpeechResult).getHypothesis)
-						.open(send.SRecognised)
+		new GoogleASR.Receiver {
 
-				var last: Channel[Array[Byte], Array[Byte]] = null
 
-				// send a nothing to "kick" the thing
-				send.SRecognised("")
+			val wSon: TWSon.I =
+				WSonGoogleASR.Transcription()
+					.bind {
+						speechRecognitionResult: SpeechRecognitionResult =>
 
-				new CMUSphinx4ASR.Si {
-					override def SConnect(a0: AudioLine): Unit =
-						a0 match {
-							case mikeAudio: MikeAudio =>
-								if (last != mikeAudio.channel) {
-									if (null != last)
-										last.rem(wSon)
 
-									last = mikeAudio.channel
+							val alternatives: Stream[Alternative] = speechRecognitionResult.getAlternativesList
+								.toStream
+								.map {
+									alternative: SpeechRecognitionAlternative =>
+										alternative.getWordsList
 
-									last.sub(wSon) {
-										data: Array[Byte] =>
-											wSon.send(data)
-									}
+										Alternative(
+											alternative.getConfidence,
+											alternative.getTranscript,
+											alternative.getWordsList.toStream
+												.map {
+													wordInfo: v1.WordInfo =>
+														WordInfo(
+															wordInfo.getStartTime.getSeconds * 1.0 + (wordInfo.getStartTime.getNanos * 0.000000001),
+															wordInfo.getEndTime.getSeconds * 1.0 + (wordInfo.getEndTime.getNanos * 0.000000001),
+															wordInfo.getWord
+														)
+												}
+										)
 								}
-						}
+							send.GRecognised(
+								alternatives.head.transcript,
+								alternatives
+							)
+					}
+					//						.bind(send.GRecognised)
+					.open((_: Unit) => ())
 
-					override def SDisconnect(): Unit =
-						if (null != last) {
-							last.rem(wSon)
-							last = null
+			var last: Channel[Array[Byte], Array[Byte]] = null
+
+			override def GConnect(a0: AudioLine): Unit =
+				a0 match {
+					case mikeAudio: MikeAudio =>
+						if (last != mikeAudio.channel) {
+							if (null != last)
+								last.rem(wSon)
+
+							last = mikeAudio.channel
+
+							last.sub(wSon) {
+								data: Array[Byte] =>
+									wSon.send(data)
+							}
 						}
+				}
+
+			override def GDisconnect(): Unit =
+				if (null != last) {
+					last.rem(wSon)
+					last = null
 				}
 		}
 
-	class MikeAudio(micro: Micro) extends AudioLine {
+	class MikeAudio(micro: Micro) extends Sphinx.AudioLine {
 		val channel: Channel[Array[Byte], Array[Byte]] = {
 			val channel: Channel[Array[Byte], Array[Byte]] =
 				Channel[Array[Byte]]()
@@ -68,45 +156,6 @@ class TrySphinx() extends Sphinx with TLogs {
 
 			channel
 		}
-
 	}
 
-	override def openGoogleASR(): TModule.Pipe[GoogleASR.Ev, GoogleASR.Si] =
-		pipe {
-			send: GoogleASR.Ev =>
-
-				val wSon: TWSon.I =
-					WSonGoogleASR.Transcription()
-						.bind((_: SpeechRecognitionResult).getAlternatives(0).getTranscript).bind(send.GRecognised)
-						.open((_: Unit) => ())
-
-				var last: Channel[Array[Byte], Array[Byte]] = null
-
-				// send a nothing to "kick" the thing
-				send.GRecognised("")
-
-				new GoogleASR.Si {
-					override def GConnect(a0: AudioLine): Unit =
-						a0 match {
-							case mikeAudio: MikeAudio =>
-								if (last != mikeAudio.channel) {
-									if (null != last)
-										last.rem(wSon)
-
-									last = mikeAudio.channel
-
-									last.sub(wSon) {
-										data: Array[Byte] =>
-											wSon.send(data)
-									}
-								}
-						}
-
-					override def GDisconnect(): Unit =
-						if (null != last) {
-							last.rem(wSon)
-							last = null
-						}
-				}
-		}
 }

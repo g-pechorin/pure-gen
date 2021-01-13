@@ -1,10 +1,6 @@
 package peterlavalle.puregen
 
 class OpaqueTest extends
-	TGenScalaTest with
-	TGenPureInTest with
-	TGenJavaScriptTest with
-	TGenPureScriptTest with
 	TParseTest {
 
 	import IR.Pi._
