@@ -1,5 +1,8 @@
 package peterlavalle.puregen
 
+import java.io.InputStream
+import java.util.concurrent.atomic.AtomicBoolean
+
 import S3.Sphinx
 import com.google.cloud.speech.v1
 import com.google.cloud.speech.v1.{SpeechRecognitionAlternative, SpeechRecognitionResult}
@@ -158,4 +161,29 @@ trait TrySphinx extends Sphinx.D {
 		}
 	}
 
+	implicit class PiInputStream4(stream: InputStream) {
+		def capacitor(len: Int)(into: Array[Byte] => Unit): AutoCloseable =
+			new AutoCloseable {
+
+				val live = new AtomicBoolean(true)
+
+				val work: AutoCloseable =
+					daemon {
+						val bytes: Array[Byte] = Array.ofDim[Byte](len)
+
+						loop(stream.read(bytes))(_ != -1 && live.get()) {
+							read: Int =>
+								assume(0 <= read)
+								if (0 != read)
+									into(bytes.clone().take(read))
+						}
+					}
+
+
+				override def close(): Unit = {
+					live.set(false)
+					work.close()
+				}
+			}
+	}
 }

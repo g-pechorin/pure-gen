@@ -48,7 +48,7 @@ object MaryLive {
 
 	private abstract class AMaryLive(split: String) extends MaryLive {
 		val worker: AutoCloseable =
-			daemon() {
+			daemon {
 
 				// queue will be null when we want to close
 				while (lock.synchronized(null != queue)) {

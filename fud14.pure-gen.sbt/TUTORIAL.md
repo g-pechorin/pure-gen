@@ -96,8 +96,6 @@ Terminal will be reused by tasks, press any key to close it.
 
 > The line `[error] Executable was not found in path: "purs"` is a Windows/PureScript/Spago thing - please don't worry.
 >
-> The line `[success] Executable "purs.exe" was found in path!` should follow - please don't worry.
->
 > > ... but if you want to file PureScript/Spago GitHub tickets asking for it to be fixed; it'd lend weight to the argument that it should be fixed.
 
 The important detail is these two lines.
@@ -133,11 +131,11 @@ These lines are equivalent;
 
 - `pure ( Wrap ( \_ -> unit))`
 - `pure ( Wrap $ \_ -> unit)`
-- `pure ![ Wrap ](https://render.githubusercontent.com/render/math?math=%20Wrap%20) \_ -> unit`
-- `pure $ unitsf`
+- `pure ( unitsf )`
 - `pure   unitsf`
 
-It's worth noting that **do-notation** is a PureScript (et al) construct to help define an `Effect`.
+It's worth noting that this **do-notation** is a PureScript (et al) construct to help define an `Effect`.
+  This notation provides syntactical sugar to make it simpler and cleaner to define certain constructs.
 PureScript is (not TypeScript or JavaScript and) a pure functional programming language.
 
 - all code is a "function" in the mathematical sense
@@ -488,8 +486,9 @@ We can use that data to create a more interesting message.
 > The CMUSphinx4 Speech Recogniser is not particularly accurate or precise in the author's experience.
 > Many more competitive systems exist, but, they're metered or less easily embedded.
 > It's also possible to tune the CMUSphinx4 to be more useful, but, for our purposes - the Sphinx system should be *fine* for this.
-> We largely need a "speech detector" rather than a "speech recogniser
-> At the end - we'll change to Google's Cloud ASR which performs much better, but, needs an account to bill usage too.
+> We largely need a "speech detector" rather than a "speech recogniser."
+
+<!-- > At the end - we'll change to Google's Cloud ASR which performs much better, but, needs an account to bill usage too. -->
 
 First, we'll try to outline how events and samples work in "pure gen" to provide a background for what we're doing, and, make one's experience with the ASR more easily transferable.
 We'll then *just* open the foreign signal functions that connect everything and check that the expected error messages indicate that stuff is working.

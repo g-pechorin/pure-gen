@@ -19,6 +19,12 @@ trait PiIterableT {
 
 	implicit class PiIterable[T](iterable: Iterable[T]) {
 
+		def mapIsHead[O](f: (T, Boolean) => O): Stream[O] =
+			iterable.toStream.zipWithIndex.map {
+				case (data, index) =>
+					f(data, 0 == index)
+			}
+
 		def mapIsLast[O](f: (T, Boolean) => O): Stream[O] =
 			iterable.toStream match {
 				case Empty => Empty
