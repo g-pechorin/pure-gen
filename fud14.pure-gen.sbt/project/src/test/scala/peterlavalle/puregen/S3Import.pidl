@@ -1,0 +1,6 @@
+
+import Foo from Bar
+
+sample AudioFeed() = Foo
+
+signal LogOut(text) = Foo

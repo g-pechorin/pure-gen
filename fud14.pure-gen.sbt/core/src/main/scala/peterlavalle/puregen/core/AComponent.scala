@@ -145,11 +145,11 @@ abstract class AComponent(
 			storedSample = Some(readSample())
 		}
 
-		override def toString: String = simpleName + ":Sample-Pedal"
-
 		override def cycleComplete(): Unit = {
 			require(storedSample.isEmpty, s"didn't read the fSF $toString")
 		}
+
+		override def toString: String = simpleName + ":Sample-Pedal"
 
 		@HostAccess.Export
 		def sample(): S = {

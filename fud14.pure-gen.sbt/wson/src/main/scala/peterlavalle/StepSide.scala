@@ -20,36 +20,38 @@ object StepSide {
 
 			lock.load = null
 
-			val worker: AutoCloseable =
-				daemon(
-					lock.synchronized {
-						require(null == lock.load)
-						lock.load = None
-						lock.notifyAll()
-						()
-					},
-					(_: Unit) => {
-						lock.synchronized {
-							require(null != lock.load)
-							if (lock.load.isEmpty) {
-								lock.wait()
-								None
-							} else {
-								val data: Option[I] = lock.load
-								lock.load = None
-								lock.notifyAll()
-								data
-							}
-						}.map(work).foreach(send)
-					},
-					(_: Unit) => {
-						lock.synchronized {
-							require(null != lock.load && lock.load.isEmpty)
-							lock.load = null
-							lock.notifyAll()
-						}
-					}
-				)
+			val worker: AutoCloseable = {
+				error("i'd like this to be dead?")
+				//				daemon(
+				//					lock.synchronized {
+				//						require(null == lock.load)
+				//						lock.load = None
+				//						lock.notifyAll()
+				//						()
+				//					},
+				//					(_: Unit) => {
+				//						lock.synchronized {
+				//							require(null != lock.load)
+				//							if (lock.load.isEmpty) {
+				//								lock.wait()
+				//								None
+				//							} else {
+				//								val data: Option[I] = lock.load
+				//								lock.load = None
+				//								lock.notifyAll()
+				//								data
+				//							}
+				//						}.map(work).foreach(send)
+				//					},
+				//					(_: Unit) => {
+				//						lock.synchronized {
+				//							require(null != lock.load && lock.load.isEmpty)
+				//							lock.load = null
+				//							lock.notifyAll()
+				//						}
+				//					}
+				//				)
+			}
 
 			new (I => Unit) with AutoCloseable {
 				override def apply(i: I): Unit = {

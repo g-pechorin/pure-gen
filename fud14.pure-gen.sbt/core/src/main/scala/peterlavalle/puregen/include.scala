@@ -1,7 +1,6 @@
 package peterlavalle.puregen
 
-import java.io.{File, InputStream}
-import java.util.concurrent.atomic.AtomicBoolean
+import java.io.File
 
 import org.graalvm.polyglot.{Context, Value}
 
@@ -19,7 +18,6 @@ trait include
 			loop(get)(test)(act)
 		}
 	}
-
 
 
 	implicit class PiValue(value: Value) extends includeT.ScriptedValue {

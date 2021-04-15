@@ -15,7 +15,7 @@ trait Error {
 				.getStackTrace
 				.toList
 				.tail
-				.filterNot((_: StackTraceElement).getMethodName.matches("TODO\\$?")).head toString()
+				.filterNot((_: StackTraceElement).getMethodName.matches("TODO\\$?")).head.toString()
 
 		val text: String =
 			if (null == message)
@@ -73,13 +73,15 @@ trait Error {
 				error.getStackTrace
 					.dropWhile {
 						frame: StackTraceElement =>
-							"require" == frame.getMethodName || "require$" == frame.getMethodName
+							"expect" == frame.getMethodName || "expect$" == frame.getMethodName
 					}
 					.toList
 					.filterNext {
 						(l: StackTraceElement, r: StackTraceElement) =>
 							l.getFileName != r.getFileName || l.getLineNumber != r.getLineNumber
-					}.toArray
+					}
+					.toArray
+					.take(8)
 			)
 
 			System.out.flush()
@@ -105,6 +107,7 @@ trait Error {
 						l.getFileName != r.getFileName || l.getLineNumber != r.getLineNumber
 				}.toArray
 		)
+		error.printStackTrace(System.err)
 
 		throw error
 	}

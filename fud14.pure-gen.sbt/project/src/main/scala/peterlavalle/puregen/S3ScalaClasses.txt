@@ -10,6 +10,7 @@ import peterlavalle.puregen.DeScriptPolyglot._
 import peterlavalle.puregen.core.AComponent
 
 object <@name/> {
+	<@imports/>
 	trait D {
 
 		final lazy val <@hard/> = new <@name/>(asInstanceOf[S3].context, asInstanceOf[S3].hook.pedal, asInstanceOf[S3].cycle) {

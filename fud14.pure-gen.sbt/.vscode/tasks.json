@@ -1,53 +1,48 @@
 {
-  // See https://go.microsoft.com/fwlink/?LinkId=733558
-  // for the documentation about the tasks.json format
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "full build & run ; sbt demo/run",
-      "type": "shell",
-      "command": "sbt",
-      "windows": {
-        "command": "sbt"
-      },
-      "args": [
-        "demo/run"
-      ],
-      "problemMatcher": [],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    },
-    {
-      "label": "clean workspace ; sbt clean",
-      "type": "shell",
-      "command": "sbt",
-      "windows": {
-        "command": "sbt"
-      },
-      "args": [
-        "clean"
-      ],
-      "problemMatcher": [],
-      "group": {
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "full build & run ; sbt demo/run",
+			"type": "shell",
+			"command": "sbt",
+			"args": [
+				"demo/run"
+			],
+			"problemMatcher": [],
+			"group": {
 				"kind": "build",
 				"isDefault": true
-      }
-    },
+			}
+		},
+		{
+			"label": "clean workspace ; sbt clean",
+			"type": "shell",
+			"command": "sbt",
+			"args": [
+				"clean"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
 		{
 			"label": "re-check the PureScript ; spago demo/build",
 			"type": "shell",
 			"command": "spago",
 			"windows": {
 				"command": "spago"
-      },
-      "problemMatcher": [],
-      
+			},
+			"problemMatcher": [],
 			"args": [
-        "-C", // no colour - reduce funkiness when passing it through whatever VCode does
+				"-C",
+				// no colour - reduce funkiness when passing it through whatever VCode does
 
-				"bundle-module" // build the module thing
+				"bundle-module"
+				// build the module thing
 			],
 			"group": {
 				"kind": "build",
@@ -57,5 +52,5 @@
 				"cwd": "${workspaceFolder}/demo/target/spago"
 			}
 		}
-  ]
+	]
 }

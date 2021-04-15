@@ -1,5 +1,7 @@
 package peterlavalle.puregen
 
+import peterlavalle.daemon
+
 trait MaryLive extends AutoCloseable {
 	/**
 	 * say this text
@@ -47,8 +49,8 @@ object MaryLive {
 		}
 
 	private abstract class AMaryLive(split: String) extends MaryLive {
-		val worker: AutoCloseable =
-			daemon {
+		val worker: AutoCloseable = {
+			daemon.once {
 
 				// queue will be null when we want to close
 				while (lock.synchronized(null != queue)) {
@@ -88,6 +90,7 @@ object MaryLive {
 					done(!todo.hasNext)
 				}
 			}
+		}
 		var queue: Option[(String, () => Unit, Boolean => Unit)] = None
 
 		override def speak(text: String, start: () => Unit, done: Boolean => Unit): Unit =

@@ -74,11 +74,14 @@ trait TGenS3Test extends TGenTest {
 	}
 
 	test("compute pure-script module") {
+
+		val expected: String = srcPureScript
+
 		val actual: String =
 			pursGeneration
 				.foldLeft("")((_: String) + (_: String) + "\n")
 
-		srcPureScript assertSourceEqual actual
+		expected assertSourceEqual actual
 	}
 
 	/**
@@ -107,11 +110,13 @@ trait TGenS3Test extends TGenTest {
 	}
 
 	test("compute java-script module") {
+		val expected: String = srcJavaScript
+
 		val actual: String =
 			ecmaGeneration
 				.foldLeft("")((_: String) + (_: String) + "\n")
 
-		srcJavaScript assertSourceEqual actual
+		expected assertSourceEqual actual
 	}
 
 }

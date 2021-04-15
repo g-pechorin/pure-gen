@@ -1,0 +1,25 @@
+
+import AudioLine from Audio
+
+struct WordInfo
+	confidence: real64
+	score: real64
+	start: real64	//start: sint64
+	end: real64	//end: sint64
+	filler: bool
+	spelling: text
+
+struct Result
+	hypothesis: text
+	bestFinalResultNoFiller: text
+	bestPronunciationResult: text
+	bestResultNoFiller: text
+
+// connection to a stream-sphinx thing
+pipe CMUSphinx4ASR(bool)
+	! SConnect(AudioLine)
+	! SDisconnect()
+	? SRecognised(text Result [WordInfo])
+
+
+

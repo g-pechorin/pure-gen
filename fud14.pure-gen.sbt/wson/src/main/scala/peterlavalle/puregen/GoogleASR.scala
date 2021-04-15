@@ -165,4 +165,5 @@ class GoogleASR(json: File = (new File(System.getProperty("user.home")) / "pureG
 
 		override def onComplete(): Unit = ()
 	}
+
 }

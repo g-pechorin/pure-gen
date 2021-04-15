@@ -66,6 +66,15 @@ object S3ScalaClasses extends S3 {
 
 				pack.replace('.', '/') + "/" + module.name + ".scala" -> bind("txt") {
 
+					case "imports" =>
+						module.items.filterAs[IR.Import]
+							.toList
+							.sortBy(_.toString)
+							.map {
+								case IR.Import(name, IR.Module(from, _)) =>
+									s"type $name = $from.$name"
+							}
+
 					case "hard" =>
 						hard
 
@@ -159,13 +168,13 @@ object S3ScalaClasses extends S3 {
 									case "eventTrigger" =>
 										pipe.events.map {
 											case IR.ActionGet(name, args) =>
-												val take = args.zipWithIndex.map {
+												val take: String = args.zipWithIndex.map {
 													case (kind, index) =>
 														"a" + index + ": " + kind.toScala
 												}.collapse(", ")
 
-												val pass = args.indices.map {
-													i =>
+												val pass: String = args.indices.map {
+													i: Int =>
 														"a" + i
 												}.collapse(", ")
 												s"def $name($take): Unit = send(new $name($pass))"
@@ -185,12 +194,12 @@ object S3ScalaClasses extends S3 {
 									case "behaviorsHandler" =>
 										pipe.behaviors.map {
 											case IR.ActionSet(name, args) =>
-												val take = args.indices.map {
-													index =>
+												val take: String = args.indices.map {
+													index: Int =>
 														"a" + index + ": Value"
 												}.collapse(", ")
 
-												val pass = args.zipWithIndex.map {
+												val pass: String = args.zipWithIndex.map {
 													case (kind, index) =>
 														kind.fromPureScript("a" + index)
 												}.collapse(", ")
@@ -301,7 +310,7 @@ object S3ScalaClasses extends S3 {
 											pipe.args.indices.foldLeft("")((_: String) + "a" + (_: Int) + ", ")
 
 										case "eventName" =>
-											pipe.events.map(_.name)
+											pipe.events.map((_: IR.ActionGet).name)
 										case "structName" =>
 											pipe.structs.map(_.name)
 

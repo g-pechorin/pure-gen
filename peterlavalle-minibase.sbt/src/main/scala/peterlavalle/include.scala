@@ -2,8 +2,7 @@ package peterlavalle
 
 import java.security.MessageDigest
 
-import scala.annotation.tailrec
-import scala.collection.convert.{DecorateAsJava, DecorateAsScala, ToScalaImplicits}
+//import scala.collection.convert.{DecorateAsJava, DecorateAsScala, ToScalaImplicits}
 import scala.reflect.ClassTag
 
 
@@ -16,16 +15,11 @@ trait include
 		with PiInputStreamT
 		with PiIterableT
 		with PiJTreeT
-		with PiNodeT
 		with PiObjectT
 		with PiOutputStreamT
 		with PiPairT
 		with PiPropertiesT
-		with PiStringT
-		with PiSwingT
-		with ToScalaImplicits
-		with PiThreadingT
-		with DecorateAsJava with DecorateAsScala {
+		with PiStringT {
 
 	implicit class PrimpThrowable(e: Throwable) {
 		def !(message: String) =
@@ -73,64 +67,4 @@ trait include
 
 		loop()
 	}
-
-	def delay(await: Long)(action: => Unit): AutoCloseable = {
-		require(0L <= await)
-		daemon {
-			Thread.sleep(await)
-			action
-		}
-	}
-
-	def daemon[D](
-								 setup: => D,
-								 work: D => D,
-								 finish: D => Unit
-							 ): AutoCloseable =
-		new AutoCloseable {
-
-			var live = true
-			val worker: AutoCloseable =
-				daemon {
-					@tailrec
-					def loop(v: D): Unit =
-						if (synchronized(live))
-							loop(work(v))
-						else
-							finish(v)
-
-					loop(setup)
-				}
-
-			override def close(): Unit =
-				synchronized {
-					require(live)
-					live = false
-					worker.close()
-				}
-
-		}
-
-	def daemon(action: => Unit): AutoCloseable =
-		new AutoCloseable {
-
-			private val thread: Thread =
-				new Thread() {
-					override def run(): Unit = {
-						synchronized {
-							notifyAll()
-						}
-
-						action
-					}
-
-					synchronized {
-						setDaemon(true)
-						start()
-						wait()
-					}
-				}
-
-			override def close(): Unit = thread.join()
-		}
 }

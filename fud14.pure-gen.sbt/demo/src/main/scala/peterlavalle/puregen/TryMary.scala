@@ -1,6 +1,6 @@
 package peterlavalle.puregen
 
-import S3.{Mary, S3}
+import S3.Mary
 
 
 trait TryMary extends Mary.D {
@@ -8,8 +8,6 @@ trait TryMary extends Mary.D {
 	import Mary._
 
 	override protected def S3_Mary_openLiveMary(split: String, send: LiveMary.Trigger): LiveMary.Signal => Unit = {
-		//	override protected def demo_demo_Mary_openLiveMary(split: String, send: LiveMary.Trigger): LiveMary.Signal => Unit = {
-
 		TODO("have the  LiveMary.Receiver just implement apply(signal)unit")
 
 		val live: MaryLive =

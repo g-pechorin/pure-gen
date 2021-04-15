@@ -55,6 +55,9 @@ object IR {
 
 	case class Struct(name: String, args: List[(String, TKind)]) extends TDefinition with TKind
 
+	case class Import(name: String, from: Module) extends TDefinition with TKind {
+		val List(actual: TKind) = from.items.filter((_: TDefinition).name == name).toList
+	}
 
 	/**
 	 * for signals

@@ -1,0 +1,6 @@
+{ver:1}
+steps:
+	- (sbt) test
+needs:
+	- peterlavalle-minibase.sbt/
+	- fud14.pure-gen.sbt/project/

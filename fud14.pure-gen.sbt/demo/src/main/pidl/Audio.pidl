@@ -1,0 +1,7 @@
+
+// the "data" from the audio system
+opaque AudioLine
+
+// the Microphone connection
+sample Microphone() = AudioLine
+

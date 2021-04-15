@@ -68,6 +68,7 @@ trait PiJTreeT {
 			def collapse(path: List[TreeNode]): Unit
 
 		}
+
 	}
 
 

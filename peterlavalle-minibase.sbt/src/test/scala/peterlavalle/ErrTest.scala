@@ -4,18 +4,18 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class ErrTest extends AnyFunSuite {
 	test("test a thing") {
-		def doit(b: Boolean): Err[String] =
+		def doit(b: Boolean): E[String] =
 			if (b)
-				Err("Yeah")
+				E("Yeah")
 			else
-				Err ! "nope"
+				E ! "nope"
 
 
-		val value: Err[String] = doit(true)
+		val value: E[String] = doit(true)
 
 		assert(value.value == "Yeah")
 
-		val failure: Err[String] = doit(false)
+		val failure: E[String] = doit(false)
 
 		assertThrows[Throwable] {
 			failure.value

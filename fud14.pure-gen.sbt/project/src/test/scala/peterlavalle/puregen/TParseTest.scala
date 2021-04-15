@@ -2,6 +2,8 @@ package peterlavalle.puregen
 
 import java.io.InputStream
 
+import peterlavalle.E
+
 import scala.io.{BufferedSource, Source}
 
 trait TParseTest extends TTestCase {
@@ -26,22 +28,23 @@ trait TParseTest extends TTestCase {
 		}
 	}
 
+
+	val includeModule: String => IR.Module = {
+		name: String =>
+			fail(s"you tried to include `$name` but test ${getClass.getSimpleName} doesn't provide that")
+	}
+
 	test("parse test") {
 
-		import fastparse._
 
-		new PCG.C1(getClass.getSimpleName) {} apply src match {
-			case Parsed.Success(value: IR.Module, _) =>
-				if (null == module)
-					fail("that parse should not have worked")
-				else
-					assert(
-						value == module
-					)
-
-			case f: Parsed.Failure =>
+		PCG(includeModule, getClass.getSimpleName, src) match {
+			case E.Success(actual) =>
+				assert(
+					actual == module
+				)
+			case E.Failure(f) =>
 				if (module != null)
-					fail(f.toString())
+					fail(f)
 		}
 	}
 }

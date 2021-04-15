@@ -40,7 +40,7 @@ libraryDependencies ++=
 	Seq(
 		"com.lihaoyi" %% "fastparse" % "2.2.2",
 		"org.scalatest" %% "scalatest" % conf("scala.test") % Test,
-		"org.scala-sbt" %% "io" % conf("sbt.version"),
+		// "org.scala-sbt" %% "io" % conf("sbt.version"),
 	)
 
 

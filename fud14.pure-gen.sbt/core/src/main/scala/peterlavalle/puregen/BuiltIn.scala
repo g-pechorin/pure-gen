@@ -6,8 +6,6 @@ import org.graalvm.polyglot.{Context, Value}
 import peterlavalle.LockOnGet
 import peterlavalle.puregen.core.AComponent
 
-import scala.collection.mutable
-
 object BuiltIn {
 
 	def apply(built: String)(bang: (Context, Hook, Runnable) => Unit): Unit =
@@ -15,15 +13,17 @@ object BuiltIn {
 			.using {
 				context: Context =>
 
-					// pedals
+					// pedals - each has to be pushed at some point in the cycle, like a bicycle
+					// ... so calling them "pedals" seemed better than "things"
 					val tPedals = new util.HashSet[AComponent#TPedal[_, _]]()
 
 
 					lazy val scriptValue: Value = context.eval("js", built)
 
-					lazy val components: mutable.Set[AComponent] =
+					lazy val components: Set[AComponent] =
 						tPedals
 							.map((_: AComponent#TPedal[_, _]).component)
+							.toSet
 
 					var last: Value = null
 
@@ -31,15 +31,17 @@ object BuiltIn {
 					val followActions: LockOnGet[() => Unit] = LockOnGet[() => Unit]()
 					val onExitActions: LockOnGet[() => Unit] = LockOnGet[() => Unit]()
 
-
+					// this function computes the next cycle
 					lazy val cycle: Value => Value = {
-						beforeActions.foreach((v: () => Unit) => require(null!=v))
-						followActions.foreach((v: () => Unit) => require(null!=v))
-						onExitActions.foreach((v: () => Unit) => require(null!=v))
-						scriptValue
-							.eff[Value, Value]("Main.cycle")
-					}
 
+						// when we want/try to compute this - "seal" all the actions
+						beforeActions.foreach((v: () => Unit) => require(null != v))
+						followActions.foreach((v: () => Unit) => require(null != v))
+						onExitActions.foreach((v: () => Unit) => require(null != v))
+
+						// retrieve the function from the compile blob
+						scriptValue.eff[Value, Value]("Main.cycle")
+					}
 
 					val stepThread: (Unit => Unit) with AutoCloseable =
 						taskThread[Unit]("agent core thread") {

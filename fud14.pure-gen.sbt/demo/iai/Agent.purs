@@ -1,74 +1,93 @@
-
 module Agent where
-
-import Effect
-import FRP
-import Prelude
-
-import Data.Tuple
-
-import S3.Scenario
 
 
 import Data.Maybe
-import S3.Sphinx
+import Data.Tuple (Tuple(..))
+
+import Effect (Effect)
+
+import FRP
+
+import Prelude
+
+import S3.Audio
 import S3.Mary
+import S3.Scenario (openAge)
+import S3.Sphinx
+
+import S3.GCASR
+
+sphinxASR :: Effect (SF AudioLine (Maybe String))
+sphinxASR = do
+  -- open the sphinx system (and don't log the detected hypothesis)
+  asr <- openCMUSphinx4ASR false
+
+  -- connect the audio-line to the ASR thing
+  let connect = (Wrap $ SConnect)
+
+  -- unpack the (Maybe Event) to (Maybe String)
+  let unpack Nothing = Nothing
+      unpack (Just (SRecognised said _ _)) = Just said
+  
+  -- combine the things
+  pure $ connect >>>> asr >>>> (Wrap $ unpack)
+
+-- --
+-- --
+-- map a "maybe text" to "maybe a speech command" starting at the current time
+createUtterance :: Effect (SF (Maybe String) (Maybe Utterance))
+createUtterance = do
+  -- step 1
+  age <- openAge
+
+  -- don't need to do anything for step 2.
+
+  -- step 3
+  --  fuse:: SF (Tuple (Maybe String) Unit) (Tuple (Maybe String) Number)
+  let fuse = fuselr passsf $ unitsf >>>> age
+
+  -- step 4
+  --  pairMap :: (Tuple (Maybe String) Number) -> Maybe Utterance
+  let pairMap (Tuple Nothing _)        = Nothing
+      pairMap (Tuple (Just text) time) = Just $ newUtterance time text
+
+  -- step 6
+  pure $ fuse >>>> (Wrap pairMap)
+
+
+
+computeMary :: Effect (SF (Maybe Utterance) LiveMarySignal)
+computeMary = do
+  let construct Nothing    = Nothing
+      construct (Just utt) = Just $ Speak utt
+  pure $ (Wrap $ construct) >>>> (cache Silent)
 
 entry :: Effect (SF Unit Unit)
 entry = do
-    -- open a microphone
-    mic <- openMicrophone
+  mic <- openMicrophone
+  asr <- sphinxASR
+  utt <- createUtterance
+  tts <- computeMary
+  olm <- openLiveMary ""
+  -- discard the mary feedback for now
+  let out = olm >>>> unitsf
 
-    -- open the sphinx system
-    asr <- openCMUSphinx4ASR
+  pure $ mic >>>> asr >>>> utt >>>> tts >>>> out
 
-    -- open both logs
-    heard_column <- openLogColumn "heard"
-    cycle_column <- openLogColumn "cycle"
 
-    let connect_microphone = mic >>>> (Wrap $ SConnect) >>>> asr
 
-    -- brain : SF (Maybe CMUSphinx4ASREvent) ()
-    brain <- parrot_brain
 
-    --  output : SF (Maybe CMUSphinx4ASREvent) (() ())
-    let output = (fuselr brain $ (Wrap log_asr) >>>> heard_column) >>>> unitsf
+gcasrASR :: Effect (SF AudioLine (Maybe String))
+gcasrASR = do
+  -- open the Google Cloud ASR system
+  asr <- openGoogleASR
 
-    pure $ cycle_message >>>> cycle_column >>>> connect_microphone >>>> output
-  where
-    cycle_message:: SF Unit String
-    cycle_message = cycle_count >>>> (Wrap $ \i -> "cycle #" <> show i <> " finished")
-      where
-        cycle_count :: SF Unit Int
-        cycle_count = fold_soft 0 suc
-          where
-            suc :: Int -> Unit -> (Tuple Int Int)
-            suc i _ = Tuple (i + 1) i
+  -- connect the audio-line to the ASR thing
+  let connect = (Wrap $ GConnect)
 
-log_asr :: Maybe CMUSphinx4ASREvent -> String
-log_asr Nothing = "there's no ASR data this cycle"
-log_asr (Just (SRecognised text _ _)) = "the ASR heard `" <> text <> "`"
-
-parrot_brain :: Effect (SF (Maybe CMUSphinx4ASREvent) Unit)
-parrot_brain = do
-
-  -- age :: SF Unit Number
-  age <- openAge
-
-  -- left :: SF (Maybe ASR) (Tuple (Maybe ASR) Number)
-  -- so it returns
-  -- : (Tuple (Maybe ASR) Number)
-  let left = fuselr passsf (unitsf >>>> age)
-
-  --  tts_maybe :: (Tuple (Maybe CMUSphinx4ASREvent) Number) -> (Maybe LiveMaryS)
-  let tts_maybe (Tuple Nothing _) = Nothing
-      tts_maybe (Tuple (Just (SRecognised said _ _)) age) = Just $ Speak $ newUtterance age said
+  -- unpack the (Maybe Event) to (Maybe String)
+  let unpack Nothing = Nothing
+      unpack (Just (GRecognised said _)) = Just said
   
-
-  -- tts_cache :: SF (Maybe LiveMaryS) LiveMaryS
-  let tts_cache = cache Silent
-
-  -- mary_tts :: SF LiveMaryS (Maybe LiveMaryE)
-  mary_tts <- openLiveMary ""
-  
-  pure $ left >>>> (Wrap tts_maybe) >>>> tts_cache >>>> mary_tts >>>> unitsf
+  -- combine the things
+  pure $ connect >>>> asr >>>> (Wrap $ unpack)

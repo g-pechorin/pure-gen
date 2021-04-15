@@ -1,0 +1,22 @@
+package foo.bar
+
+abstract class S3
+(
+	val context: org.graalvm.polyglot.Context,
+	val	hook: peterlavalle.puregen.BuiltIn.Hook,
+	val	cycle: java.lang.Runnable
+) extends Object
+	with S3Import.D
+{
+	def apply(): Unit = {
+		// pull the lazy classes down and make their instances hard
+
+		foo_bar_S3Import
+	}
+
+	override final def onExit(act: => Unit): Unit = hook.onExit(() => act)
+
+	override final def before(act: => Unit): Unit = hook.before(() => act)
+
+	override final def follow(act: => Unit): Unit = hook.follow(() => act)
+}

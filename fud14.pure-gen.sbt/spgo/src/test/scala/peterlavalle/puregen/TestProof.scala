@@ -75,30 +75,35 @@ class TestProof extends AnyFunSuite {
 
 	test("do a full build/run") {
 
+		try {
+			var seen: Option[String] = None
 
-		var seen: Option[String] = None
+			TestTemp {
+				temp: File =>
+					SpagoBuild(temp)(poct / "spago-tests/basic") {
+						javaScript: File =>
+							Context.create() using {
+								context: Context =>
+									context
+										.global[String, Unit]("console.log") {
+											data: String =>
+												seen = Some(data)
+										}
+										.module(javaScript)
+										.invokeMember("main")
+							}
+					}
+			}
 
-		TestTemp {
-			temp: File =>
-				SpagoBuild(temp)(poct / "spago-tests/basic") {
-					javaScript: File =>
-						Context.create() using {
-							context: Context =>
-								context
-									.global[String, Unit]("console.log") {
-										data: String =>
-											seen = Some(data)
-									}
-									.module(javaScript)
-									.invokeMember("main")
-						}
-				}
+			require(
+				seen.contains("hello there!"),
+				"need to run the thing"
+			)
+		} catch {
+			case e: Throwable =>
+				System.err.println("this test can fail if Visual Code is 'watching' a file")
+				throw e
 		}
-
-		require(
-			seen.contains("hello there!"),
-			"need to run the thing"
-		)
 	}
 
 

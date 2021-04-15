@@ -11,21 +11,18 @@ trait TheScenario extends Scenario.D {
 	 * we need to note when the scenario starts
 	 */
 	private lazy val start: Long = System.currentTimeMillis()
-
-
-	private var age: Double = -1
+	private val buffered = new util.HashMap[String, util.LinkedList[String]]()
 
 	before {
 		age = (System.currentTimeMillis() - start) * 0.001
 	}
+	private var age: Double = -1
 
 	override protected def S3_Scenario_openAge(): () => Double = () => age
 
-	private val buffered = new util.HashMap[String, util.LinkedList[String]]()
-
 	override protected def S3_Scenario_openLogColumn(a0: String): String => Unit = {
 		require(!buffered.containsKey(a0))
-		buffered(a0) = new util.LinkedList[String]()
+		buffered.put(a0, new util.LinkedList[String]())
 		(_: String)
 			.split("[\r \t]*\n")
 			.foreach(buffered(a0).add)

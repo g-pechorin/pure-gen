@@ -3,14 +3,13 @@ package peterlavalle
 import java.io.InputStream
 import java.util
 
-import scala.collection.immutable.Stream.Empty
 import scala.io.{BufferedSource, Source}
 import scala.reflect.ClassTag
 import scala.util.matching.Regex
 
 trait TemplateResource {
 	lazy val rSlot: Regex = {
-		val rSlot: Regex = ".*(<@(\\w*)/>).*".r
+		val rSlot: Regex = ".*(<@([\\w\\-]*)/>).*".r
 
 		"package <@pack/> {" match {
 			case rSlot("<@pack/>", "pack") =>
@@ -64,8 +63,13 @@ trait TemplateResource {
 							case text: String =>
 								Stream(text)
 
-							case list: Iterable[AnyRef] =>
-								list.toStream.flatMap(unravel)
+							case list: Iterable[_] =>
+								list.toStream.flatMap {
+									case ref: AnyRef =>
+										unravel(ref)
+									case _ =>
+										error("this was impossible?")
+								}
 
 							case LinkBind(simpleName: String, sub) =>
 								bind(
@@ -80,6 +84,11 @@ trait TemplateResource {
 									key: String =>
 										sub(key) ifNull data(key)
 								}
+
+							case failed =>
+								sys.error(
+									s"failed to unravel $key `$failed`"
+								)
 						}
 
 					unravel(data(key))
@@ -102,8 +111,8 @@ trait TemplateResource {
 					)
 				case head #:: tail =>
 					head #:: loop(tail)
-				case Empty =>
-					Empty
+				case Stream() =>
+					Stream()
 			}
 
 		loop {

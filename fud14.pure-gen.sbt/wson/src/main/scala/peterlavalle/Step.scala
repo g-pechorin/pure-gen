@@ -10,20 +10,22 @@ trait Step[I, O] {
 	 *             //	 * @param sink for values
 	 * @return an object which we can send values into, or close
 	 */
-	def !(read: => Iterator[I]): AutoCloseable =
-		daemon[((I => Unit) with AutoCloseable, Iterator[I])](
-			(this ! ((_: O) => ()), read),
-			{
-				case (s: (I => Unit) with AutoCloseable, read: Iterator[I]) => {
-					if (read.hasNext)
-						s(read.next())
-					s -> read
-				}
-			},
-			(_: ((I => Unit) with AutoCloseable, Iterator[I]))
-				._1
-				.close()
-		)
+	def !(read: => Iterator[I]): AutoCloseable = {
+		error("i'd like this to be dead?")
+		//		daemon[((I => Unit) with AutoCloseable, Iterator[I])](
+		//			(this ! ((_: O) => ()), read),
+		//			{
+		//				case (s: (I => Unit) with AutoCloseable, read: Iterator[I]) => {
+		//					if (read.hasNext)
+		//						s(read.next())
+		//					s -> read
+		//				}
+		//			},
+		//			(_: ((I => Unit) with AutoCloseable, Iterator[I]))
+		//				._1
+		//				.close()
+		//		)
+	}
 
 	/**
 	 * create a thing to push our values off into

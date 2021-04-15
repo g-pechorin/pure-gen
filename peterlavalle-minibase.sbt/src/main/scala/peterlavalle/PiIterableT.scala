@@ -1,12 +1,36 @@
 package peterlavalle
 
-import java.util.{List => Jist}
+import java.lang.{Iterable => JIterable}
+import java.util
+import java.util.{List => Jist, Map => JMap}
 
-import scala.collection.immutable.Stream.Empty
+import scala.language.implicitConversions
 import scala.math.Ordering
 import scala.reflect.ClassTag
 
 trait PiIterableT {
+
+	implicit def extJIterable[E](list: JIterable[E]): Iterable[E] = {
+		val value: util.Iterator[E] = list.iterator()
+
+		def loop(): List[E] =
+
+			if (value.hasNext)
+				value.next() :: loop()
+			else
+				List()
+
+		loop()
+	}
+
+	implicit def extJMap[K, V](map: JMap[K, V]): Map[K, V] =
+		map
+			.entrySet()
+			.map {
+				entry: JMap.Entry[K, V] =>
+					entry.getKey -> entry.getValue
+			}
+			.toMap
 
 	implicit class PiJist[T](jist: Jist[T]) {
 		def one: T = {
@@ -18,6 +42,29 @@ trait PiIterableT {
 
 
 	implicit class PiIterable[T](iterable: Iterable[T]) {
+		def distinctBy[Q](f: T => Q): Stream[T] = {
+			def loop(todo: Stream[T], seen: Set[Q]): Stream[T] =
+				todo match {
+					case Stream() => Stream()
+					case head #:: tail =>
+						val next = f(head)
+
+						if (seen(next))
+							loop(tail, seen)
+						else
+							head #:: loop(tail, seen + next)
+				}
+
+			loop(
+				iterable.toStream,
+				Set()
+			)
+		}
+
+		def filterOne(p: T => Boolean): T = {
+			val List(one) = iterable.filter(p).toList
+			one
+		}
 
 		def mapIsHead[O](f: (T, Boolean) => O): Stream[O] =
 			iterable.toStream.zipWithIndex.map {
@@ -27,7 +74,7 @@ trait PiIterableT {
 
 		def mapIsLast[O](f: (T, Boolean) => O): Stream[O] =
 			iterable.toStream match {
-				case Empty => Empty
+				case Stream() => Stream()
 				case Stream(last) =>
 					Stream(f(last, true))
 				case head #:: tail =>
@@ -42,25 +89,6 @@ trait PiIterableT {
 
 		def toListBy[B](f: T => B)(implicit ord: Ordering[B]): List[T] =
 			iterable.toList.sortBy(f)
-
-		def distinctBy[O](f: T => O): Stream[T] = {
-			def loop(seen: Set[O], todo: Stream[T]): Stream[T] =
-				todo match {
-					case Empty => Empty
-
-					case head #:: tail =>
-						val lump: O = f(head)
-						if (seen(lump))
-							loop(seen + lump, tail)
-						else
-							head #:: loop(seen + lump, tail)
-				}
-
-			loop(
-				seen = Set(),
-				todo = iterable.toStream
-			)
-		}
 
 		def filterNext(p: (T, T) => Boolean): List[T] = {
 			def loop(
@@ -94,13 +122,21 @@ trait PiIterableT {
 					require(p(head))
 					tail
 			}
+
+		def twin: Iterable[(T, T)] = iterable.map(v => (v, v))
 	}
 
 	implicit class PiIterablePair[L, R](iterable: Iterable[(L, R)]) {
-		def mapr[O](f: R => O): Stream[(L, O)] =
-			iterable.toStream.map {
+		def mapr[O](f: R => O) =
+			iterable.map {
 				case (l, r) =>
 					(l, f(r))
+			}
+
+		def mapl[O](f: L => O) =
+			iterable.map {
+				case (l, r) =>
+					(f(l), r)
 			}
 	}
 

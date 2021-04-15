@@ -3,8 +3,6 @@ package peterlavalle
 trait PiAutoCloseableT {
 
 	sealed trait TUsing[A, B] {
-		def apply(a: A => B): B = foreach(a)
-
 		def foreach(a: A => B): B
 
 		def as[I](f: A => I): TUsing[I, B] = {
@@ -13,6 +11,8 @@ trait PiAutoCloseableT {
 				override def foreach(i: I => B): B = from.apply((a: A) => i(f(a)))
 			}
 		}
+
+		def apply(a: A => B): B = foreach(a)
 	}
 
 	implicit class PiAutoCloseable[C <: AutoCloseable](self: C) {
@@ -22,6 +22,7 @@ trait PiAutoCloseableT {
 				self.close()
 			out
 		}
+
 
 		def use[O]: TUsing[C, O] =
 			new TUsing[C, O] {
@@ -39,7 +40,6 @@ trait PiAutoCloseableT {
 				next.close()
 			}
 	}
-
 
 
 }

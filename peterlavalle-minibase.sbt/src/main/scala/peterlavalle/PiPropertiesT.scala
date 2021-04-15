@@ -10,13 +10,6 @@ trait PiPropertiesT {
 				.AbsoluteFile
 		)
 
-	trait T {
-		def apply(key: String, value: => String): String
-
-		def apply(key: String): String =
-			apply(key, error(s"failed to load/find property `$key`"))
-	}
-
 	private def from(file: File): T =
 
 		new T {
@@ -51,5 +44,13 @@ trait PiPropertiesT {
 				data.getProperty(key)
 			}
 		}
+
+	trait T {
+		def apply(key: String, value: => String): String
+
+		def apply(key: String): String =
+			apply(key, error(s"failed to load/find property `$key`"))
+	}
+
 }
 

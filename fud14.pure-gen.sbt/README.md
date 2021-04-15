@@ -1,14 +1,22 @@
 
-> Currently this is "Windows Only" due to my lack of not-Windows computers setup to test it.
+> Currently this is "Windows Only" due to my lack of not-Windows testing.
 
 This system demonstrates using [the (pure) functional programming language PureScript](https://www.purescript.org/) to ["script" (in the Unity3D sense)](https://docs.unity3d.com/Manual/ScriptingSection.html) the interactions between the systems that make up an interactive AI.
 For the time being - there are only speech recognition and speech synthesis components.
 
 [Installation Instructions](INSTALL.md) provide a guide to setting up the system and running the demonstration.
 
-The broad idea is that each "component" (once activated) should contribute (or not) up to one "event" to the execution of the "agent."
-The "agent" here is the part written in a functional programming language and is [implemented following the functional reactive programming paradigm.](https://en.wikipedia.org/wiki/Functional_reactive_programming)
-The agent reacts to any events by adjusting (or not) any (or all) "signal" values, and, (in keeping with the paradigm) producing a "new version" of itself.
+
+Interactive AI development is (kind of) an exercise in tying disparate software components together.
+These components areusually all "real time" and themselves somewhat experimental.
+This scenario leads to a situation where the developer must process various streams of data in a non-blocking manner.
+The system here uses [functional reactive programming](https://en.wikipedia.org/wiki/Functional_reactive_programming) to allow someone to construct blocks of logic that tie together and produce the system.
+
+The developer writes an **agent** as a PureScript module which connects to foreign software components and constructs an initial signal function instance.
+The framework implements a sort of **shell** which connects some component bindings for this agent and then "cycles" it sending input data and updating outputs.
+Data items coming in which cause an update cycle are termed **event**s and data going out denpoting the new state of some component is called **signal**s.
+
+<!-- need more rewrite here -->
 
 From an imperative background;
 - the agent is a state machine with an undetermined number of states

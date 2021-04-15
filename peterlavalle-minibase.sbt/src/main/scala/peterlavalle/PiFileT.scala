@@ -1,16 +1,38 @@
 package peterlavalle
 
 import java.io.{File, FileWriter, Writer}
-import java.util
 
-import scala.collection.immutable.Stream.Empty
 import scala.io.{BufferedSource, Source}
 
 
 trait PiFileT {
 
+	object Folder {
+		def unapply(any: Any): Option[File] = {
+			any match {
+				case folder: File if folder.isDirectory =>
+					Some(folder)
+				case _ =>
+					None
+			}
+		}
+	}
+
 	implicit class PiFile(from: File) {
 		val AbsoluteFile: File = from.getAbsoluteFile
+
+		def ls: Stream[File] =
+			if (!AbsoluteFile.isDirectory)
+				null
+			else
+				AbsoluteFile
+					.listFiles()
+					.toStream
+					.sortBy {
+						file: File =>
+							(file.isFile, file.getName)
+								.toString()
+					}
 
 		def **(p: String => Boolean): Stream[String] = {
 
@@ -23,11 +45,11 @@ trait PiFileT {
 				val list: Stream[String] =
 					root
 						.list() match {
-						case null => Empty
+						case null => Stream.empty
 						case list => list.toStream
 					}
 
-				list.filter(root / (_: String) isFile) ++ {
+				list.filter((p: String) => (root / p).isFile) ++ {
 					list.map((name: String) => name -> root / name)
 						.filterNot((_: (String, File))._2.isFile)
 						.flatMap {
@@ -42,7 +64,7 @@ trait PiFileT {
 		}
 
 		def ioWriteLines(text: String): File =
-			ioWriteLines(text.split("[\r \t]*\n"))
+			ioWriteLines(text.split("[\r \t]*\n").toSeq)
 
 		def ioWriteLines(lines: Seq[String]): File = {
 			val file = AbsoluteFile
@@ -58,27 +80,42 @@ trait PiFileT {
 			file
 		}
 
+		def EnsureParent: File = {
+			require(ParentFile.EnsureMkDirs.exists())
+			AbsoluteFile
+		}
+
+		def EnsureMkDirs: File = {
+			if (!(AbsoluteFile.isDirectory || AbsoluteFile.mkdirs()))
+				require(AbsoluteFile.isDirectory || AbsoluteFile.mkdirs())
+			AbsoluteFile
+		}
+
+		def ParentFile: File = AbsoluteFile.getParentFile.getAbsoluteFile
+
+		def extend(f: String => String): File = ParentFile / f(AbsoluteFile.getName)
+
 		def /(path: String): File =
 			if (path.startsWith("../"))
 				AbsoluteFile.ParentFile / path.drop(3)
 			else
 				new File(AbsoluteFile, path).getAbsoluteFile
 
-		def reWriteLine(regex: String)(make: String => String): Err[File] =
+		def reWriteLine(regex: String)(make: String => String): E[File] =
 			Source.fromFile(AbsoluteFile).using {
 				src: BufferedSource =>
 
 					lazy val mkString: String = src.mkString
 
 					@scala.annotation.tailrec
-					def loop(todo: List[String], done: List[String]): Err[File] = {
+					def loop(todo: List[String], done: List[String]): E[File] = {
 						todo match {
 							case Nil =>
-								Err ! s"no lines match `$regex`"
+								E ! s"no lines match `$regex`"
 
 							case line :: tail if line matches regex =>
 								if (tail.exists((_: String) matches regex))
-									Err ! s"multiple lines match `$regex`"
+									E ! s"multiple lines match `$regex`"
 								else {
 									tail.foldLeft {
 										done
@@ -86,7 +123,7 @@ trait PiFileT {
 											.foldLeft(new FileWriter(AbsoluteFile): Writer)((_: Writer) append (_: String) append "\n")
 											.append(make(line)).append("\n")
 									}((_: Writer) append (_: String) append "\n").close()
-									Err(AbsoluteFile)
+									E(AbsoluteFile)
 								}
 
 							case head :: tail =>
@@ -102,37 +139,6 @@ trait PiFileT {
 						Nil
 					)
 			}
-
-		def $(cmds: String*)(log: String => Unit, ret: Int = 0): Err[Unit] = {
-			val out: Int = AbsoluteFile.$(cmds.toSeq, (o: String) => log(';' + o), (e: String) => log('!' + e))
-			if (out == ret)
-				Err(())
-			else
-				Err ! s"the command ${cmds.head} failed"
-		}
-
-		def $(cmds: Seq[String], out: String => Unit, err: String => Unit): Int = {
-			require(cmds.nonEmpty)
-			require(AbsoluteFile.isDirectory)
-			import sys.process._
-			Process(
-				cmds,
-				AbsoluteFile
-			) ! ProcessLogger(out, err)
-		}
-
-		def EnsureParent: File = {
-			require(ParentFile.EnsureMkDirs.exists())
-			AbsoluteFile
-		}
-
-		def EnsureMkDirs: File = {
-			if (!(AbsoluteFile.isDirectory || AbsoluteFile.mkdirs()))
-				require(AbsoluteFile.isDirectory || AbsoluteFile.mkdirs())
-			AbsoluteFile
-		}
-
-		def ParentFile: File = AbsoluteFile.getParentFile.getAbsoluteFile
 
 		def FreshFolder: File = {
 			require(!AbsoluteFile.isFile)

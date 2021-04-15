@@ -5,10 +5,10 @@
 module FRP where
 
 
+import Data.Maybe -- dep: maybe
 import Effect (Effect) -- dep: effect
 import Prelude (bind, pure, ($), Unit, unit) -- dep: prelude
 import Data.Tuple (Tuple(..), fst, snd) -- dep: tuples
-import Data.Maybe -- dep: maybe
 
 -- Signal functions will conform to this generic type.
 data SF i o
@@ -41,9 +41,9 @@ react s@(Lift f) i = do
   pure (Tuple s o)
 react (Next f) i = f i
 react (Pipe {take: t, send: s}) i = do
-  (Tuple t unit) <- react t i
-  (Tuple s o) <- react s unit
-  pure $ Tuple (Pipe {take: t, send: s}) o
+  (Tuple t0 unit) <- react t i
+  (Tuple s0 o) <- react s unit
+  pure $ Tuple (Pipe {take: t0, send: s0}) o
 
 -- This is a pseudo-constructor flr a signal function that *just* emits the same value over and over again.
 -- This is surprisingly useful in the construction/generation of foreign signal functions.

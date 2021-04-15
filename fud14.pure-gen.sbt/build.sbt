@@ -3,83 +3,6 @@ import java.io.File
 import sbt.Def
 
 
-val hgRoot: File = {
-	var root = file("").getAbsoluteFile.getParentFile
-
-	while (!(root / ".hg").exists())
-		root = root.getAbsoluteFile.getParentFile.getAbsoluteFile
-	root
-}
-
-
-def conf: String => String = {
-	import com.typesafe.config.ConfigFactory
-
-	(key: String) =>
-		ConfigFactory.parseFile(
-			hgRoot / "sbt.bin/scala.conf"
-		).getString(key)
-}
-
-
-
-
-//
-// trying to fix mary xslt error
-// adding these fixes MaryTTS in the sbt CLI, but, breaks it under IDEA on Windows 7
-def maryXSLTFix = {
-	// is this in the IntelliJ IDEA?
-	if ("true" == System.getProperty("idea.managed"))
-		Seq()
-	else
-		Seq(
-			// https://github.com/marytts/marytts/issues/455
-			"xalan" % "xalan" % "2.7.2",
-
-			// https://github.com/marytts/marytts/issues/740
-			"net.sf.saxon" % "Saxon-HE" % "9.7.0-18",
-		)
-}
-
-//
-// trying to tell sbt exit
-fork in run := true
-//trapExit := false
-
-
-name := "pure-gen"
-organization := "com.peterlavalle"
-//version := "0.1.0-SNAPSHOT"
-scalaVersion := conf("scala.version")
-
-resolvers += Resolver.mavenCentral
-
-resolvers += Classpaths.typesafeReleases
-resolvers += Resolver.sonatypeRepo("public")
-resolvers += Resolver.sonatypeRepo("snapshots")
-resolvers += Resolver.sonatypeRepo("staging")
-resolvers += Resolver.sonatypeRepo("releases")
-resolvers += Resolver.jcenterRepo
-
-//https://repo.spring.io/plugins-release/
-
-
-val all: Seq[Def.Setting[_]] =
-	Seq(
-		libraryDependencies ++= Seq(
-			"org.scalatest" %% "scalatest" % conf("scala.test") % Test,
-		),
-		resolvers += Classpaths.typesafeReleases,
-		resolvers += Resolver.sonatypeRepo("public"),
-		resolvers += Resolver.sonatypeRepo("snapshots"),
-		resolvers += Resolver.sonatypeRepo("staging"),
-		resolvers += Resolver.sonatypeRepo("releases"),
-		resolvers += Resolver.jcenterRepo,
-	)
-
-
-
-
 lazy val root =
 	(project in file("."))
 		.settings(
@@ -104,9 +27,7 @@ lazy val root =
 			spgo % "compile->test",
 			wson % "compile->test",
 		)
-
 lazy val base = RootProject(hgRoot / "peterlavalle-minibase.sbt")
-
 lazy val core = project
 	.settings(all: _ *)
 	.dependsOn(base)
@@ -116,6 +37,25 @@ lazy val core = project
 		)
 	)
 
+//
+// trying to tell sbt exit
+fork in run := true
+
+
+name := "pure-gen"
+organization := "com.peterlavalle"
+scalaVersion := conf("scala.version")
+
+resolvers += Resolver.mavenCentral
+
+resolvers += Classpaths.typesafeReleases
+resolvers += Resolver.sonatypeRepo("public")
+resolvers += Resolver.sonatypeRepo("snapshots")
+resolvers += Resolver.sonatypeRepo("staging")
+resolvers += Resolver.sonatypeRepo("releases")
+resolvers += Resolver.jcenterRepo
+
+//https://repo.spring.io/plugins-release/
 lazy val demo = project
 	.settings(all: _ *)
 	.dependsOn(
@@ -125,7 +65,6 @@ lazy val demo = project
 		spgo,
 		wson,
 	)
-
 lazy val mary = project
 	.settings(all: _ *)
 	.dependsOn(
@@ -142,7 +81,6 @@ lazy val mary = project
 			"de.dfki.mary" % "marytts-common" % "5.2",
 		)
 	)
-
 lazy val spgo = project
 	.settings(all: _ *)
 	.dependsOn(
@@ -152,7 +90,6 @@ lazy val spgo = project
 	.settings(
 		libraryDependencies += "org.graalvm.js" % "js" % "20.1.0",
 	)
-
 lazy val wson = project
 	.settings(all: _ *)
 	.dependsOn(
@@ -161,24 +98,24 @@ lazy val wson = project
 	)
 	.settings(
 		libraryDependencies ++= Seq(
-			"com.ibm.watson" % "speech-to-text" % "8.5.0",
+			// "com.ibm.watson" % "speech-to-text" % "8.5.0",
 
 			"com.google.cloud" % "google-cloud-speech" % "1.24.0",
 			"commons-cli" % "commons-cli" % "1.4" % Test,
 
-			"org.mozilla.deepspeech" % "libdeepspeech" % "0.8.1",
-			// "org.mozilla.deepspeech" % "libdeepspeech" % "0.7.4",
+			// "org.mozilla.deepspeech" % "libdeepspeech" % "0.8.1",
+			// // "org.mozilla.deepspeech" % "libdeepspeech" % "0.7.4",
 
-			//
-			//			//
-			//			//			//
-			//			//			"org.springframework" % "spring-websocket" % "5.2.2.RELEASE",
-			//			//			"org.springframework" % "spring-messaging" % "5.2.2.RELEASE",
-			//			//			"javax.websocket" % "javax.websocket-api" % "1.0", // needed on own?
-			//
+			// //
+			// //			//
+			// //			//			//
+			// //			//			"org.springframework" % "spring-websocket" % "5.2.2.RELEASE",
+			// //			//			"org.springframework" % "spring-messaging" % "5.2.2.RELEASE",
+			// //			//			"javax.websocket" % "javax.websocket-api" % "1.0", // needed on own?
+			// //
 
-			// trying to hack blue
-			"org.java-websocket" % "Java-WebSocket" % "1.5.1",
+			// // trying to hack blue
+			// "org.java-websocket" % "Java-WebSocket" % "1.5.1",
 
 			// show sphinx doing the thing
 			"edu.cmu.sphinx" % "sphinx4-core" % "5prealpha-SNAPSHOT",
@@ -186,3 +123,50 @@ lazy val wson = project
 
 		)
 	)
+val hgRoot: File = {
+	var root = file("").getAbsoluteFile.getParentFile
+
+	while (!(root / ".hg").exists())
+		root = root.getAbsoluteFile.getParentFile.getAbsoluteFile
+	root
+}
+val all: Seq[Def.Setting[_]] =
+	Seq(
+		scalaVersion := conf("scala.version"),
+		libraryDependencies ++= Seq(
+			"org.scalatest" %% "scalatest" % conf("scala.test") % Test,
+		),
+		resolvers += Classpaths.typesafeReleases,
+		resolvers += Resolver.sonatypeRepo("public"),
+		resolvers += Resolver.sonatypeRepo("snapshots"),
+		resolvers += Resolver.sonatypeRepo("staging"),
+		resolvers += Resolver.sonatypeRepo("releases"),
+		resolvers += Resolver.jcenterRepo,
+	)
+
+def conf: String => String = {
+	import com.typesafe.config.ConfigFactory
+
+	(key: String) =>
+		ConfigFactory.parseFile(
+			hgRoot / "sbt.bin/scala.conf"
+		).getString(key)
+}
+
+//
+// this bit of weirdness fixes an XSLT error in the CLI and IDEA
+def maryXSLTFix = {
+	// is this in the IntelliJ IDEA? ...
+	if ("true" == System.getProperty("idea.managed"))
+	// ... then addind the stuff below causes an error
+		Seq()
+	else
+	// ... we're using the CLI and need these to "fix" and XSLT transformer error
+		Seq(
+			// https://github.com/marytts/marytts/issues/455
+			"xalan" % "xalan" % "2.7.2",
+
+			// https://github.com/marytts/marytts/issues/740
+			"net.sf.saxon" % "Saxon-HE" % "9.7.0-18",
+		)
+}

@@ -21,10 +21,13 @@ trait S3 extends TemplateResource {
 			// handle renaming
 			modules.map {
 				case IR.Module(name, items) if name.contains(".") =>
-					TODO("fixit so we don't have to rename")
-					System.err.println("module " + name + " is being renamed")
+					//					TODO("fixit so we don't have to rename")
+					val to: String = name.reverse.takeWhile('.' != _).reverse
+					require(to == name, "just stop doing this")
+					//					System.err.println(s"module `$name` is being renamed to `$to`")
+
 					IR.Module(
-						name.reverse.takeWhile('.' != _).reverse,
+						to,
 						items
 					)
 				case module =>
@@ -81,9 +84,9 @@ object S3 {
 	}
 
 	implicit class PrimpPipe(pipe: IR.Pipe) {
-		def events: Stream[IR.ActionGet] = pipe.actions.filterAs[IR.ActionGet].toStream.sortBy(_.name)
+		def events: Stream[IR.ActionGet] = pipe.actions.filterAs[IR.ActionGet].toStream.sortBy((_: IR.ActionGet).name)
 
-		def behaviors: Stream[IR.ActionSet] = pipe.actions.filterAs[IR.ActionSet].toStream.sortBy(_.name)
+		def behaviors: Stream[IR.ActionSet] = pipe.actions.filterAs[IR.ActionSet].toStream.sortBy((_: IR.ActionSet).name)
 
 		def structs: Stream[IR.Struct] = (pipe.args ++ pipe.actions).structs
 	}
@@ -93,6 +96,10 @@ object S3 {
 	}
 
 	implicit class PrimListIRIR(irs: Iterable[IR.IR]) {
+
+		/**
+		 * does/should crawl any/all constructs to find any/all structures we've defined
+		 */
 		def structs: Stream[IR.Struct] =
 			irs
 				.flatMap {
@@ -106,7 +113,12 @@ object S3 {
 						case IR.Struct(_, args) =>
 							args.map((_: (String, IR.TKind))._2)
 
-						case _: IR.TAtomicKind | _: IR.Opaque =>
+						case
+							// i don;t think that we need one
+							_: IR.Import |
+
+
+							_: IR.TAtomicKind | _: IR.Opaque =>
 							// TODO;not fully covered
 							Nil
 					}
@@ -148,6 +160,8 @@ object S3 {
 				}
 
 				ir match {
+					case imported: IR.Import =>
+						imported.actual.fromPureScript(left)
 					case atomic: IR.TAtomicKind => s"$left.toValue[" + of(atomic) + "]"
 					case IR.Struct(struct, _) => s"$left.toValue[$struct]"
 					case IR.ListOf(what) => s"$left.toValue[Stream[" + of(what) + "]]"
@@ -159,6 +173,7 @@ object S3 {
 
 			def toScala: String =
 				ir match {
+					case IR.Import(name, from) => s"${from.name}.$name"
 					case IR.Bool => "Boolean"
 
 					case IR.Real32 => "Float"

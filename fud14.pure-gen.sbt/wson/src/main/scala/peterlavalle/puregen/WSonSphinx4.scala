@@ -4,13 +4,11 @@ import java.io.InputStream
 
 import edu.cmu.sphinx.api.{AbstractSpeechRecognizer, Configuration, SpeechResult}
 import edu.cmu.sphinx.frontend.util.StreamDataSource
+import peterlavalle.daemon
+import peterlavalle.daemon._
 
 object WSonSphinx4 extends TWSon.B[SpeechResult] {
 	override protected def open(output: SpeechResult => Unit, chain: InputStream): AutoCloseable = {
-
-		type R = AbstractSpeechRecognizer with AutoCloseable with Runnable
-
-		var live: R = null
 
 		def newConfiguration(): Configuration = {
 			val configuration: Configuration = new Configuration()
@@ -22,29 +20,30 @@ object WSonSphinx4 extends TWSon.B[SpeechResult] {
 			configuration
 		}
 
+		val asr: AbstractSpeechRecognizer with AutoCloseable =
+			new AbstractSpeechRecognizer(newConfiguration()) with AutoCloseable {
+				//							live = this
 
-		daemon[AutoCloseable](
-			{
-				new AbstractSpeechRecognizer(newConfiguration()) with AutoCloseable with Runnable {
-					live = this
+				context
+					.getInstance(classOf[StreamDataSource])
+					.setInputStream(chain)
 
-					context
-						.getInstance(classOf[StreamDataSource])
-						.setInputStream(chain)
+				recognizer.allocate()
 
-					recognizer.allocate()
+				override def close(): Unit = recognizer.deallocate()
 
-					override def close(): Unit = recognizer.deallocate()
+			}
 
-					override def run(): Unit = output(getResult)
-				}
-			},
-			(r: AutoCloseable) => {
-				live.run()
-				r
-			},
-			(_: AutoCloseable).close()
-		)
+		// TODO; convert this to a more-generic daemon
+		daemon
+			.reader(
+				asr.getResult
+			)(
+				null != _
+			)(
+				output
+			)
+			.afterEnd(asr)
 
 	}
 }

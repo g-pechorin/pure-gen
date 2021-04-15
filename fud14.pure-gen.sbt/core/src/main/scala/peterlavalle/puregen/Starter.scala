@@ -69,21 +69,23 @@ object Starter {
 				var warm = false
 			}
 
-			val worker: AutoCloseable =
-				daemon {
-
-					while (true) {
-						lock.synchronized {
-							while (!lock.warm)
-								lock.wait()
-							lock.warm = false
-						}
-
-						task
-					}
-
-					error("do the/a exit of the thread")
-				}
+			val worker: AutoCloseable = {
+				error("this code should be dead")
+				//				daemon {
+				//
+				//					while (true) {
+				//						lock.synchronized {
+				//							while (!lock.warm)
+				//								lock.wait()
+				//							lock.warm = false
+				//						}
+				//
+				//						task
+				//					}
+				//
+				//					error("do the/a exit of the thread")
+				//				}
+			}
 
 			override def close(): Unit = {
 				error("implement closing of the/a thread")

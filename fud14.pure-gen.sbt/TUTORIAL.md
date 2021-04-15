@@ -552,6 +552,7 @@ Add these packages and check to ensure that (other than new wantings) the agent 
 
 ```purescript
 import Data.Maybe
+import S3.Audio
 import S3.Sphinx
 ```
 
@@ -741,6 +742,7 @@ import S3.Scenario
 
 
 import Data.Maybe
+import S3.Audio
 import S3.Sphinx
 
 entry :: Effect (SF Unit Unit)
@@ -1030,6 +1032,7 @@ import S3.Scenario
 
 
 import Data.Maybe
+import S3.Audio
 import S3.Sphinx
 import S3.Mary
 

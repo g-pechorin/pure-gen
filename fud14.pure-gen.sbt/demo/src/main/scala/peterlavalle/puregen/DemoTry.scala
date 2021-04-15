@@ -9,8 +9,6 @@ import scala.io.{BufferedSource, Source}
 
 object DemoTry {
 
-	TODO("fix the timestamp thing")
-
 	def main(args: Array[String]): Unit = {
 		if (args.nonEmpty)
 			???
@@ -60,8 +58,13 @@ object DemoTry {
 			(context: Context, pedal: BuiltIn.Hook, run: Runnable) =>
 				(new S3(context, pedal, run)
 					with TrySphinx
+
+					with TheAudio
+					with TheGCASR
 					with TheScenario
-					with TryMary) ()
+
+					with TryMary
+					) ()
 		}
 	}
 }

@@ -48,8 +48,8 @@ If something went wrong ... there's a longer version of setup below.
 - [Trouble Shooting](#trouble-shooting)
 	- [GOOGLE_APPLICATION_CREDENTIALS](#google_application_credentials)
 	- [TargetDataLine](#targetdataline)
-	- [XSLT 'void' to 'boolean](#xslt-void-to-boolean)
-	- [XTSE0280: Element name *|text() is not a valid QName](#xtse0280-element-name-text-is-not-a-valid-qname)
+	- [XSLT 'void' to 'boolean' (fixed?)](#xslt-void-to-boolean-fixed)
+	- [XTSE0280: Element name *|text() is not a valid QName (fixed?)](#xtse0280-element-name-text-is-not-a-valid-qname-fixed)
 
 Most of this system builds and runs as an [sbt](https://www.scala-sbt.org/) project, other than the PureScript build tools.
 This means that if you have the Java SDK setup correctly, sbt usable from the command line, and the PureScript tools; you won't need to install any other software to use this program.
@@ -207,7 +207,7 @@ No line matching interface TargetDataLine supporting format ...`
 
 Plugin your camera or microphone.
 
-### XSLT 'void' to 'boolean
+### XSLT 'void' to 'boolean' (fixed?)
 
 If you get an error at startup with a message containing ...
 
@@ -218,14 +218,14 @@ FATAL ERROR:  'Cannot convert data-type 'void' to 'boolean'.'
 
 Then "the old bug" is back and the MaryTTS XSLT has gone wrong.
 
-### XTSE0280: Element name *|text() is not a valid QName
+### XTSE0280: Element name *|text() is not a valid QName (fixed?)
 
 Seeon on;
 - Windows 7 x64
 - IDEA
 
 Solution;
-- run fromt eh command line
+- run from the command line
 
 ```
 Static error at xsl:strip-space on line 36 column 41

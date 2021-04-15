@@ -10,6 +10,8 @@ The document discusses the components of the system, and the FRP library used to
 	- [Scenario](#scenario)
 	- [Mary](#mary)
 	- [Sphinx](#sphinx)
+	- [GCASR / Google's Cloud Automated Speech Recognition](#gcasr--googles-cloud-automated-speech-recognition)
+	- [Audio Systems](#audio-systems)
 - [FRP PureScrpt Module](#frp-purescrpt-module)
 	- [`SF i o`](#sf-i-o)
 		- [`Wrap`](#wrap)
@@ -27,12 +29,12 @@ The document discusses the components of the system, and the FRP library used to
 	- [`unitsf`](#unitsf)
 	- [`passsf`](#passsf)
 
-> overview of archotecture
+> overview of architecture
 
 This system architecture was designed to divide any/all programming into three areas
 
 > **agent**
-> > The "agent" is the PureScript program that contains the "buisness logic" of any AI system developed with this software.
+> > The "agent" is the PureScript program that contains the "business logic" of any AI system developed with this software.
 > > The agent is specified by a single signal function, constructed within the effect monad, that accepts a "unit" non-value as input and emits a unit as output.
 >
 > `component`
@@ -44,7 +46,7 @@ This system architecture was designed to divide any/all programming into three a
 
 
 
-> example of emvedding
+> example of embedding
 
 ## Components / p Interface Definition Language
 
@@ -56,7 +58,7 @@ This system architecture was designed to divide any/all programming into three a
 While implemented in Scala, the components still need `.purs` and `.js` source code to integrate correctly with the `Agent.purs`.
 To assist in consistency and maintenance a code generator and IDL were developed and used to generate `.purs` and `.js` files and corresponding `.scala` sources with `trait` abstractions.
 
-> clarify this - we're detai.ing the idl
+> clarify this - we're detailing the idl
 
 > explain foriegn saignal fuynction
 
@@ -128,21 +130,18 @@ trait TheScenario extends Scenario.D {
    * we need to note when the scenario starts
    */
   private lazy val start: Long = System.currentTimeMillis()
-
-
-  private var age: Double = -1
+  private val buffered = new util.HashMap[String, util.LinkedList[String]]()
 
   before {
     age = (System.currentTimeMillis() - start) * 0.001
   }
+  private var age: Double = -1
 
   override protected def S3_Scenario_openAge(): () => Double = () => age
 
-  private val buffered = new util.HashMap[String, util.LinkedList[String]]()
-
   override protected def S3_Scenario_openLogColumn(a0: String): String => Unit = {
     require(!buffered.containsKey(a0))
-    buffered(a0) = new util.LinkedList[String]()
+    buffered.put(a0, new util.LinkedList[String]())
     (_: String)
       .split("[\r \t]*\n")
       .foreach(buffered(a0).add)
@@ -167,7 +166,7 @@ trait TheScenario extends Scenario.D {
 
 ### Mary
 
-The "Mary" component contains the functionality for the text-to-speech system.
+The "Mary" component contains the functionality of the text-to-speech system.
 At present, it is *just* [the MaryTTS system](https://github.com/marytts/marytts) which functions in a "live" manner to play audio as quickly as possible.
 
 ```
@@ -193,24 +192,13 @@ If the TTS system is interrupted before it finishes, then, a `Spoken` event will
 
 ### Sphinx
 
-The "Sphinx" component handles Automated Speech Recognition.
-The first system it could connect to was [the CMUSphinx4](https://cmusphinx.github.io/) software with [Google's Cloud ASR](https://cloud.google.com/speech-to-text) being added later.
-[Google's Cloud ASR](https://cloud.google.com/speech-to-text) would be the recommended approach as it seems "more accurate" most of the time.
-[CMUSphinx4](https://cmusphinx.github.io/) is somewhat simpler to set up though, and, "free as in free snacks" (and freedom) so will remain integrated for the foreseeable future.
-Due to limitations in the `.pidl` tools - the current approach needs both systems to appear in the same file/component if they wish to share the `Microphone` system.<sup id='f_link3'>[3](#f_note3)</sup>
-
+The "Sphinx" component handles Automated Speech Recognition using [version 4 of CMU's Sphinx software ](https://cmusphinx.github.io/).
+CMUSphinx4 is simple to set up in this context, so, is offered here for its portability.
 
 ```
-// the "data" from the audio system
-opaque AudioLine
+import AudioLine from Audio
 
-// the Microphone connection
-sample Microphone() = AudioLine
-
-
-
-
-struct SphinxWord
+struct WordInfo
   confidence: real64
   score: real64
   start: real64  //start: sint64
@@ -218,27 +206,33 @@ struct SphinxWord
   filler: bool
   spelling: text
 
-
-
-struct SphinxResult
+struct Result
   hypothesis: text
   bestFinalResultNoFiller: text
   bestPronunciationResult: text
   bestResultNoFiller: text
 
 // connection to a stream-sphinx thing
-pipe CMUSphinx4ASR()
+pipe CMUSphinx4ASR(bool)
   ! SConnect(AudioLine)
   ! SDisconnect()
-  ? SRecognised(text SphinxResult [SphinxWord])
+  ? SRecognised(text Result [WordInfo])
+```
 
 
+### GCASR / Google's Cloud Automated Speech Recognition
+
+The GCASR component connects to [Google's Cloud ASR service](https://cloud.google.com/speech-to-text) and offers improved accuracy with the requirement of additional setup and using a metered service.
+The implementation used here is fairly crude - the approach should probably be reworked at some point - but the API is (or should be) stable.
+It might make sense to add additional functionality, but, what's there shouldn't need to be removed or updated.
+
+```
+import AudioLine from Audio
 
 struct WordInfo
   startTime: real64
   endTime: real64
   word: text
-
 
 struct Alternative
   confidence: real32
@@ -253,32 +247,40 @@ pipe GoogleASR()
 ```
 
 
-The system functions on a (unique?) abstraction - instead of passing around conventional "audio packets"<sup id='f_link4'>[4](#f_note4)</sup> it passes around an `AudioLine` instance which is analogous to a stream handle.
+### Audio Systems
 
-The `Microphone` itself *just* opens the system's default microphone (whatever that means) and continually sends out an appropriate `AudioLine` instance for other systems.<sup id='f_link5'>[5](#f_note5)</sup>
+The components rely upon definitions from the "audio" component, which is fairly simple.
+
+```
+// the "data" from the audio system
+opaque AudioLine
+
+// the Microphone connection
+sample Microphone() = AudioLine
+```
+
+The system functions on a (unique?) abstraction - instead of passing around conventional "audio packets"<sup id='f_link3'>[3](#f_note3)</sup> it passes around an `AudioLine` instance which is analogous to a stream handle.
+
+The `Microphone` itself *just* opens the system's default microphone (whatever that means) and continually sends out an appropriate `AudioLine` instance for other systems.
 The returned `AudioLine` instance is suitable for use with multiple behaviours.
 
-> clarify ; audio line can be used with multiple consumers at once
 
 
 
 
 The two ASR systems have similar APIs with (basically) identical functionality.
-Both are `pipe` type foreign signal functions that require a `Connect AudioLine` or `Disconnect` behvaiour and emit `Recognition String` events.<sup id='f_link6'>[6](#f_note6)</sup>
-Due to ... reasons ... the two `pipe` definitions can't share messages<sup id='f_link7'>[7](#f_note7)</sup> so each prefixes the message name with a letter.
+Both are `pipe` type foreign signal functions that require a `Connect AudioLine` or `Disconnect` behaviour and emit recognition events.
+Due to ... reasons ... the two `pipe` definitions can't share messages<sup id='f_link5'>[5](#f_note5)</sup> so each prefixes the message name with a letter.
 
 Another future goal would be to add [ICL's ASR](https://github.com/peterlavalle/AVP/tree/gift/ASR), [IBM's Watson](https://www.ibm.com/uk-en/cloud/watson-speech-to-text) and on-chip implemntation of [CMU PocketSphinx](https://github.com/cmusphinx/pocketsphinx) and [Mozilla's DeepSpeech](https://github.com/mozilla/DeepSpeech).
 
 
-
 ## FRP PureScrpt Module
-
-> clarify that this is purescript
 
 
 The `FRP.purs` module contains a lot of PureScript functionality to construct signal functions that form the system.
 Central to this is the `SF i o` type used to define signal functions.
-There are several constructors, though only the `Next` one is strictly speaking necessary.<sup id='f_link8'>[8](#f_note8)</sup>
+There are several constructors, though only the `Next` one is strictly speaking necessary.<sup id='f_link6'>[6](#f_note6)</sup>
 Through the `Next` signal function, a developer can (effectively) construct any functionality that they need.
 
 The file offers several "pseudo constructor" functions that cover "common" cases in development and help developers work consistently.
@@ -444,31 +446,16 @@ This functionality isn't currently "correct" but will work.
 More work on/with the system would be needed to implement this.
 [back](#f_link2)
 
-<b id='f_note3'>[3](#f_link3)</b>
-Simply put - the `.pidl` DSL can't perform any sort of `import` action.
-*Fixing* this isn't a priority, but, it's an understood problem that I'd like to tackle.
-[back](#f_link3)
-
 <b id='f_note4'>[4](#f_link4)</b>
-"Audio Packets" would be time-sensitive in ways that feel inappropriate for this system's design.
-Using this "Audio Line" to control the audio sample *feels* more appropriate to the authors and requires less configuration.
-Also; the "Audio Line" approach doesn't need to cycle the FRP network whenever a new sample is available - this has rather important performance implications.
+In an ideal implementation of `.pidl` the `MicroPhone` and `AudioLine` items would be in the `Scenario.pidl` module.
 [back](#f_link4)
 
 <b id='f_note5'>[5](#f_link5)</b>
-In an ideal implementation of `.pidl` the `MicroPhone` and `AudioLine` items would be in the `Scenario.pidl` module.
+Yet.
+The two definitions can't share messages *yet* and while an approach to resolve this is practical the time expenditure to develop and implement it is not.
 [back](#f_link5)
 
 <b id='f_note6'>[6](#f_link6)</b>
-An active area of development (by Peter) is to expand these two APIs to emit some of the more detailed information from the ASR systems.
-[back](#f_link6)
-
-<b id='f_note7'>[7](#f_link7)</b>
-Yet.
-The two definitions can't share messages *yet* and while an approach to resolve this is practical the time expenditure to develop and implement it is not.
-[back](#f_link7)
-
-<b id='f_note8'>[8](#f_link8)</b>
 Since the `Pipe` constructor is so simple to match and decompose - one could argue that it is needed as well.
-[back](#f_link8)
+[back](#f_link6)
 

@@ -4,8 +4,6 @@
 
 import java.io.File
 
-import peterlavalle.puregen.IR
-
 // declare settings
 val idlRoots = settingKey[Seq[File]]("folders to scan for .pidl in")
 val idlTargetScala = settingKey[File]("where pidl should put .scala")
@@ -35,7 +33,7 @@ idlGenerateScala := {
 	val out = idlTargetScala.value
 	import peterlavalle.puregen._
 
-	S3.Scala( pak, src , out)
+	S3.Scala(pak, src, out)
 }
 // purescript generation tasks
 Compile / resourceGenerators += idlGenerateScript
@@ -44,5 +42,5 @@ idlGenerateScript := {
 	val src = idlRoots.value
 	val out = idlTargetScript.value
 	import peterlavalle.puregen._
-	S3.Script( pak, src , out)
+	S3.Script(pak, src, out)
 }

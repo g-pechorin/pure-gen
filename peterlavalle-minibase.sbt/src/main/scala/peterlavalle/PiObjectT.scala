@@ -6,6 +6,8 @@ trait PiObjectT {
 
 	implicit class PiObject[O <: Object](o: O) {
 
+		def identityCode: Int = System.identityHashCode(o)
+
 		def $recurStreamDistinct(con: O => Boolean = _ => true)(next: O => Iterable[O]): Stream[O] = {
 			if (!con(o))
 				Stream()

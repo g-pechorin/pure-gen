@@ -1,2 +1,7 @@
 {
+	"files.watcherExclude": {
+		"**/.spago/**": true,
+		"**/.git/**": true,
+		"**/.hg/**": true,
+	},
 }

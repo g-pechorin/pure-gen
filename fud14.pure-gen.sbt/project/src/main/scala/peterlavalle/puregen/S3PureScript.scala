@@ -7,7 +7,11 @@ object S3PureScript extends S3 {
 	implicit class PiPureScriptKind(kind: IR.TKind) {
 		def toPureScript: String =
 			kind match {
+
+				case IR.Import(name, _) => name
+
 				case IR.Bool => "Boolean"
+
 
 				case IR.Real32 =>
 					TODO("get 32bit floats in here you")
@@ -61,6 +65,8 @@ object S3PureScript extends S3 {
 						definitions
 							// expand things into types
 							.flatMap {
+								case i: IR.Import =>
+									Set(i)
 								case IR.Opaque(_) =>
 									Set[IR.TKind]()
 								case fsf: IR.TFSF[_] =>
@@ -78,6 +84,11 @@ object S3PureScript extends S3 {
 											case _: IR.Signal | _: IR.Sample =>
 												Stream(
 													"import Effect (Effect) -- dep: effect"
+												)
+
+											case IR.Import(name, from) =>
+												Stream(
+													s"import S3.${from.name} ($name)"
 												)
 
 											case _: IR.Pipe =>
