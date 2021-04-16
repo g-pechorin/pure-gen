@@ -15,4 +15,11 @@ struct Alternative
 pipe GoogleASR()
 	! GConnect(AudioLine)
 	! GDisconnect()
-	? GRecognised(text [Alternative])
+	? GRecognised(
+
+		// this is *just* our best guess for what was detected
+		text
+
+		// this is the full detection
+		[Alternative]
+	)

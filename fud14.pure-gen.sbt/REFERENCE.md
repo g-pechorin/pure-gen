@@ -28,6 +28,7 @@ The document discusses the components of the system, and the FRP library used to
 	- [`repeat`](#repeat)
 	- [`unitsf`](#unitsf)
 	- [`passsf`](#passsf)
+	- [`sinkin`](#sinkin)
 
 > overview of architecture
 
@@ -198,6 +199,7 @@ CMUSphinx4 is simple to set up in this context, so, is offered here for its port
 ```
 import AudioLine from Audio
 
+// the "full" response includes these per-word details
 struct WordInfo
   confidence: real64
   score: real64
@@ -208,6 +210,7 @@ struct WordInfo
 
 struct Result
   hypothesis: text
+
   bestFinalResultNoFiller: text
   bestPronunciationResult: text
   bestResultNoFiller: text
@@ -216,7 +219,12 @@ struct Result
 pipe CMUSphinx4ASR(bool)
   ! SConnect(AudioLine)
   ! SDisconnect()
-  ? SRecognised(text Result [WordInfo])
+  ? SRecognised(
+    // this is *just* whatever hypothesis came first
+    text
+
+    Result [WordInfo]
+  )
 ```
 
 
@@ -243,7 +251,14 @@ struct Alternative
 pipe GoogleASR()
   ! GConnect(AudioLine)
   ! GDisconnect()
-  ? GRecognised(text [Alternative])
+  ? GRecognised(
+
+    // this is *just* our best guess for what was detected
+    text
+
+    // this is the full detection
+    [Alternative]
+  )
 ```
 
 
@@ -433,6 +448,16 @@ This is a pseudo-constant.
 This is a signal function that *just* passes a value through.
 
 This can be useful when building signal functions to twist the structures around.
+
+### `sinkin`
+
+```purescript
+sinkin :: forall i o. SF i o -> SF i i
+```
+
+"sink" some input into this signal function
+
+the/my intent is that this SF can be inserted between two components to send the output to a logging function
 
 ----
 

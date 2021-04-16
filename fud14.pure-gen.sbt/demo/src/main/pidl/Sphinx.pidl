@@ -1,6 +1,7 @@
 
 import AudioLine from Audio
 
+// the "full" response includes these per-word details
 struct WordInfo
 	confidence: real64
 	score: real64
@@ -11,6 +12,7 @@ struct WordInfo
 
 struct Result
 	hypothesis: text
+
 	bestFinalResultNoFiller: text
 	bestPronunciationResult: text
 	bestResultNoFiller: text
@@ -19,7 +21,12 @@ struct Result
 pipe CMUSphinx4ASR(bool)
 	! SConnect(AudioLine)
 	! SDisconnect()
-	? SRecognised(text Result [WordInfo])
+	? SRecognised(
+		// this is *just* whatever hypothesis came first
+		text
+		
+		Result [WordInfo]
+	)
 
 
 

@@ -135,4 +135,8 @@ unitsf = Wrap $ \_ -> unit
 passsf :: forall v. SF v v
 passsf = Wrap $ \v -> v
 
-
+-- "sink" some input into this signal function
+--
+-- the/my intent is that this SF can be inserted between two components to send the output to a logging function
+sinkin :: forall i o. SF i o -> SF i i
+sinkin f = (fuselr passsf f) >>>> (Wrap fst)
