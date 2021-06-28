@@ -6,7 +6,7 @@ import sbt.Def
 import java.io.File
 
 val hgRoot: File = {
-	var root = file("").getAbsoluteFile.getParentFile
+	var root = file("").getAbsoluteFile
 
 	while (!(root / "sbt.bin/scala.conf").exists())
 		root = root.getAbsoluteFile.getParentFile.getAbsoluteFile

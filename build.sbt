@@ -6,7 +6,7 @@ import sbt.Def
 import java.io.File
 
 val hgRoot: File = {
-	var root = file("").getAbsoluteFile.getParentFile
+	var root = file("").getAbsoluteFile
 
 	while (!(root / "sbt.bin/scala.conf").exists())
 		root = root.getAbsoluteFile.getParentFile.getAbsoluteFile
@@ -76,7 +76,7 @@ val all: Seq[Def.Setting[_]] =
 
 lazy val base = project
 	// proxy project to get minibase
-	.settings(libraryDependencies += "com.github.g-pechorin" % "peterlavalle.sbt" % "26729b2")
+	.settings(libraryDependencies += "com.github.g-pechorin" % "peterlavalle.sbt" % "hgcb1fc62c")
 
 lazy val root = {
 	(project in file("."))

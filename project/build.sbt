@@ -6,7 +6,7 @@ import sbt.Def
 import java.io.File
 
 val hgRoot: File = {
-	var root = file("").getAbsoluteFile.getParentFile
+	var root = file("").getAbsoluteFile
 
 	while (!(root / "sbt.bin/scala.conf").exists())
 		root = root.getAbsoluteFile.getParentFile.getAbsoluteFile
@@ -38,7 +38,7 @@ resolvers += "jitpack" at "https://jitpack.io"
 
 name := "pureGenerator"
 
-libraryDependencies += "com.github.g-pechorin" % "peterlavalle.sbt" % "26729b2"
+libraryDependencies += "com.github.g-pechorin" % "peterlavalle.sbt" % "hgcb1fc62c"
 
 lazy val all =
 	Seq(Compile, Test).flatMap {
