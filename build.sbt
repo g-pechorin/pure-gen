@@ -76,7 +76,7 @@ val all: Seq[Def.Setting[_]] =
 
 lazy val base = project
 	// proxy project to get minibase
-	.settings(libraryDependencies += "com.github.g-pechorin" % "peterlavalle.sbt" % "hgcb1fc62c")
+	.settings(libraryDependencies += "com.github.g-pechorin" % "peterlavalle.sbt" % "hg.6ef2712d")
 
 lazy val root = {
 	(project in file("."))
