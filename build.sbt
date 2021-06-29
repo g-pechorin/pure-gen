@@ -77,7 +77,7 @@ val all: Seq[Def.Setting[_]] =
 lazy val base = project
 	.settings(resolvers += "jitpack" at "https://jitpack.io")
 	// proxy project to get minibase
-	.settings(libraryDependencies += "com.github.g-pechorin" % "minibase" % "f93287f")
+	.settings(libraryDependencies += "com.github.g-pechorin" % "minibase" % "ad82c1c")
 
 lazy val root = {
 	(project in file("."))

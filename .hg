@@ -1,15 +1,15 @@
 {
  "bookmarks": [],
  "date": [
-  1624999025,
+  1625003562,
   -3600
  ],
- "phase": "draft",
- "node": "0dd561970291bcfac562d1aa2cbca77d733a844a",
- "rev": 11876,
+ "phase": "public",
+ "node": "10a2650367f8bddb5b8308b2ccc4254d238af390",
+ "rev": 11877,
  "branch": "g4tput",
  "user": "Peter LaValle <peter.lavalle@gmail.com>",
- "desc": "added travis files",
- "parents": ["aecbb4785066d69140969bb81f114885bb684eb3"],
+ "desc": "uses shared travis snd jitpack",
+ "parents": ["0dd561970291bcfac562d1aa2cbca77d733a844a"],
  "tags": ["tip"]
 }
