@@ -1,15 +1,15 @@
 {
  "bookmarks": [],
  "date": [
-  1624972804,
+  1624974364,
   -3600
  ],
  "phase": "draft",
- "node": "4a969c5780bf7d9f1fab141e96fd54ddb8b60eea",
- "rev": 11865,
+ "node": "0fc21db4acf318659ff183c39353f36497805e29",
+ "rev": 11866,
  "branch": "g4tput",
  "user": "Peter LaValle <peter.lavalle@gmail.com>",
- "desc": "added jitpack and went back to hash",
- "parents": ["aa15c271df86502c6ba010f04e85b0bd641d266f"],
+ "desc": "added a settyings line that should fixit",
+ "parents": ["4a969c5780bf7d9f1fab141e96fd54ddb8b60eea"],
  "tags": ["tip"]
 }

@@ -38,7 +38,7 @@ resolvers += "jitpack" at "https://jitpack.io"
 
 name := "pureGenerator"
 
-libraryDependencies += "com.github.g-pechorin" % "minibase" % "b475bf8"
+libraryDependencies += "com.github.g-pechorin" % "minibase" % "abe6c0b"
 
 lazy val all =
 	Seq(Compile, Test).flatMap {
