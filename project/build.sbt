@@ -36,26 +36,4 @@ resolvers += "jitpack" at "https://jitpack.io"
 // end of standard stuff
 /// ---
 
-name := "pureGenerator"
-
-libraryDependencies += "com.github.g-pechorin" % "minibase" % "abe6c0b"
-
-lazy val all =
-	Seq(Compile, Test).flatMap {
-		from =>
-			Seq(
-				// ensure that we're reading resources from the scala source paths
-				(unmanagedResourceDirectories in from) += ((scalaSource in from).value),
-			)
-	}
-
-lazy val root =
-	(project in file("."))
-		.settings(all: _ *)
-
-libraryDependencies ++=
-	Seq(
-		"com.lihaoyi" %% "fastparse" % "2.2.2",
-		"org.scalatest" %% "scalatest" % conf("scala.test") % Test,
-		// "org.scala-sbt" %% "io" % conf("sbt.version"),
-	)
+libraryDependencies += "com.github.g-pechorin" % "pure-generator" % "e8b728c"

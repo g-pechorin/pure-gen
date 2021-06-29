@@ -3,5 +3,5 @@ steps:
 	- (sbt) test
 needs:
 	- peterlavalle-minibase.sbt/
-	- fud14.pure-gen.sbt/project/
+	- fud14.1.pure-generator-plugin.sbt/
 hub: git@github.com:g-pechorin/pure-gen.git
