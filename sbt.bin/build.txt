@@ -31,7 +31,12 @@ scalacOptions ++= conf("scala.options").split("/").toSeq
 resolvers += Classpaths.typesafeReleases
 resolvers += Resolver.mavenCentral
 resolvers += Resolver.jcenterRepo
+
+//
 resolvers += "jitpack" at "https://jitpack.io"
+
+// this worked ONCE ... i'm going to leave it though
+//resolvers += Resolver.url("jitpack", url("https://jitpack.io"))( Patterns("[organisation]/[module]/[revision]/[module]-[revision].[ext]") )
 
 // end of standard stuff
 /// ---

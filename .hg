@@ -1,15 +1,15 @@
 {
  "bookmarks": [],
  "date": [
-  1624911244,
+  1624972804,
   -3600
  ],
  "phase": "draft",
- "node": "6ef2712d4fc0ae0ea2f0ed1f15251e0747f6bb7e",
- "rev": 11853,
+ "node": "4a969c5780bf7d9f1fab141e96fd54ddb8b60eea",
+ "rev": 11865,
  "branch": "g4tput",
  "user": "Peter LaValle <peter.lavalle@gmail.com>",
- "desc": "let's try that tag",
- "parents": ["cb1fc62ced0dcd08f2061c53b0407359572a56d9"],
+ "desc": "added jitpack and went back to hash",
+ "parents": ["aa15c271df86502c6ba010f04e85b0bd641d266f"],
  "tags": ["tip"]
 }
