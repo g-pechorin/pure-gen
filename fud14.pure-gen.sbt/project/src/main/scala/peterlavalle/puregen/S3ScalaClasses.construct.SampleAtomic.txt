@@ -1,9 +1,0 @@
-
-@HostAccess.Export
-final def _new_<@name/>
-(
-	<@args/>
-): SampleAtomic[<@kind/>] = new SampleAtomic[<@kind/>](
-	"<@host/>/<@name/>(" +<@send/> ")",
-	open<@name/>(<@pass/>)
-)
