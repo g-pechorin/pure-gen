@@ -1,15 +1,15 @@
 {
  "bookmarks": [],
  "date": [
-  1625054060,
+  1625054945,
   -3600
  ],
- "phase": "draft",
- "node": "f77042670b6132e605e3694d62cef0be01a4ec29",
- "rev": 11883,
+ "phase": "public",
+ "node": "92ce472830f4bc96794b3df1050db443fa16dcbd",
+ "rev": 11884,
  "branch": "g4tput",
  "user": "Peter LaValle <peter.lavalle@gmail.com>",
- "desc": "travis says no",
- "parents": ["c138e5de59da865d1d435e3766b94442244b5025"],
+ "desc": "template resource needed for minitest",
+ "parents": ["f77042670b6132e605e3694d62cef0be01a4ec29"],
  "tags": ["tip"]
 }
