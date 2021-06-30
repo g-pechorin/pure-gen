@@ -1,15 +1,15 @@
 {
  "bookmarks": [],
  "date": [
-  1625003562,
+  1625054060,
   -3600
  ],
- "phase": "public",
- "node": "10a2650367f8bddb5b8308b2ccc4254d238af390",
- "rev": 11877,
+ "phase": "draft",
+ "node": "f77042670b6132e605e3694d62cef0be01a4ec29",
+ "rev": 11883,
  "branch": "g4tput",
  "user": "Peter LaValle <peter.lavalle@gmail.com>",
- "desc": "uses shared travis snd jitpack",
- "parents": ["0dd561970291bcfac562d1aa2cbca77d733a844a"],
+ "desc": "travis says no",
+ "parents": ["c138e5de59da865d1d435e3766b94442244b5025"],
  "tags": ["tip"]
 }
