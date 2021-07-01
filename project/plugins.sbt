@@ -36,4 +36,4 @@ resolvers += "jitpack" at "https://jitpack.io"
 // end of standard stuff
 /// ---
 
-libraryDependencies += "com.github.g-pechorin" % "pure-generator" % "3a62b0c"
+libraryDependencies += "com.github.g-pechorin" % "pure-generator" % "83343b0"
