@@ -1,0 +1,10 @@
+
+struct WordInfo
+	// startTime: real64
+	// endTime: real64
+	word: text
+
+
+pipe GoogleASR()
+	! GDisconnect()
+	? GRecognised(text WordInfo)

@@ -1,0 +1,22 @@
+// TODO; import from other files
+
+// TODO; support the suckers transforming
+
+// TODO; do out-of-order parsing (using DePa!!!)
+
+// a signal comes out of the PFP script
+signal Foo(text)
+	! Trip()
+	! Tame(sint32)
+
+// an event *might* go into the PFP script
+event Bar(text)
+	? Touch()
+
+
+
+
+
+// a sample *always* goes into the PFP script
+sample Strip(real64)
+	? Flip(text)

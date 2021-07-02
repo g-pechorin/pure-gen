@@ -1,0 +1,6 @@
+case <@host/>.<@name/>(<@args/>) =>
+	event<@name/>
+		.execute(
+			<@pass/>
+			null
+		).execute()

@@ -1,0 +1,5 @@
+
+// an event *might* go into the PFP script
+event Bar(text)
+	! Touch()
+

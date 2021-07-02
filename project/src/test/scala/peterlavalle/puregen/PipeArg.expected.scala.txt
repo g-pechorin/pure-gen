@@ -1,0 +1,136 @@
+package foo.bar
+
+import java.util.Random
+
+import org.graalvm.polyglot.{Context, HostAccess, Value}
+import peterlavalle.Quick
+import peterlavalle.Quick._
+import peterlavalle.puregen.DeScriptPolyglot
+import peterlavalle.puregen.DeScriptPolyglot._
+import peterlavalle.puregen.core.AComponent
+
+object PipeArg {
+	trait D {
+
+		final lazy val foo_bar_PipeArg = new PipeArg(asInstanceOf[S3].context, asInstanceOf[S3].hook.pedal, asInstanceOf[S3].cycle) {
+			protected def openFoo(a0: String, send: Foo.Trigger): Foo.Signal => Unit = foo_bar_PipeArg_openFoo(a0, send)
+		}
+
+		/**
+		 * add some action to happen BEFORE the cycle collects events
+		 */
+		def before(act: => Unit): Unit
+
+		/**
+		 * add some action to happen AFTER the cycle sends out signals
+		 *
+		 * @param act
+		 */
+		def follow(act: => Unit): Unit
+		def onExit(act: => Unit): Unit
+
+		protected def foo_bar_PipeArg_openFoo(a0: String, send: Foo.Trigger): Foo.Signal => Unit
+	}
+
+
+
+	object Foo {
+
+		// ======
+		// events
+		sealed trait Event
+
+		implicit val RandomEvent: Quick[Event] = {
+			(random: Random) =>
+				random.choose(
+					() =>
+						Status(
+							random.nextBoolean()
+						),
+				)
+		}
+
+		// ======
+		// signals
+		sealed trait Signal
+
+		trait Receiver extends (Signal => Unit) {
+			def Action(a0: Double): Unit
+
+			def apply(sent: Signal): Unit = sent match {
+				case Action(a0) => this.Action(a0)
+			}
+		}
+
+		case class Status(a0: Boolean) extends Event
+
+		/**
+			* luxury class
+			*/
+		final class Trigger(send: Event => Unit) {
+			def apply(e: Event): Unit = send(e)
+
+			def Status(a0: Boolean): Unit = send(new Status(a0))
+		}
+
+		case class Action(a0: Double) extends Signal
+
+		final class Handler(pass: Signal => Unit) {
+
+			@HostAccess.Export
+			def Action(a0: Value): Unit =
+				pass(new Action(a0.toValue[Double]))
+		}
+	}
+}
+
+abstract class PipeArg
+(
+	context: Context,
+	hook: AComponent#TPedal[_, _] => Unit,
+	cycle: Runnable
+) extends AComponent(context, hook, cycle) {
+	import PipeArg._
+
+
+	override final def bindName: String = "foo.bar:PipeArg"
+
+
+	@HostAccess.Export
+	final def _new_Foo
+	(
+		// event constructors
+			eventStatus: Value,
+		// struct constructors
+		// args to the constructor
+			a0: String,
+		// basic "null" constructor
+			eventNothing: Value
+	): TPipe[Foo.Event, Foo.Signal, Foo.Handler] = new Object
+			with TPipe[Foo.Event, Foo.Signal, Foo.Handler] {
+
+
+		hook(this)
+
+		override protected[this] val handler: Foo.Signal => Unit =
+			openFoo(a0, new Foo.Trigger(send))
+
+		@HostAccess.Export
+		override final def signal(): Foo.Handler = new Foo.Handler(store)
+
+		override protected[this] val simpleName: String = "PipeArg/Foo(" + a0 + ")"
+		override protected[this] val cycleRunnable: Runnable = cycle
+		override protected[this] val eventMap: Foo.Event => Value = {
+			case null => eventNothing.execute()
+			case Foo.Status(a0) =>
+				eventStatus
+					.execute(
+						a0: java.lang.Boolean,
+						null
+					).execute()
+		}
+	}
+
+	protected def openFoo(a0: String, send: Foo.Trigger): Foo.Signal => Unit
+
+}

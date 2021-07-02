@@ -1,0 +1,57 @@
+package <@pack/>
+
+import java.util.Random
+
+import org.graalvm.polyglot.{Context, HostAccess, Value}
+import peterlavalle.Quick
+import peterlavalle.Quick._
+import peterlavalle.puregen.DeScriptPolyglot
+import peterlavalle.puregen.DeScriptPolyglot._
+import peterlavalle.puregen.core.AComponent
+
+object <@name/> {
+	<@imports/>
+	trait D {
+
+		final lazy val <@hard/> = new <@name/>(asInstanceOf[S3].context, asInstanceOf[S3].hook.pedal, asInstanceOf[S3].cycle) {
+			<@link/>
+		}
+
+		/**
+		 * add some action to happen BEFORE the cycle collects events
+		 */
+		def before(act: => Unit): Unit
+
+		/**
+		 * add some action to happen AFTER the cycle sends out signals
+		 *
+		 * @param act
+		 */
+		def follow(act: => Unit): Unit
+		def onExit(act: => Unit): Unit
+
+		<@interface/>
+	}
+
+	@HostAccess.Export trait <@opaque/> extends AComponent.Opaque
+
+	<@struct/>
+	<@composite/>
+}
+
+abstract class <@name/>
+(
+	context: Context,
+	hook: AComponent#TPedal[_, _] => Unit,
+	cycle: Runnable
+) extends AComponent(context, hook, cycle) {
+	import <@name/>._
+
+
+	override final def bindName: String = "<@pack/>:<@name/>"
+
+	<@construct/>
+
+	<@open/>
+
+}

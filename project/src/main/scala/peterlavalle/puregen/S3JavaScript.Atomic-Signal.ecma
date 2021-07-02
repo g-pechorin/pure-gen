@@ -1,0 +1,4 @@
+
+exports._<@name/>Cycle = (<@name/>) =>
+  (a0) =>
+  () => <@name/>.behave(a0)

@@ -1,0 +1,33 @@
+
+@HostAccess.Export
+final def _new_<@name/>
+(
+	// event constructors
+		event<@eventName/>: Value,
+	// struct constructors
+		struct<@structName/>: Value,
+	// args to the constructor
+		<@args/>
+	// basic "null" constructor
+		eventNothing: Value
+): TPipe[<@name/>.Event, <@name/>.Signal, <@name/>.Handler] = new Object
+		with <@structName/>.PureScript
+		with TPipe[<@name/>.Event, <@name/>.Signal, <@name/>.Handler] {
+
+	override val new<@structName/>: Value = struct<@structName/>
+
+	hook(this)
+
+	override protected[this] val handler: <@name/>.Signal => Unit =
+		open<@name/>(<@pass/>new <@name/>.Trigger(send))
+
+	@HostAccess.Export
+	override final def signal(): <@name/>.Handler = new <@name/>.Handler(store)
+
+	override protected[this] val simpleName: String = "<@host/>/<@name/>(" + <@send/>")"
+	override protected[this] val cycleRunnable: Runnable = cycle
+	override protected[this] val eventMap: <@name/>.Event => Value = {
+		case null => eventNothing.execute()
+		<@case/>
+	}
+}

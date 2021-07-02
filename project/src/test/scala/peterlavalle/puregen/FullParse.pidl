@@ -1,0 +1,45 @@
+
+
+// a signal comes out of the PFP script
+signal Foo(text)
+	! Trip()
+	! Tame(sint32)
+
+// an event *might* go into the PFP script
+event Bar(text)
+	? Touch()
+
+
+// there three are for *just values* ... whatever that ends up meaning
+event Flap(text) = text
+sample Ship(sint32) = real32
+signal Vampire() = real64
+
+
+
+
+
+
+// TODO; move this to "after" Strip to test out-of-order parsing
+opaque Reap
+
+// a sample *always* goes into the PFP script
+sample Strip(real64)
+	? Flip(text)
+
+	? Tape(Reap)
+
+
+
+
+//// record Reap(text, sint64, Data)
+
+
+// an opaque is an object typed pointer passed to the script
+opaque Data
+
+// a wormhole can read and write ... but it's an event and a signal
+pipe Sound()
+	! Sense(real32)
+	? Listen(Data)
+

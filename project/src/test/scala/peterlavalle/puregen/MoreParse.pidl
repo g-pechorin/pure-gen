@@ -1,0 +1,10 @@
+
+
+// an opaque is an object typed pointer passed to the script
+opaque Data
+
+// a wormhole can read and write ... but it's an event and a signal
+pipe Sound()
+	! Sense(real32)
+	? Listen(Data)
+

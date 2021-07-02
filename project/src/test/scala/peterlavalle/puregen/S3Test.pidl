@@ -1,0 +1,27 @@
+
+struct Gable
+	startTime: [real64]
+	work: bool
+
+struct Retract
+	label: text
+	edges: [Gable]
+
+
+struct WordInfo
+	startTime: real64
+	endTime: real64
+	word: text
+
+opaque AudioLine
+
+sample AudioFeed() = AudioLine
+
+signal LogOut(text) = text
+
+pipe Sphinx4()
+	? Recognised (WordInfo)
+	? Rotund ([Gable] Retract)
+	! Live ()
+	! Mute ([Gable])
+	! Skip (sint32 WordInfo [real32] [Gable])

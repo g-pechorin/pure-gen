@@ -1,0 +1,7 @@
+
+exports._<@pipe/>Event = (<@pipe/>) => () =>
+  () => {
+    var out = <@pipe/>.event()
+    // print("<@host/>/<@pipe/>Event = " + JSON.stringify(out))
+    return out
+  }

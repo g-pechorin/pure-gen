@@ -1,0 +1,10 @@
+
+pipe TTS()
+	! Silent(real32)
+	! Speak(real32 text)
+	? Speaking(real32 text)
+	? Spoken(real32 text)
+	? Silence(real32)
+
+
+opaque Audio

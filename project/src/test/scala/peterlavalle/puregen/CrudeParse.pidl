@@ -1,0 +1,11 @@
+
+// there three are for *just values* ... whatever that ends up meaning
+
+
+
+signal Vampire() = real64
+
+event Flap(text) = text
+
+sample Ship(sint32) = real32
+

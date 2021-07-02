@@ -1,0 +1,8 @@
+exports._<@name/> =
+  // args
+    <@args/>
+  // the actual call
+  () => _S3_.<@pack/>.<@host/>._new_<@name/>(
+    // args
+      <@pass/>
+  )
