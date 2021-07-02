@@ -40,24 +40,5 @@ name := "pureGenerator"
 
 enablePlugins(SbtPlugin)
 
-libraryDependencies += "com.github.g-pechorin" % "minibase" % "c014ad2"
-
-lazy val all =
-	Seq(Compile, Test).flatMap {
-		from =>
-			Seq(
-				// ensure that we're reading resources from the scala source paths
-				(unmanagedResourceDirectories in from) += ((scalaSource in from).value),
-			)
-	}
-
-lazy val root =
-	(project in file("."))
-		.settings(all: _ *)
-
-libraryDependencies ++=
-	Seq(
-		"com.lihaoyi" %% "fastparse" % "2.2.2",
-		"org.scalatest" %% "scalatest" % conf("scala.test") % Test,
-		// "org.scala-sbt" %% "io" % conf("sbt.version"),
-	)
+// non-sbt logic comes from here; sorry about the mess
+libraryDependencies += "com.github.g-pechorin" % "pure-generator" % "115b194"
