@@ -1,15 +1,15 @@
 {
  "bookmarks": [],
  "date": [
-  1625183525,
+  1625184924,
   -3600
  ],
  "phase": "draft",
- "node": "4f4ce850e0a7e65ecfe4612172337990dad30966",
- "rev": 11893,
+ "node": "3b729dc8ff18d5c9a6bf324adc5ff4292fe5ed4b",
+ "rev": 11894,
  "branch": "g4tput",
  "user": "Peter LaValle <peter.lavalle@gmail.com>",
- "desc": "prep for magic",
- "parents": ["065a14c038cb873d0e28197a12baec8d065d78ad"],
+ "desc": "tweak",
+ "parents": ["4f4ce850e0a7e65ecfe4612172337990dad30966"],
  "tags": ["tip"]
 }
