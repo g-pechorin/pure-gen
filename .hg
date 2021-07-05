@@ -1,1 +1,16 @@
-{"date":"2021-04-16 14:15:46 +0000","node":"9a79f4356626477d0e7fe7242b61e6d8b425bbf2","user":"Peter"}
+g4tput
+bookmarks:
+branch: default
+date:
+	-1625522561
+	--3600
+desc: "Merge with g4tput"
+node: 9003ab6296d3d6ffd491e4ce651e67d20e52f644
+parents:
+	-863ce079fa849a9e08e735bf59b4f95100e82cea
+	-b71d8a6e540caf5fa16b65d61ec1c22845f3c6aa
+phase: draft
+rev: 11923
+tags:
+	-tip
+user: "Peter LaValle <peter.lavalle@gmail.com>"
