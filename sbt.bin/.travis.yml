@@ -1,7 +1,0 @@
-language: java
-os:
-- linux
-- osx
-jdk: openjdk11
-script:
-- java -jar sbt.bin/sbt-launch.jar test
