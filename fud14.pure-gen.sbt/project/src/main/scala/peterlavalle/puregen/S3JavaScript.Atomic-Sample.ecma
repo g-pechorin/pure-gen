@@ -1,3 +1,0 @@
-
-exports._<@name/>Cycle = (<@name/>) => () =>
-  () => <@name/>.sample()

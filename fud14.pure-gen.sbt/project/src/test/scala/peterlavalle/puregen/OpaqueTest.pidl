@@ -1,4 +1,0 @@
-
-opaque Audio
-
-event Mike() = Audio

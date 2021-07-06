@@ -1,1 +1,16 @@
-{"date":"2021-04-16 14:15:46 +0000","node":"9a79f4356626477d0e7fe7242b61e6d8b425bbf2","user":"Peter"}
+g4tput
+bookmarks:
+branch: nonode
+date:
+	-1625580054
+	--3600
+desc: "Merge with sand"
+node: 00b24f5e30ec8152d9c0ae6f744ec68701e6c19b
+parents:
+	-6b83c71961fac988d98a9a8d33344d1a7c2af9f6
+	-f2cba51a9492bf9c111ae717971adeb7ba5ac366
+phase: draft
+rev: 11935
+tags:
+	-tip
+user: "Peter LaValle <peter.lavalle@gmail.com>"

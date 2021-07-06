@@ -1,5 +1,0 @@
-
-
-pipe Foo(text)
-	? Status(bool)
-	! Action(real64)
