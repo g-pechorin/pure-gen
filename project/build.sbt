@@ -41,4 +41,4 @@ name := "pureGenerator"
 enablePlugins(SbtPlugin)
 
 // non-sbt logic comes from here; sorry about the mess
-libraryDependencies += "com.github.g-pechorin" % "pure-generator" % "b2e2387"
+libraryDependencies += "com.github.g-pechorin" % "pure-generator" % "b2ebfcf"

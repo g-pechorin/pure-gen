@@ -1,16 +1,15 @@
 g4tput
 bookmarks:
-branch: default
+branch: nonode
 date:
-	-1625522561
+	-1625594049
 	--3600
-desc: "Merge with g4tput"
-node: 9003ab6296d3d6ffd491e4ce651e67d20e52f644
+desc: "spgo tests should pass"
+node: 6fe8ae184201b719510f7ba2447d1efb90c24271
 parents:
-	-863ce079fa849a9e08e735bf59b4f95100e82cea
-	-b71d8a6e540caf5fa16b65d61ec1c22845f3c6aa
+	-a3dfe31adf663b0faf757abcb273a039903a7c71
 phase: draft
-rev: 11923
+rev: 11943
 tags:
 	-tip
 user: "Peter LaValle <peter.lavalle@gmail.com>"

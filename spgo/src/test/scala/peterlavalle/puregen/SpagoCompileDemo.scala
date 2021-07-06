@@ -20,7 +20,7 @@ object SpagoCompileDemo {
 
 	def main(args: Array[String]): Unit = {
 
-		val compile = new SpagoCompile(File.createTempFile("spc.", ".bld", new File("target")))
+		val compile = new SpagoCompile.Sand(???, File.createTempFile("spc.", ".bld", new File("target")))
 
 		compile.gen(
 			hello,

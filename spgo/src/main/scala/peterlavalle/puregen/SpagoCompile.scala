@@ -4,10 +4,12 @@ import java.io.{File, FileWriter, PrintStream, Writer}
 import java.util
 
 import peterlavalle._
+import peterlavalle.puresand.NoNode
 
 import scala.annotation.tailrec
 import scala.io.BufferedSource
 import scala.language.implicitConversions
+import scala.sys.process.ProcessLogger
 import scala.util.matching.Regex
 
 object SpagoCompile {
@@ -130,6 +132,56 @@ object SpagoCompile {
 		}
 	}
 
+	final class Sand(box: => File, cwd: File) extends SpagoCompile(cwd) {
+
+		val node: NoNode = NoNode(box)
+
+		override protected def runSpago(cwd: File, cmd: String*): Log => Int = {
+
+			val call = node(cmd.head, cmd.tail: _ *)(cwd)
+
+			(log: Log) =>
+				call {
+					ProcessLogger(
+						log.out(_: String),
+						log.err(_: String)
+					)
+				}
+		}
+	}
+
+
+	final class Step(workspaceRoot: File) extends SpagoCompile(workspaceRoot: File) {
+		override protected def runSpago(cwd: File, cmd: String*): Log => Int = {
+
+			// install spago and purs
+			val spago = {
+				//		TODO("create a local node project/env and use spago/purs from there")
+				// if we need "our own" spago; do this
+				//			val spago = workIn / "node_modules/.bin/spago"
+				//			if (!spago.isFile)
+				//				StepScript(workIn)
+				//					.step("npm init -y")
+				//					.step("npm install purescript")
+				//					.step("npm install spago")
+				//					.run((line: String) => System.err.println(line)) match {
+				//					case 0 =>
+				//				}
+				//
+				//			spago.AbsolutePath
+
+				// TODO;  some wizardry to setup npm/spago/purescript
+
+				"spago"
+			}
+
+			(lo: Log) =>
+				StepScript(workspaceRoot)
+					.step(spago :: cmd.toList)
+					.run(lo)
+		}
+	}
+
 }
 
 /**
@@ -137,7 +189,7 @@ object SpagoCompile {
  *
  * @param workspaceRoot where the root should be. largely cosmetic
  */
-class SpagoCompile(workspaceRoot: File) extends TemplateResource {
+abstract class SpagoCompile(workspaceRoot: File) extends TemplateResource {
 
 	import peterlavalle.puregen.SpagoCompile._
 
@@ -150,6 +202,7 @@ class SpagoCompile(workspaceRoot: File) extends TemplateResource {
 		(name: String, src: String) =>
 			new FileWriter(dir / name).append(src).close()
 	}
+
 	private lazy val isWindows =
 		osNameArch {
 			case ("windows", _) => true
@@ -224,28 +277,6 @@ class SpagoCompile(workspaceRoot: File) extends TemplateResource {
 
 		out.Unlink
 
-
-		// install spago and purs
-		val spago = {
-			//		TODO("create a local node project/env and use spago/purs from there")
-			// if we need "our own" spago; do this
-			//			val spago = workIn / "node_modules/.bin/spago"
-			//			if (!spago.isFile)
-			//				StepScript(workIn)
-			//					.step("npm init -y")
-			//					.step("npm install purescript")
-			//					.step("npm install spago")
-			//					.run((line: String) => System.err.println(line)) match {
-			//					case 0 =>
-			//				}
-			//
-			//			spago.AbsolutePath
-
-			// TODO;  some wizardry to setup npm/spago/purescript
-
-			"spago"
-		}
-
 		// listen to the output to see if spago is missing
 		var spagoMissing = false
 		var spagoNoBash = false
@@ -273,9 +304,7 @@ class SpagoCompile(workspaceRoot: File) extends TemplateResource {
 		if (out.exists())
 			require(out.delete() && !out.exists())
 
-		StepScript(workspaceRoot)
-			.step(spago, "bundle-module", "-m", m.name, "-t", out)
-			.run(lo) match {
+		runSpago(workspaceRoot, "bundle-module", "-m", m.name, "-t", out.AbsolutePath)(lo) match {
 
 			case 0 if out.exists() =>
 				assume(!(
@@ -323,6 +352,8 @@ class SpagoCompile(workspaceRoot: File) extends TemplateResource {
 				E ! "spago build returned " + r
 		}
 	}
+
+	protected def runSpago(cwd: File, cmd: String*): Log => Int
 
 	def gen(src: AnyRef*): Unit =
 		src.toList.foreach {
