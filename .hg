@@ -2,14 +2,14 @@ g4tput
 bookmarks:
 branch: nonode
 date:
-	-1625594049
+	-1625685912
 	--3600
-desc: "spgo tests should pass"
-node: 6fe8ae184201b719510f7ba2447d1efb90c24271
+desc: thingstuff
+node: 76bf40e1cdc043e48d4b0072698110d96324cbca
 parents:
-	-a3dfe31adf663b0faf757abcb273a039903a7c71
+	-6ea3eb6a2d595eeb02eb7e2feb1585bb3d26be10
 phase: draft
-rev: 11943
+rev: 11961
 tags:
 	-tip
 user: "Peter LaValle <peter.lavalle@gmail.com>"

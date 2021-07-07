@@ -62,15 +62,15 @@ class SpagoCompileTest extends AnyFunSuite {
 	}
 
 	test("do a compile") {
-		TempDir() {
+		TestTemp {
 			box =>
-		val spagoCompile = new SpagoCompile.Sand(box, target / "spage1")
-		spagoCompile.gen(SpagoCompileDemo.hello, frpSrc)
-		spagoCompile.autoDependencies()
-		import SpagoCompile._
-		assert(
-			spagoCompile.bundleModule(println(_: Any), "Hello").value.stripTrim == helloJs
-		)
+				val spagoCompile = new SpagoCompile(box, target / "spage1")
+				spagoCompile.gen(SpagoCompileDemo.hello, frpSrc)
+				spagoCompile.autoDependencies()
+				import SpagoCompile._
+				assert(
+					spagoCompile.bundleModule(println(_: Any), "Hello").value.stripTrim == helloJs
+				)
 		}
 	}
 
@@ -150,9 +150,9 @@ class SpagoCompileTest extends AnyFunSuite {
 
 
 	test("test multi module") {
-		TempDir() {
+		TestTemp {
 			box =>
-				val spagoCompile = new SpagoCompile.Sand(box, target / "spage2")
+				val spagoCompile = new SpagoCompile(box, target / "spage2")
 				spagoCompile.gen(SpagoCompileDemo.hello, frpSrc)
 				spagoCompile.autoDependencies()
 				import SpagoCompile._
@@ -633,7 +633,8 @@ class SpagoCompileTest extends AnyFunSuite {
 				""".stripMargin.stripTrim
 					}
 				)
-		}	}
+		}
+	}
 
 
 	implicit class ExtString(s: String) {

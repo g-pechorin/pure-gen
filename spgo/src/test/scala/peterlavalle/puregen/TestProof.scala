@@ -87,7 +87,7 @@ class TestProof extends AnyFunSuite {
 							// use "fresh" here to avoid errors when i still have it open in the terminal
 							temp.FreshFolder
 
-							val spagoCompile = new SpagoCompile.Sand(sand, temp)
+							val spagoCompile = new SpagoCompile(sand, temp)
 
 							spagoCompile.sources.add(poct / "spago-tests/basic")
 

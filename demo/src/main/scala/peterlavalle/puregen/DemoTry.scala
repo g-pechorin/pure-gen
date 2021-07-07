@@ -23,6 +23,8 @@ object DemoTry {
 
 		val spago: File =
 			demo / "target/spago"
+		val sandBox: File =
+			demo / "target/cache"
 
 		require((spago / "gen").isDirectory, "you need to run sbt compile to generate the headers")
 
@@ -45,7 +47,7 @@ object DemoTry {
 			}
 		}
 
-		val compile = new SpagoCompile(spago)
+		val compile = new SpagoCompile(sandBox, spago)
 
 		// compile has some sources
 		compile.sources.add(demo.ParentFile / "lib")

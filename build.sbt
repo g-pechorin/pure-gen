@@ -77,7 +77,7 @@ val all: Seq[Def.Setting[_]] =
 lazy val base = project
 	.settings(resolvers += "jitpack" at "https://jitpack.io")
 	// proxy project to get minibase
-	.settings(libraryDependencies += "com.github.g-pechorin" % "minibase" % "b7d5418")
+	.settings(libraryDependencies += "com.github.g-pechorin" % "minibase" % "f4dc455")
 
 lazy val root = {
 	(project in file("."))
@@ -104,7 +104,7 @@ lazy val core = {
 		.dependsOn(base)
 		.settings(
 			libraryDependencies ++= Seq(
-				"org.graalvm.js" % "js" % "20.1.0"
+				"org.graalvm.js" % "js" %  conf("graaljs"),
 			)
 		)
 }
@@ -133,26 +133,28 @@ lazy val mary = {
 			libraryDependencies ++= maryXSLTFix,
 
 			libraryDependencies ++= Seq(
-				"de.dfki.mary" % "voice-cmu-slt-hsmm" % "5.2",
-				"de.dfki.mary" % "marytts-client" % "5.2",
-				"de.dfki.mary" % "marytts-common" % "5.2",
+				"de.dfki.mary" % "voice-cmu-slt-hsmm" % conf("marytts"),
+				"de.dfki.mary" % "marytts-client" % conf("marytts"),
+				"de.dfki.mary" % "marytts-common" % conf("marytts"),
 			)
 		)
 }
+
 lazy val spgo = {
 	project
 		.settings(all: _ *)
 		.dependsOn(
 			base,
-			core % Test,
+			core,
 			// test % Test,
 		)
 		.dependsOn(RootProject(hgRoot / "puresand.sbt/"))
 		.settings(
-			libraryDependencies += "org.graalvm.js" % "js" % "20.1.0",
+			libraryDependencies += "org.graalvm.js" % "js" % conf("graaljs"),
 			Compile / resourceDirectory := (Compile / scalaSource).value,
 		)
 }
+
 lazy val wson = {
 	project
 		.settings(all: _ *)
