@@ -2,14 +2,14 @@ g4tput
 bookmarks:
 branch: nonode
 date:
-	-1625757849
+	-1625847681
 	--3600
-desc: "should fix detection"
-node: 753434795ba96bd46eb7d37818999de128489dbb
+desc: "gitout can put some hg data in as templates"
+node: 727e82fc55f95a160bc08657e75e97615a45bbb6
 parents:
-	-31cc3f69f473dee3c31afc9e213b1f26528e4c43
-phase: public
-rev: 11963
+	-0126e6616ac6ed66db36183d4550d1b64d333772
+phase: draft
+rev: 11978
 tags:
 	-tip
 user: "Peter LaValle <peter.lavalle@gmail.com>"

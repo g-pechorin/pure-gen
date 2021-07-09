@@ -77,7 +77,7 @@ val all: Seq[Def.Setting[_]] =
 lazy val base = project
 	.settings(resolvers += "jitpack" at "https://jitpack.io")
 	// proxy project to get minibase
-	.settings(libraryDependencies += "com.github.g-pechorin" % "minibase" % "ab1f1b2")
+	.settings(libraryDependencies += "com.github.g-pechorin" % "minibase" % "2b0123e")
 
 lazy val root = {
 	(project in file("."))
@@ -147,7 +147,7 @@ lazy val spgo = {
 			base,
 			core,
 		)
-	.settings(libraryDependencies += "com.github.g-pechorin" % "puresand" % "09762c0")
+	.settings(libraryDependencies += "com.github.g-pechorin" % "puresand" % "6d201a5")
 		.settings(
 			libraryDependencies += "org.graalvm.js" % "js" % conf("graaljs"),
 			Compile / resourceDirectory := (Compile / scalaSource).value,
