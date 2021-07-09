@@ -2,14 +2,14 @@ g4tput
 bookmarks:
 branch: nonode
 date:
-	-1625685912
+	-1625757849
 	--3600
-desc: thingstuff
-node: 76bf40e1cdc043e48d4b0072698110d96324cbca
+desc: "should fix detection"
+node: 753434795ba96bd46eb7d37818999de128489dbb
 parents:
-	-6ea3eb6a2d595eeb02eb7e2feb1585bb3d26be10
-phase: draft
-rev: 11961
+	-31cc3f69f473dee3c31afc9e213b1f26528e4c43
+phase: public
+rev: 11963
 tags:
 	-tip
 user: "Peter LaValle <peter.lavalle@gmail.com>"
