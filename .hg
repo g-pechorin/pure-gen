@@ -2,15 +2,14 @@ g4tput
 bookmarks:
 branch: default
 date:
-	-1625522561
+	-1625912417
 	--3600
-desc: "Merge with g4tput"
-node: 9003ab6296d3d6ffd491e4ce651e67d20e52f644
+desc: "cleanup before push"
+node: 11de4ef6b2993e108003b4da8d63c345b652f4ec
 parents:
-	-863ce079fa849a9e08e735bf59b4f95100e82cea
-	-b71d8a6e540caf5fa16b65d61ec1c22845f3c6aa
-phase: draft
-rev: 11923
+	-e0d4a7e2920f58f1e8b8752b157c04e276b61015
+phase: public
+rev: 11989
 tags:
 	-tip
 user: "Peter LaValle <peter.lavalle@gmail.com>"

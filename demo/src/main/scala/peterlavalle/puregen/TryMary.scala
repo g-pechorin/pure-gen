@@ -7,8 +7,6 @@ trait TryMary extends Mary.D {
 	import Mary._
 
 	override protected def S3_Mary_openLiveMary(split: String, send: LiveMary.Trigger): LiveMary.Signal => Unit = {
-		TODO("have the  LiveMary.Receiver just implement apply(signal)unit")
-
 		val live: MaryLive =
 			if ("" == split)
 				MaryLive.kirk()
@@ -17,13 +15,13 @@ trait TryMary extends Mary.D {
 
 		val ifNewer: Newer[Double] = new Newer(-1.0)
 
-		new LiveMary.Receiver {
-			override def Silent(): Unit =
+		import LiveMary._
+		{
+			case Silent() =>
 				ifNewer() {
 					live.speak("", () => {}, (_: Boolean) => {})
 				}
-
-			override def Speak(a0: Utterance): Unit =
+			case Speak(a0: Utterance) =>
 				ifNewer(a0.start) {
 					live.speak(a0.words, () => send.Speaking(a0), (full: Boolean) => if (full) send.Spoken(a0))
 				}

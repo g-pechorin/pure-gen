@@ -3,8 +3,6 @@ package peterlavalle
 import java.util.Random
 
 trait Quick[T] {
-	TODO("this should be a monad ... and support ranges or something so we can generate all possible values in a stream")
-
 	def generate(random: Random): T
 }
 

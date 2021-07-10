@@ -1,40 +1,26 @@
 
 
->
-> I have tested this on;
->
-> - Windows 7 (my Desktop)
-> - Windows 10 (my laptop)
-> - https://builds.sr.ht/
->		- debian/buster
-> - an out of date Mac Mini
-> - a RaspberryPi3 which couldn't handle building PureScript
->
-
-You will need a physical microphone (compatible with the Java Media Framework ... which all seem to be) and a few software packages to run this.
-Once those are set up, you can run the demonstration agent and get started "hacking on it" as folks say.
-
-# Short Version (REALLY try this first)
+On 2021-07-09 I finished the "nonode" changes which simplified the setup of this system.
+The project now operates on amd64 based Windows, Linux and MacOS computers.<sup id='f_link1'>[1](#f_note1)</sup>
+You need git and [JDK11+](https://adoptopenjdk.net/) for the software to work - you can check with the following commands;
 
 ```bash
 $ javac --version
 $ java --version#
 ```
 
-Both need-need to be 11 or later for this to work.
-If they are not, update them.
-
-Node.JS is used for `npm` which is used for installing PureScript and Spago.
-The only "foolproof" way to set it up has been ...
+With that in place you can clone (et al) the project and "test" it to be sure it's all running;
 
 ```bash
-$ sudo npm install -g npm@latest
-$ sudo npm install -g purescript@0.14.1
-$ sudo npm install -g spago@0.20.1
+$ git clone -b default https://github.com/g-pechorin/pure-gen.git
+$ cd pure-gen
+$ java -jar sbt.bin/sbt-launch.jar test
 ```
 
-... but if you're on Windows you don't need `sudo`.
+I have tested this on;
 
-Someday - I'll simplify this and use a self-sandboxing approach for the PureScript/Spago stuff.
+- Windows 7 (my Desktop)
+- Ubuntu ??? (my Laptop)
+- an old Mac Mini
 
 [When you're ready - why not continue with the tutorial?](TUTORIAL.md)

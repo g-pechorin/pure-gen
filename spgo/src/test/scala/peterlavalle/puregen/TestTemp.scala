@@ -44,7 +44,7 @@ object TestTemp {
 			}
 
 		// only delete if we worked
-		temp.Unlink
+		 // temp.Unlink
 
 		out
 	}

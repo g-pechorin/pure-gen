@@ -77,7 +77,7 @@ val all: Seq[Def.Setting[_]] =
 lazy val base = project
 	.settings(resolvers += "jitpack" at "https://jitpack.io")
 	// proxy project to get minibase
-	.settings(libraryDependencies += "com.github.g-pechorin" % "minibase" % "b5d9f8a")
+	.settings(libraryDependencies += "com.github.g-pechorin" % "minibase" % "5b57dae")
 
 lazy val root = {
 	(project in file("."))
@@ -93,7 +93,6 @@ lazy val root = {
 			demo,
 			mary,
 			spgo,
-			// test,
 			wson,
 		)
 }
@@ -104,7 +103,7 @@ lazy val core = {
 		.dependsOn(base)
 		.settings(
 			libraryDependencies ++= Seq(
-				"org.graalvm.js" % "js" % "20.1.0"
+				"org.graalvm.js" % "js" %  conf("graaljs"),
 			)
 		)
 }
@@ -133,25 +132,27 @@ lazy val mary = {
 			libraryDependencies ++= maryXSLTFix,
 
 			libraryDependencies ++= Seq(
-				"de.dfki.mary" % "voice-cmu-slt-hsmm" % "5.2",
-				"de.dfki.mary" % "marytts-client" % "5.2",
-				"de.dfki.mary" % "marytts-common" % "5.2",
+				"de.dfki.mary" % "voice-cmu-slt-hsmm" % conf("marytts"),
+				"de.dfki.mary" % "marytts-client" % conf("marytts"),
+				"de.dfki.mary" % "marytts-common" % conf("marytts"),
 			)
 		)
 }
+
 lazy val spgo = {
 	project
 		.settings(all: _ *)
 		.dependsOn(
 			base,
-			core % Test,
-			// test % Test,
+			core,
 		)
+	.settings(libraryDependencies += "com.github.g-pechorin" % "puresand" % "660ebcd")
 		.settings(
-			libraryDependencies += "org.graalvm.js" % "js" % "20.1.0",
+			libraryDependencies += "org.graalvm.js" % "js" % conf("graaljs"),
 			Compile / resourceDirectory := (Compile / scalaSource).value,
 		)
 }
+
 lazy val wson = {
 	project
 		.settings(all: _ *)
@@ -168,17 +169,6 @@ lazy val wson = {
 
 				// "org.mozilla.deepspeech" % "libdeepspeech" % "0.8.1",
 				// // "org.mozilla.deepspeech" % "libdeepspeech" % "0.7.4",
-
-				// //
-				// //			//
-				// //			//			//
-				// //			//			"org.springframework" % "spring-websocket" % "5.2.2.RELEASE",
-				// //			//			"org.springframework" % "spring-messaging" % "5.2.2.RELEASE",
-				// //			//			"javax.websocket" % "javax.websocket-api" % "1.0", // needed on own?
-				// //
-
-				// // trying to hack blue
-				// "org.java-websocket" % "Java-WebSocket" % "1.5.1",
 
 				// show sphinx doing the thing
 				"edu.cmu.sphinx" % "sphinx4-core" % "5prealpha-SNAPSHOT",

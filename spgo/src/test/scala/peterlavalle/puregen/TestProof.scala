@@ -79,30 +79,34 @@ class TestProof extends AnyFunSuite {
 			var seen: Option[String] = None
 
 			TestTemp {
-				temp: File =>
+				sand: File =>
 
-					// use "fresh" here to avoid errors when i still have it open in the terminal
-					temp.FreshFolder
+					TestTemp {
+						temp: File =>
 
-					val spagoCompile = new SpagoCompile(temp)
+							// use "fresh" here to avoid errors when i still have it open in the terminal
+							temp.FreshFolder
 
-					spagoCompile.sources.add(poct / "spago-tests/basic")
+							val spagoCompile = new SpagoCompile(sand, temp)
 
-					spagoCompile.autoDependencies()
+							spagoCompile.sources.add(poct / "spago-tests/basic")
 
-					val javaScript =
-						spagoCompile.bundleModule(SpagoCompile.Log, "Main")
-							.value
+							spagoCompile.autoDependencies()
 
-					Context.create() using {
-						context: Context =>
-							context
-								.global[String, Unit]("console.log") {
-									data: String =>
-										seen = Some(data)
-								}
-								.module(javaScript)
-								.invokeMember("main")
+							val javaScript: String =
+								spagoCompile.bundleModule(SpagoCompile.Log, "Main")
+									.value
+
+							Context.create() using {
+								context: Context =>
+									context
+										.global[String, Unit]("console.log") {
+											data: String =>
+												seen = Some(data)
+										}
+										.module(javaScript)
+										.invokeMember("main")
+							}
 					}
 			}
 

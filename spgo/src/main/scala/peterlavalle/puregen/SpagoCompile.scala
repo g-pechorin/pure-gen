@@ -4,15 +4,74 @@ import java.io.{File, FileWriter, PrintStream, Writer}
 import java.util
 
 import peterlavalle._
+import peterlavalle.puregen.SpagoCompile.Log
+import peterlavalle.puresand.NoNode
 
 import scala.annotation.tailrec
 import scala.io.BufferedSource
 import scala.language.implicitConversions
+import scala.sys.process.ProcessLogger
 import scala.util.matching.Regex
 
 object SpagoCompile {
 
-	type Log = StepScript.Log
+	trait Log {
+		def out(line: Any): Unit
+
+		def err(line: Any): Unit
+
+		object listen {
+			/**
+			 * listen to output and errors
+			 */
+			def apply(all: String => Unit): Log =
+				listen.out(all)
+					.listen.err(all)
+
+			def out(all: String => Unit): Log =
+				modify.out {
+					line =>
+						all(line)
+						line
+				}
+
+			def err(all: String => Unit): Log =
+				modify.err {
+					line =>
+						all(line)
+						line
+				}
+		}
+
+		object modify {
+			private val base = Log.this
+
+			/**
+			 * modify the output and errors
+			 */
+			def apply(all: String => String): Log =
+				modify.out(all)
+					.modify.err(all)
+
+			def out(all: String => String): Log =
+				new Log {
+					override def out(line: Any): Unit = base.out(all(line.toString))
+
+					override def err(line: Any): Unit = base.err(line)
+				}
+
+			def err(all: String => String): Log =
+
+				new Log {
+					override def out(line: Any): Unit = base.out(line)
+
+					override def err(line: Any): Unit = base.err(all(line.toString))
+				}
+		}
+
+
+	}
+
 	val rDep: Regex = {
 		//	TODO("get the regex to handle multiple deps")
 		"import .*--\\s*dep\\s*:(.*?)\\s*".r
@@ -33,15 +92,15 @@ object SpagoCompile {
 			flush()
 		}
 
-		private def flush(): Unit = {
-			System.out.flush()
-			System.err.flush()
-		}
-
 		override def err(line: Any): Unit = {
 			flush()
 			System.err.println(line)
 			flush()
+		}
+
+		private def flush(): Unit = {
+			System.out.flush()
+			System.err.flush()
 		}
 	}
 
@@ -137,9 +196,7 @@ object SpagoCompile {
  *
  * @param workspaceRoot where the root should be. largely cosmetic
  */
-class SpagoCompile(workspaceRoot: File) extends TemplateResource {
-
-	import peterlavalle.puregen.SpagoCompile._
+final class SpagoCompile private(workspaceRoot: File, runSpago: (File, Seq[String]) => Log => Int) extends TemplateResource {
 
 	/**
 	 * i will want to generate sources (sorry) these are the files that will be generated
@@ -150,11 +207,14 @@ class SpagoCompile(workspaceRoot: File) extends TemplateResource {
 		(name: String, src: String) =>
 			new FileWriter(dir / name).append(src).close()
 	}
-	private lazy val isWindows =
+	private lazy val isWindows: Boolean =
 		osNameArch {
 			case ("windows", _) => true
 			case _ => false
 		}
+
+	import peterlavalle.puregen.SpagoCompile._
+
 	/**
 	 * dependency packages added to the build. most will probably be picjed up from sources is autoDependencies
 	 */
@@ -163,6 +223,30 @@ class SpagoCompile(workspaceRoot: File) extends TemplateResource {
 	 * source roots - folders to look in for source files
 	 */
 	val sources = new util.LinkedList[Source]()
+
+	/**
+	 * make a spago compiler using the nonode approach
+	 *
+	 * @param box where to extract the nonode needed binaries
+	 * @param cwd where to marshall the spago workspace
+	 */
+	def this(box: File, cwd: File) =
+		this(
+			cwd,
+			(cwd: File, cmd: Seq[String]) => {
+
+				// build it once here
+				val call = NoNode(box)(cmd.head, cmd.tail: _ *)(cwd)
+
+				(log: Log) =>
+					call {
+						ProcessLogger(
+							log.out(_: String),
+							log.err(_: String)
+						)
+					}
+			}
+		)
 
 	/**
 	 *
@@ -224,28 +308,6 @@ class SpagoCompile(workspaceRoot: File) extends TemplateResource {
 
 		out.Unlink
 
-
-		// install spago and purs
-		val spago = {
-			//		TODO("create a local node project/env and use spago/purs from there")
-			// if we need "our own" spago; do this
-			//			val spago = workIn / "node_modules/.bin/spago"
-			//			if (!spago.isFile)
-			//				StepScript(workIn)
-			//					.step("npm init -y")
-			//					.step("npm install purescript")
-			//					.step("npm install spago")
-			//					.run((line: String) => System.err.println(line)) match {
-			//					case 0 =>
-			//				}
-			//
-			//			spago.AbsolutePath
-
-			// TODO;  some wizardry to setup npm/spago/purescript
-
-			"spago"
-		}
-
 		// listen to the output to see if spago is missing
 		var spagoMissing = false
 		var spagoNoBash = false
@@ -273,9 +335,7 @@ class SpagoCompile(workspaceRoot: File) extends TemplateResource {
 		if (out.exists())
 			require(out.delete() && !out.exists())
 
-		StepScript(workspaceRoot)
-			.step(spago, "bundle-module", "-m", m.name, "-t", out)
-			.run(lo) match {
+		runSpago(workspaceRoot, Seq("bundle-module", "-m", m.name, "-t", out.AbsolutePath))(lo) match {
 
 			case 0 if out.exists() =>
 				assume(!(

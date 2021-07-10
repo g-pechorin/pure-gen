@@ -116,7 +116,6 @@ trait MikeDemoT {
 				println("hmm ...")
 			}
 
-			TODO("fix this so there's a proper close and no need for a prompt")
 			more.close()
 
 			what.close()

@@ -31,8 +31,6 @@ abstract class AComponent(
 		val component: AComponent = AComponent.this
 		protected val simpleName: String
 
-		_root_.peterlavalle.TODO("replace simpleName with toString")
-
 		def cycleComplete(): Unit
 
 		def cycleActivate(): Unit
